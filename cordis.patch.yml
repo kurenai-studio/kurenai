@@ -1,0 +1,6 @@
+- insert:
+    - id: kurenai
+      name: "@kurenai-studio/dsh-plugin-kurenai"
+      config:
+        autoStart: false
+        port: 7460

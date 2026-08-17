@@ -1,0 +1,7 @@
+node_modules/
+lib/
+coverage/
+.DS_Store
+*.log
+.kurenai/
+kurenai.demo.patch.yml

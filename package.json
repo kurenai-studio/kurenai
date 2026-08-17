@@ -1,0 +1,74 @@
+{
+  "name": "@kurenai-studio/dsh-plugin-kurenai",
+  "version": "0.0.2",
+  "description": "DSH-native Cocos vibe coding studio with headless preview and runtime inspector",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./inspector-runtime": {
+      "types": "./lib/inspector-runtime/index.d.ts",
+      "default": "./lib/inspector-runtime/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/**/*",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-primitives"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "check": "tsc --noEmit && npm run test && npm run build"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "cocos",
+    "vibe-coding",
+    "headless",
+    "inspector"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-client-runtime": ">=0.0.1-rc.1",
+    "@deepseek-ai/dsh-client-ui-slots": ">=0.0.1-rc.1",
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/http-proxy": "^1.17.17",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "react": "^19.2.8",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "http-proxy": "^1.18.1"
+  }
+}
