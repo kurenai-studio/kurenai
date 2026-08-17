@@ -41,6 +41,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "prepare": "npm run build",
     "test": "vitest run",
     "check": "tsc --noEmit && npm run test && npm run build"
   },
