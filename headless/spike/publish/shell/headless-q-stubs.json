@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "q-bundled:///fs/exports/webview.js": "/scripting/empty-feature.js",
+    "q-bundled:///fs/exports/video.js": "/scripting/empty-feature.js",
+    "q-bundled:///fs/exports/dragon-bones.js": "/scripting/empty-feature.js",
+    "q-bundled:///fs/exports/tiled-map.js": "/scripting/empty-feature.js",
+    "q-bundled:///fs/exports/vendor-google.js": "/scripting/empty-feature.js",
+    "q-bundled:///fs/exports/xr.js": "/scripting/empty-feature.js"
+  }
+}

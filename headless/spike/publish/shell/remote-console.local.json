@@ -1,0 +1,5 @@
+{
+  "sdkUrl": "https://kuroneko.chat/remote-console/sdk/remote-console.legacy.umd.js",
+  "serverUrl": "wss://kuroneko.chat/remote-console/ws",
+  "enabled": true
+}

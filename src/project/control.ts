@@ -11,7 +11,8 @@ import {
   type Server,
   type ServerResponse,
 } from "node:http";
-import { basename, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import {
   PreviewController,
@@ -156,12 +157,14 @@ export class ProjectControl {
         this.config.headlessRoot ??
           process.env.KURENAI_HEADLESS_ROOT ??
           process.env.HEADLESS_STACK;
-      if (!configuredHeadlessRoot) {
+      const headlessRoot = configuredHeadlessRoot
+        ? resolve(configuredHeadlessRoot)
+        : bundledHeadlessRoot();
+      if (!existsSync(headlessRoot)) {
         throw new Error(
-          "KURENAI_HEADLESS_ROOT must point to the supplied headless-cocos repository",
+          "KURENAI_HEADLESS_ROOT must point to a headless-cocos checkout (or use the vendored headless/ tree)",
         );
       }
-      const headlessRoot = resolve(configuredHeadlessRoot);
       const creator = join(headlessRoot, "spike", "create-project.mjs");
       if (!existsSync(creator)) {
         throw new Error(
@@ -230,12 +233,7 @@ export class ProjectControl {
     const absolutePath = resolve(projectPath);
     const project = await this.inspect(absolutePath);
     if (!project) throw new Error("The DSH workspace is not a Cocos Creator project");
-    const headlessRoot = requireDirectory(
-      "headlessRoot",
-      this.config.headlessRoot ??
-        process.env.KURENAI_HEADLESS_ROOT ??
-        process.env.HEADLESS_STACK,
-    );
+    const headlessRoot = resolveHeadlessRoot(this.config);
     const platform = options.platform ?? "web";
     const outDir = options.outDir ?? join(absolutePath, "dist", platform);
     const cli = join(headlessRoot, "spike", "publish", "cli.mjs");
@@ -682,4 +680,23 @@ function requireDirectory(label: string, value: string | undefined): string {
   const absolute = resolve(value);
   if (!existsSync(absolute)) throw new Error(`${label} does not exist: ${absolute}`);
   return absolute;
+}
+
+/** Prefer env checkout; fall back to vendored `headless/` next to this package. */
+function bundledHeadlessRoot(): string {
+  // src/project/control.ts → packageRoot/headless
+  return resolve(dirname(fileURLToPath(import.meta.url)), "../../headless");
+}
+
+function resolveHeadlessRoot(config: ProjectControlConfig): string {
+  const configured =
+    config.headlessRoot ??
+    process.env.KURENAI_HEADLESS_ROOT ??
+    process.env.HEADLESS_STACK;
+  if (configured?.trim()) return requireDirectory("headlessRoot", configured);
+  const bundled = bundledHeadlessRoot();
+  if (existsSync(join(bundled, "spike", "publish", "cli.mjs"))) return bundled;
+  throw new Error(
+    "headlessRoot is required (set KURENAI_HEADLESS_ROOT or use the vendored headless/ tree)",
+  );
 }

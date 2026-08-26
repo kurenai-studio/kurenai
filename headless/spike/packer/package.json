@@ -1,0 +1,17 @@
+{
+  "name": "cocos-mini-packer-spike",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Headless mini-packer that produces Cocos Creator 3.8 packer-driver-compatible chunks using @cocos/creator-programming-{quick-pack,mod-lo}. Bypasses Creator IDE for TS-only iteration.",
+  "bin": {
+    "mini-packer": "build.cjs"
+  },
+  "scripts": {
+    "build": "node build.cjs --verbose",
+    "smoke": "node build.cjs --verbose --out=./.smoke-out"
+  },
+  "notes": {
+    "runtime-deps": "Currently resolved from NPM_ROOT (default: ../../tmp-asar-root/node_modules). To make self-contained, npm-install @cocos/creator-programming-quick-pack@1.7.x and @cocos/creator-programming-mod-lo@1.12.x into this folder.",
+    "why-vendored-uuid": "Creator's uuid.js is not on npm; carried via NPM_ROOT/../utils/dist/uuid.js. Reimplement compressUUID if you want zero-Cocos deps."
+  }
+}
