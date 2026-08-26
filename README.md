@@ -6,6 +6,11 @@ context.
 
 > Status: working MVP. Kurenai directly uses each DSH session's workspace
 > directory as its Cocos project root.
+>
+> The historical preview research tree lived in
+> [`shinjiyu/headless-cocos`](https://github.com/shinjiyu/headless-cocos)
+> (**migrated / read-only**). Point `KURENAI_HEADLESS_ROOT` at a local checkout
+> or runtime kit; do not treat that remote as the product home.
 
 ## Product loop
 
