@@ -52,6 +52,15 @@ Kurenai does not maintain an independent project registry.
 - `kurenai_preview_start`
 - `kurenai_preview_status`
 - `kurenai_preview_stop`
+- `kurenai_publish` — headless static publish (`platform=web` MVP; plugin-extensible)
+
+Headless publish CLI (no Creator):
+
+```powershell
+node $env:KURENAI_HEADLESS_ROOT\spike\publish\cli.mjs --project=<cocos-project> --platform=web
+```
+
+See `headless-cocos/spike/publish/README.md`.
 
 ## Development
 

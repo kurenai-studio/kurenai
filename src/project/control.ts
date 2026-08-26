@@ -219,6 +219,73 @@ export class ProjectControl {
     return (await this.previewFor(resolve(projectPath))).stop();
   }
 
+  async publish(
+    projectPath: string,
+    options: {
+      platform?: string;
+      outDir?: string;
+      skipPacker?: boolean;
+    } = {},
+  ): Promise<Record<string, unknown>> {
+    const absolutePath = resolve(projectPath);
+    const project = await this.inspect(absolutePath);
+    if (!project) throw new Error("The DSH workspace is not a Cocos Creator project");
+    const headlessRoot = requireDirectory(
+      "headlessRoot",
+      this.config.headlessRoot ??
+        process.env.KURENAI_HEADLESS_ROOT ??
+        process.env.HEADLESS_STACK,
+    );
+    const platform = options.platform ?? "web";
+    const outDir = options.outDir ?? join(absolutePath, "dist", platform);
+    const cli = join(headlessRoot, "spike", "publish", "cli.mjs");
+    if (!existsSync(cli)) {
+      throw new Error(`Publish CLI missing: ${cli}`);
+    }
+    const args = [
+      cli,
+      `--project=${absolutePath}`,
+      `--platform=${platform}`,
+      `--out=${outDir}`,
+    ];
+    if (options.skipPacker) args.push("--skip-packer");
+    const { stdout, stderr, code } = await runCommandCapture(
+      process.execPath,
+      args,
+      headlessRoot,
+    );
+    const combined = `${stdout}\n${stderr}`.trim();
+    let parsed: Record<string, unknown> | undefined;
+    const jsonMatch = combined.match(/\{[\s\S]*"ok"\s*:\s*(true|false)[\s\S]*\}\s*$/);
+    if (jsonMatch) {
+      try {
+        parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+      } catch {
+        parsed = undefined;
+      }
+    }
+    if (code !== 0) {
+      return {
+        ok: false,
+        platform,
+        outDir,
+        exitCode: code,
+        error:
+          (typeof parsed?.error === "string" && parsed.error) ||
+          combined.slice(-4000) ||
+          "publish failed",
+        logTail: combined.slice(-2000),
+      };
+    }
+    return {
+      ok: true,
+      platform,
+      outDir,
+      ...(parsed ?? {}),
+      logTail: combined.slice(-1500),
+    };
+  }
+
   setSelection(
     sessionId: string,
     selection: SelectionContext | undefined,
@@ -346,6 +413,19 @@ export class ProjectControl {
           json(response, 200, {
             ok: true,
             preview: await this.stopPreview(projectPath),
+          });
+          return;
+        }
+        if (url.pathname === "/api/publish") {
+          json(response, 200, {
+            ...(await this.publish(projectPath, {
+              platform:
+                typeof body.platform === "string" ? body.platform : "web",
+              ...(typeof body.outDir === "string"
+                ? { outDir: body.outDir }
+                : {}),
+              skipPacker: body.skipPacker === true,
+            })),
           });
           return;
         }
@@ -569,4 +649,37 @@ async function runCommand(
       else reject(new Error(`${command} failed (${String(code)}): ${stderr.trim()}`));
     });
   });
+}
+
+async function runCommandCapture(
+  command: string,
+  args: string[],
+  cwd: string,
+): Promise<{ stdout: string; stderr: string; code: number }> {
+  return await new Promise((resolvePromise, reject) => {
+    const child = spawn(command, args, {
+      cwd,
+      stdio: "pipe",
+      windowsHide: true,
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk: Buffer | string) => {
+      stdout += String(chunk);
+    });
+    child.stderr.on("data", (chunk: Buffer | string) => {
+      stderr += String(chunk);
+    });
+    child.once("error", reject);
+    child.once("exit", (code) => {
+      resolvePromise({ stdout, stderr, code: code ?? 1 });
+    });
+  });
+}
+
+function requireDirectory(label: string, value: string | undefined): string {
+  if (!value?.trim()) throw new Error(`${label} is required`);
+  const absolute = resolve(value);
+  if (!existsSync(absolute)) throw new Error(`${label} does not exist: ${absolute}`);
+  return absolute;
 }

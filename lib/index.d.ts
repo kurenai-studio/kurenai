@@ -143,6 +143,11 @@ declare class ProjectControl {
   }>;
   startPreview(projectPath: string): Promise<PreviewState>;
   stopPreview(projectPath: string): Promise<PreviewState>;
+  publish(projectPath: string, options?: {
+    platform?: string;
+    outDir?: string;
+    skipPacker?: boolean;
+  }): Promise<Record<string, unknown>>;
   setSelection(sessionId: string, selection: SelectionContext | undefined): void;
   contextText(sessionId: string, projectPath: string): string;
   private previewFor;

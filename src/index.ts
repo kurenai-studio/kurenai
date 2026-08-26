@@ -156,6 +156,45 @@ export function apply(ctx: DshContext, config: ProjectControlConfig = {}): void 
     ),
   );
 
+  ctx.tools.register(
+    tool(
+      "kurenai_publish",
+      "Headless publish: freeze the project into a static dist (default platform=web). No Cocos Creator install required.",
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          platform: {
+            type: "string",
+            enum: ["web"],
+            description: "Platform plugin id (extensible; MVP: web)",
+          },
+          outDir: {
+            type: "string",
+            description: "Optional output directory (default: <project>/dist/<platform>)",
+          },
+          skipPacker: {
+            type: "boolean",
+            description: "Reuse existing packer output instead of rebuilding scripts",
+          },
+        },
+      },
+      async (args, execution) => {
+        try {
+          const current = requireProjectContext(execution);
+          return await control.publish(current.projectPath, {
+            platform:
+              typeof args.platform === "string" ? args.platform : "web",
+            ...(typeof args.outDir === "string" ? { outDir: args.outDir } : {}),
+            skipPacker: args.skipPacker === true,
+          });
+        } catch (error) {
+          return errorResult(error);
+        }
+      },
+    ),
+  );
+
   ctx.systemPrompt?.section({
     name: "kurenai:selected-node",
     order: 120,
