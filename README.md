@@ -62,10 +62,17 @@ Kurenai does not maintain an independent project registry.
 Headless publish CLI (no Creator):
 
 ```powershell
+# Prefer the vendored tree in this repo (preview-parity fixes included):
+node .\headless\spike\publish\cli.mjs --project=<cocos-project> --platform=web
+node .\headless\spike\serve-dist.mjs --root=<cocos-project>\dist\web --port=7480
+
+# Or point at an external checkout:
 node $env:KURENAI_HEADLESS_ROOT\spike\publish\cli.mjs --project=<cocos-project> --platform=web
 ```
 
-See `headless-cocos/spike/publish/README.md`.
+`serve-dist` is required for static dist: it serves `/engine_external`, `/src/effect.bin`, and `/query-extname` that plain `npx serve` cannot.
+
+See `headless/spike/publish/README.md`.
 
 ## Development
 
