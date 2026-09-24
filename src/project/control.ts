@@ -27,6 +27,16 @@ import {
 
 export type ProjectTemplateId = "base-ai" | "base-ai-3d";
 export type PublishPlatform = "web-desktop" | "web-mobile";
+
+const PUBLISH_LOG_TAIL_LINES = 30;
+
+function publishLogTail(combined: string, verbose?: boolean): string | undefined {
+  const text = combined.trim();
+  if (!text) return undefined;
+  if (verbose) return text;
+  const lines = text.split("\n");
+  return lines.slice(-PUBLISH_LOG_TAIL_LINES).join("\n");
+}
 const IGNORED_WORKSPACE_ENTRIES = new Set([".git", ".DS_Store", ".cursor", ".vscode", ".idea"]);
 
 export interface CommandResult {
@@ -208,6 +218,7 @@ export class ProjectControl {
     options: {
       platform?: PublishPlatform;
       outDir?: string;
+      verbose?: boolean;
     } = {},
   ): Promise<Record<string, unknown>> {
     const absolutePath = resolve(projectPath);
@@ -247,13 +258,15 @@ export class ProjectControl {
           error: combined.slice(-4000) || "cocos build failed",
         };
       }
+      const outDir = dest.startsWith("project://")
+        ? join(absolutePath, dest.slice("project://".length))
+        : resolve(absolutePath, dest);
+      const logTail = publishLogTail(combined, options.verbose);
       return {
         ok: true,
+        outDir,
         platform,
-        outDir: dest.startsWith("project://")
-          ? join(absolutePath, dest.slice("project://".length))
-          : resolve(absolutePath, dest),
-        logTail: combined.slice(-1500),
+        ...(logTail !== undefined ? { logTail } : {}),
       };
     } finally {
       if (configDir) await rm(configDir, { recursive: true, force: true });
@@ -401,6 +414,7 @@ export class ProjectControl {
               ...(typeof body.outDir === "string"
                 ? { outDir: body.outDir }
                 : {}),
+              ...(body.verbose ? { verbose: true } : {}),
             })),
           });
           return;

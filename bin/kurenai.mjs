@@ -8,7 +8,7 @@
  *   kurenai asset info <file> [--project <dir>]
  *   kurenai logs [--since <seq>] [--errors] [--project <dir>]
  *   kurenai context [--project <dir>]
- *   kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--project <dir>]
+ *   kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--verbose] [--project <dir>]
  *
  * The project defaults to the nearest directory above the file (or cwd) that
  * contains assets/ and package.json. Output is JSON on stdout.
@@ -29,9 +29,9 @@ const USAGE = `usage:
   kurenai asset info <file> [--project <dir>]
   kurenai logs [--since <seq>] [--errors] [--project <dir>]
   kurenai context [--project <dir>]
-  kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--project <dir>]`;
+  kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--verbose] [--project <dir>]`;
 
-const FLAGS = new Set(['errors']);
+const FLAGS = new Set(['errors', 'verbose']);
 
 function parseArgs(argv) {
   const positional = [];
@@ -190,6 +190,7 @@ async function main() {
     const result = await control.publish(project, {
       platform: options.platform ?? 'web-desktop',
       ...(options.out ? { outDir: resolve(options.out) } : {}),
+      ...(options.verbose ? { verbose: true } : {}),
     });
     print({ ok: true, ...result });
     return;

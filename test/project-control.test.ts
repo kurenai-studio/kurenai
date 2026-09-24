@@ -188,6 +188,32 @@ describe("ProjectControl", () => {
     });
   });
 
+  it("truncates publish logTail by default and keeps full output with verbose", async () => {
+    const root = await temporaryRoot();
+    const cliRoot = join(root, "cocos-cli");
+    await mkdir(join(cliRoot, "dist"), { recursive: true });
+    await writeFile(join(cliRoot, "dist", "cli.js"), "");
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({ name: "game", creator: { version: "4.0.0" } }),
+    );
+    const filler = Array.from({ length: 50 }, (_, index) => `log line ${index}`).join("\n");
+    const stdout = `${filler}\n✓ Build completed successfully! Build Dest: project://build/web-desktop\n`;
+    const control = new ProjectControl({
+      cocosCliRoot: cliRoot,
+      runCommand: async () => ({ stdout, stderr: "", code: 0 }),
+    });
+
+    const trimmed = await control.publish(root);
+    expect(trimmed.outDir).toBe(join(root, "build", "web-desktop"));
+    expect(String(trimmed.logTail)).not.toContain("log line 0");
+    expect(String(trimmed.logTail)).toContain("log line 49");
+
+    const verbose = await control.publish(root, { verbose: true });
+    expect(String(verbose.logTail)).toContain("log line 0");
+    expect(String(verbose.logTail)).toContain("log line 49");
+  });
+
   it("keys selection by project path", async () => {
     const root = await temporaryRoot();
     await writeFile(
