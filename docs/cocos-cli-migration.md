@@ -100,7 +100,7 @@ Docker bind mount 下 `fs.watch` 不可靠，所以 host 支持 `WATCH_POLL=1`�
 | `stack/templates/*` | 迁入 kurenai 仓 | |
 | `stack/run-rubik.mjs`、`run-puzzle.mjs` | 改写为验收脚本 | 改为写 prefab、材质和 `assets/game/*.ts`，不碰场景（见第 9 节） |
 
-`headless-cocos` 的 importer 覆盖面（glTF 扩展、Spine 3.8/4.2、BMFont、plist 等）在切换前要和 cocos-cli asset-db 对一遍，缺的记为 cocos-cli 的待补项，而不是继续维护 kurenai 版。
+`headless-cocos` 的 importer 覆盖面（glTF 扩展、Spine 3.8/4.2、BMFont、plist 等）在切换前要和 cocos-cli asset-db 对一遍，缺的记为 cocos-cli 的待补项，而不是继续维护 kurenai 版。对照表见 [`importer-coverage.md`](./importer-coverage.md)（#13）。
 
 ## 5. 工具面（替代 DSH）：CLI 为主
 
@@ -191,7 +191,7 @@ Docker bind mount 下 `fs.watch` 不可靠，所以 host 支持 `WATCH_POLL=1`�
 - **资源占用**：现在的 shim 用了 `--max-old-space-size=8192`，每个工程一个完整 cocos-cli 进程，内存需要实测（可以复用 webgame-docker 资源基准那套相位和指标）。
 - **inspector**：Cocos4 预览下已验证可用（见第 9 节的加载时序问题）。
 - **安装体积**：kurenai 会依赖约 5.7 GB 的 cocos-cli 发行物，直到有瘦身后的核心包。
-- **importer 覆盖差异**：headless 有、cocos-cli 没有的资源类型，切换后会出现回退。
+- **importer 覆盖差异**：headless 有、cocos-cli 没有的资源类型，切换后会出现回退。详见 [`importer-coverage.md`](./importer-coverage.md)。
 
 ## 9. 资源文件 + 代码的写作方式（2026-09-24 调整）
 
