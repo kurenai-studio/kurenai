@@ -100,6 +100,11 @@ npm install
 npm run check
 ```
 
+## Agent swarm
+
+Parallel workers claim GitHub issues labeled `swarm:available`. Claim, branch, PR, and
+manager review rules live in [`docs/SWARM.md`](docs/SWARM.md).
+
 ## Limitations
 
 - Canvas picking targets 2D `UITransform` bounds; 3D raycasting is not
