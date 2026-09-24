@@ -102,6 +102,8 @@ npm run check
 
 ## Limitations
 
+- In Docker (bind-mounted project dirs), set `WATCH_POLL=1` on the cocos host;
+  see [`docs/docker-watch-poll.md`](docs/docker-watch-poll.md).
 - Canvas picking targets 2D `UITransform` bounds; 3D raycasting is not
   implemented.
 - Materials created from code can only use `builtin-unlit`; write `.mtl` files
