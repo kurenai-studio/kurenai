@@ -10,5 +10,14 @@ describe("run-puzzle scaffold", () => {
     const prefab = JSON.parse(match![1] as string);
     expect(prefab[0]["__type__"]).toBe("cc.Prefab");
     expect(prefab[0]._name).toBe("PuzzleTile");
+    expect(prefab.some((entry: { __type__?: string }) => entry.__type__ === "cc.Sprite")).toBe(true);
+  });
+
+  it("generates playable view code with swap and win logic", () => {
+    const source = readFileSync(join(process.cwd(), "scripts/run-puzzle.mjs"), "utf8");
+    expect(source).toContain("images/puzzle");
+    expect(source).toContain("onPieceTap");
+    expect(source).toContain("Complete!");
+    expect(source).toContain("encodePng");
   });
 });
