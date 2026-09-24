@@ -154,8 +154,20 @@ async function stopHost(project) {
   return { ok: true, running: false, stopped: host.pid };
 }
 
+function printUsage(exitCode) {
+  process.stderr.write(`${USAGE}\n`);
+  process.exit(exitCode);
+}
+
+function wantsHelp(argv) {
+  return argv[0] === 'help' || argv.includes('--help') || argv.includes('-h');
+}
+
 async function main() {
-  const { positional, options } = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (wantsHelp(argv)) printUsage(0);
+
+  const { positional, options } = parseArgs(argv);
   const [group, command, target] = positional;
 
   if (group === 'init' && command) {
@@ -225,8 +237,7 @@ async function main() {
     return;
   }
 
-  process.stderr.write(`${USAGE}\n`);
-  process.exit(2);
+  printUsage(2);
 }
 
 main().catch((error) => exitWith(error instanceof Error ? error.message : String(error)));
