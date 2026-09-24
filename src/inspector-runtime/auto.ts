@@ -17,6 +17,14 @@ async function boot(): Promise<void> {
 
   while (Date.now() < deadline) {
     try {
+      // Importing "cc" before the engine bundle has registered it makes
+      // SystemJS cache a load failure that then breaks the game's own import.
+      // Wait until the game has started the engine and loaded a scene.
+      const legacy = (globalThis as { cc?: { director?: { getScene?(): unknown } } }).cc;
+      if (!legacy?.director?.getScene?.()) {
+        await new Promise((done) => setTimeout(done, 250));
+        continue;
+      }
       cocos ??= await window.System?.import("cc");
       const director = cocos?.director as
         | { getScene?(): unknown }

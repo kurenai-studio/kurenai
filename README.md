@@ -1,115 +1,115 @@
 # Kurenai Studio
 
-DSH-native Cocos vibe coding: chat beside a live Headless Cocos preview, inspect
-the runtime scene tree, click a node, and use that selection as precise agent
-context.
+Cocos vibe coding on top of [cocos-cli](https://github.com/SUD-GLOBAL/cocos-cli):
+a live preview per project, a runtime scene inspector, and a command line for
+coding agents.
 
-> Status: working MVP. Kurenai directly uses each DSH session's workspace
-> directory as its Cocos project root.
->
-> The historical preview research tree lived in
-> [`shinjiyu/headless-cocos`](https://github.com/shinjiyu/headless-cocos)
-> (**migrated / read-only**). Point `KURENAI_HEADLESS_ROOT` at a local checkout
-> or runtime kit; do not treat that remote as the product home.
+> Status: migrated off the DSH plugin and the historical `headless-cocos` stack.
+> The preview runs cocos-cli's own runtime, asset-db and script packer. Agents
+> use the `kurenai` CLI; there is no MCP server.
+> See [`docs/cocos-cli-migration.md`](docs/cocos-cli-migration.md).
 
 ## Product loop
 
 ```text
-Click a node in the preview
-  → Kurenai Inspector resolves node/path/components
-  → selection becomes DSH chat context
-  → agent edits the Cocos project on disk
-  → Headless Cocos compiles and HMR refreshes the iframe
+Agent writes files under assets/ (prefabs, materials, TypeScript views)
+  → cocos host watcher → asset-db refresh (.meta, import, compile)
+  → cocos-cli live reload refreshes the preview
+  → agent reads uuids and errors through `kurenai asset info` / `kurenai logs`
 ```
 
-Kurenai intentionally edits source files rather than mutating only the browser
-runtime, so changes survive reload and remain reviewable.
+Prefabs describe structure and look and carry no scripts; code loads them by
+path and attaches behaviour with `addComponent(View).bind(root)`. `.meta` files
+are always written by the engine. The rules agents follow live in
+[`templates/shared/AGENTS.md`](templates/shared/AGENTS.md), copied into every
+new project.
 
-## Workspace workflow
+## Pieces
 
-Kurenai does not maintain an independent project registry.
+- `bin/kurenai.mjs` — the CLI (see below).
+- `bin/kurenai-cocos-host.mjs` — one long-lived process per project. Loads
+  cocos-cli, starts its game preview, watches `assets/` (or polls with
+  `WATCH_POLL=1`) and exposes `/__kurenai/status`, `/__kurenai/refresh`,
+  `/__kurenai/asset` and `/__kurenai/logs`. Advertises itself in
+  `<project>/temp/kurenai-host.json`.
+- `src/preview/controller.ts` — starts the host (or attaches to one the CLI
+  started) and puts `PreviewBridge` in front of it.
+- `src/preview/bridge.ts` — reverse proxy that injects the inspector and keeps
+  every preview request on the bridge origin.
+- `src/project/control.ts` — project detection, template initialization,
+  selection context and publish through `cocos build`.
+- `src/inspector-runtime/` — browser runtime for scene tree, selection and 2D
+  hit testing.
+- `templates/` — `base-ai` (2D) and `base-ai-3d` project templates plus the
+  `shared` layer (Boot entry, helpers, `AGENTS.md`).
 
-- **New project** — create/open an empty DSH Workspace, then choose the
-  `base-ai` 2D template or `base-ai-3d` template from the supplied
-  `headless-cocos` checkout.
-- **Existing project** — open the Cocos project directory as a DSH Workspace;
-  Kurenai detects it from `package.json` and starts the preview.
-- **Continue work** — reopen the existing DSH Workspace/session. DSH remains
-  the source of truth for project paths, recent workspaces and conversations.
+## Requirements
 
-## Repository surfaces
+- Node.js 22+
+- A cocos-cli install. Defaults to
+  `~/Library/Application Support/cocos-default/cocos-4.0.0-alpha.33` (installed
+  by PinK); override with `KURENAI_COCOS_CLI_ROOT` or the `cocosCliRoot` option.
+  The host uses cocos-cli internals (`dist/core/*`), so keep the version pinned.
 
-- `src/index.ts` — DSH host plugin and preview lifecycle tools.
-- `src/preview/controller.ts` — starts/stops an external Headless Cocos checkout.
-- `src/project/` — current-DSH-workspace detection, initialization and local
-  preview control API.
-- `src/client/` — DSH shell overlay that splits chat on the left from the
-  preview/Inspector workspace on the right.
-- `src/inspector-runtime/` — browser runtime for scene tree, selection and
-  initial 2D UI hit testing.
-- `src/shared/protocol.ts` — versioned `postMessage` contract between iframe and
-  DSH.
+## Install
 
-## Current DSH tools
+Not published to npm; install from GitHub:
 
-- `kurenai_project_initialize`
-- `kurenai_project_current`
-- `kurenai_preview_start`
-- `kurenai_preview_status`
-- `kurenai_preview_stop`
-- `kurenai_publish` — headless static publish (`platform=web` MVP; plugin-extensible)
-
-Headless publish CLI (no Creator):
-
-```powershell
-node $env:KURENAI_HEADLESS_ROOT\spike\publish\cli.mjs --project=<cocos-project> --platform=web
+```sh
+git clone https://github.com/kurenai-studio/kurenai.git
+cd kurenai
+npm install
+npm link   # optional: puts `kurenai` on PATH
 ```
 
-See `headless-cocos/spike/publish/README.md`.
+`lib/` is committed, so no build step is needed to use the CLI.
+
+## CLI
+
+```sh
+kurenai init ./my-game --template base-ai-3d
+cd my-game
+kurenai host start                 # background preview host; prints the preview URL
+kurenai asset info assets/resources/materials/red.mtl   # engine-assigned uuid, sub-assets
+kurenai logs --errors              # compile errors and browser console
+kurenai context                    # project state + AGENTS.md
+kurenai publish --platform web-desktop --out ./dist
+kurenai host stop
+```
+
+Commands that need the host start it when it is not running. Output is JSON.
+
+## Library
+
+```ts
+import { ProjectControl } from "@kurenai-studio/kurenai";
+
+const control = new ProjectControl({ scene: "db://assets/main.scene" });
+await control.initialize("/path/to/new-game", "base-ai-3d");
+const preview = await control.startPreview("/path/to/new-game");
+console.log(preview.url); // bridge URL with the inspector injected
+
+await control.publish("/path/to/new-game", { platform: "web-desktop" });
+await control.stopServer(); // stops the bridges and any hosts it started
+```
 
 ## Development
 
-```powershell
+```sh
 npm install
 npm run check
 ```
 
-Install a development build into a DSH profile after building:
+## Limitations
 
-```powershell
-dsh plugin --profile <profile> add <absolute-path-to-this-repo>
-```
-
-Configure the generated Cordis row with the Cocos project and a local
-`headless-cocos` checkout:
-
-```yaml
-- id: kurenai
-  name: "@kurenai-studio/dsh-plugin-kurenai"
-  config:
-    port: 7460
-    controlPort: 7459
-```
-
-Point to the Headless Cocos stack through `KURENAI_HEADLESS_ROOT`. The project
-path is always read from the active DSH session cwd.
-
-The runtime kit and Cocos engine binaries are deliberately not distributed by
-this repository. Follow the Headless Cocos runtime-kit instructions and Cocos
-licensing requirements.
-
-## MVP limitations
-
-- DSH does not expose a native center-split slot. Kurenai mounts through the
-  additive `shell.overlay` slot and temporarily reserves right-side frame
-  padding while open, preserving the original conversation and composer.
-- Selecting a node can copy a structured context block. Direct insertion into
-  the active DSH composer still needs a supported conversation API adapter.
-- Initial canvas picking targets 2D `UITransform` bounds. Camera-aware 3D
-  raycasting and complex multi-camera scenes are not implemented.
+- Canvas picking targets 2D `UITransform` bounds; 3D raycasting is not
+  implemented.
+- Materials created from code can only use `builtin-unlit`; write `.mtl` files
+  for lit materials.
+- Publishing supports `web-desktop` and `web-mobile`.
 
 ## License
 
-Kurenai source code is MIT licensed. Cocos Creator engine snapshots, packer
-binaries and other vendor assets are not part of this repository and remain
-under their respective licenses.
+Kurenai source code is MIT licensed. cocos-cli, the Cocos engine and other
+vendor assets are not part of this repository and remain under their
+respective licenses.

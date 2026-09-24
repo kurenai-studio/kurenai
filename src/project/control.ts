@@ -2,8 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 import {
   cp,
   mkdir,
+  mkdtemp,
   readFile,
   readdir,
+  rm,
+  writeFile,
 } from "node:fs/promises";
 import {
   createServer,
@@ -11,8 +14,11 @@ import {
   type Server,
   type ServerResponse,
 } from "node:http";
-import { basename, join, resolve } from "node:path";
+import { randomUUID } from "node:crypto";
+import { tmpdir } from "node:os";
+import { basename, dirname, join, resolve } from "node:path";
 import { spawn } from "node:child_process";
+import { packageFile, resolveCocosCliRoot } from "../cocos/paths.js";
 import {
   PreviewController,
   type PreviewConfig,
@@ -20,7 +26,14 @@ import {
 } from "../preview/controller.js";
 
 export type ProjectTemplateId = "base-ai" | "base-ai-3d";
-const DSH_WORKSPACE_METADATA = new Set([".evolve", ".dsh-home"]);
+export type PublishPlatform = "web-desktop" | "web-mobile";
+const IGNORED_WORKSPACE_ENTRIES = new Set([".git", ".DS_Store", ".cursor", ".vscode", ".idea"]);
+
+export interface CommandResult {
+  stdout: string;
+  stderr: string;
+  code: number;
+}
 
 export interface ProjectControlConfig extends PreviewConfig {
   controlPort?: number;
@@ -31,7 +44,7 @@ export interface ProjectControlConfig extends PreviewConfig {
     command: string,
     args: string[],
     cwd: string,
-  ) => Promise<void>;
+  ) => Promise<CommandResult>;
 }
 
 export interface CocosProject {
@@ -41,7 +54,7 @@ export interface CocosProject {
   dimension: "2d" | "3d";
 }
 
-interface SelectionContext {
+export interface SelectionContext {
   id: string;
   name: string;
   path: string;
@@ -57,7 +70,7 @@ export class ProjectControl {
   private readonly runCommand: NonNullable<ProjectControlConfig["runCommand"]>;
 
   constructor(private readonly config: ProjectControlConfig) {
-    this.runCommand = config.runCommand ?? runCommand;
+    this.runCommand = config.runCommand ?? runCommandCapture;
   }
 
   get url(): string {
@@ -131,56 +144,28 @@ export class ProjectControl {
     const target = resolve(projectPath);
     await mkdir(target, { recursive: true });
     if (await this.inspect(target)) {
-      throw new Error("This DSH workspace is already a Cocos Creator project");
+      throw new Error("This directory is already a Cocos Creator project");
     }
-    const entries = await readdir(target);
-    const projectEntries = entries.filter(
-      (entry) => !DSH_WORKSPACE_METADATA.has(entry),
+    const projectEntries = (await readdir(target)).filter(
+      (entry) => !IGNORED_WORKSPACE_ENTRIES.has(entry),
     );
     if (projectEntries.length) {
       throw new Error(
-        `Cocos initialization requires an empty DSH workspace directory; found: ${projectEntries.join(
-          ", ",
-        )}`,
+        `Cocos initialization requires an empty directory; found: ${projectEntries.join(", ")}`,
       );
     }
     const configuredRoot =
       template === "base-ai-3d"
         ? this.config.template3dRoot
         : this.config.templateRoot;
-    const templateRoot = configuredRoot ? resolve(configuredRoot) : undefined;
-    if (templateRoot) {
-      await copyDirectoryContents(templateRoot, target);
+    if (configuredRoot) {
+      await copyDirectoryContents(resolve(configuredRoot), target);
     } else {
-      const configuredHeadlessRoot =
-        this.config.headlessRoot ??
-          process.env.KURENAI_HEADLESS_ROOT ??
-          process.env.HEADLESS_STACK;
-      if (!configuredHeadlessRoot) {
-        throw new Error(
-          "KURENAI_HEADLESS_ROOT must point to the supplied headless-cocos repository",
-        );
-      }
-      const headlessRoot = resolve(configuredHeadlessRoot);
-      const creator = join(headlessRoot, "spike", "create-project.mjs");
-      if (!existsSync(creator)) {
-        throw new Error(
-          "KURENAI_HEADLESS_ROOT must point to the supplied headless-cocos repository",
-        );
-      }
-      await this.runCommand(
-        process.execPath,
-        [
-          creator,
-          "--template",
-          template,
-          "--out",
-          target,
-          ...(entries.length ? ["--force"] : []),
-        ],
-        headlessRoot,
-      );
+      await copyDirectoryContents(packageFile(join("templates", template)), target);
+      // Boot entry, helpers and AGENTS.md shared by every bundled template.
+      await copyDirectoryContents(packageFile(join("templates", "shared")), target);
     }
+    await assignProjectIdentity(target);
     const project = await this.inspect(target);
     if (!project) {
       throw new Error("The initialized template is not a Cocos Creator project");
@@ -188,29 +173,28 @@ export class ProjectControl {
     return project;
   }
 
-  async state(
-    sessionId: string,
-    projectPath: string,
-  ): Promise<{
-    sessionId: string;
+  async state(projectPath: string): Promise<{
     projectPath: string;
     project?: CocosProject;
     preview?: PreviewState;
+    selection?: SelectionContext;
   }> {
     const absolutePath = resolve(projectPath);
+    const key = normalizePath(absolutePath);
     const project = await this.inspect(absolutePath);
-    const preview = this.previews.get(normalizePath(absolutePath))?.snapshot();
+    const preview = this.previews.get(key)?.snapshot();
+    const selection = this.selections.get(key);
     return {
-      sessionId,
       projectPath: absolutePath,
       ...(project ? { project } : {}),
       ...(preview ? { preview } : {}),
+      ...(selection ? { selection } : {}),
     };
   }
 
   async startPreview(projectPath: string): Promise<PreviewState> {
     const project = await this.inspect(projectPath);
-    if (!project) throw new Error("The DSH workspace is not a Cocos Creator project");
+    if (!project) throw new Error("The directory is not a Cocos Creator project");
     const preview = await this.previewFor(project.projectPath);
     return preview.start({ project: project.projectPath });
   }
@@ -222,85 +206,81 @@ export class ProjectControl {
   async publish(
     projectPath: string,
     options: {
-      platform?: string;
+      platform?: PublishPlatform;
       outDir?: string;
-      skipPacker?: boolean;
     } = {},
   ): Promise<Record<string, unknown>> {
     const absolutePath = resolve(projectPath);
     const project = await this.inspect(absolutePath);
-    if (!project) throw new Error("The DSH workspace is not a Cocos Creator project");
-    const headlessRoot = requireDirectory(
-      "headlessRoot",
-      this.config.headlessRoot ??
-        process.env.KURENAI_HEADLESS_ROOT ??
-        process.env.HEADLESS_STACK,
-    );
-    const platform = options.platform ?? "web";
-    const outDir = options.outDir ?? join(absolutePath, "dist", platform);
-    const cli = join(headlessRoot, "spike", "publish", "cli.mjs");
-    if (!existsSync(cli)) {
-      throw new Error(`Publish CLI missing: ${cli}`);
+    if (!project) throw new Error("The directory is not a Cocos Creator project");
+    const cocosCliRoot = resolveCocosCliRoot(this.config.cocosCliRoot);
+    const cli = join(cocosCliRoot, "dist", "cli.js");
+    if (!existsSync(cli)) throw new Error(`cocos-cli not found: ${cli}`);
+    const platform = options.platform ?? "web-desktop";
+    const args = [cli, "build", "--project", absolutePath, "--platform", platform];
+
+    let configDir: string | undefined;
+    if (options.outDir) {
+      const outDir = resolve(absolutePath, options.outDir);
+      configDir = await mkdtemp(join(tmpdir(), "kurenai-build-"));
+      const configPath = join(configDir, "build-config.json");
+      await writeFile(
+        configPath,
+        JSON.stringify({ buildPath: dirname(outDir), outputName: basename(outDir) }),
+      );
+      args.push("--build-config", configPath);
     }
-    const args = [
-      cli,
-      `--project=${absolutePath}`,
-      `--platform=${platform}`,
-      `--out=${outDir}`,
-    ];
-    if (options.skipPacker) args.push("--skip-packer");
-    const { stdout, stderr, code } = await runCommandCapture(
-      process.execPath,
-      args,
-      headlessRoot,
-    );
-    const combined = `${stdout}\n${stderr}`.trim();
-    let parsed: Record<string, unknown> | undefined;
-    const jsonMatch = combined.match(/\{[\s\S]*"ok"\s*:\s*(true|false)[\s\S]*\}\s*$/);
-    if (jsonMatch) {
-      try {
-        parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
-      } catch {
-        parsed = undefined;
+
+    try {
+      const { stdout, stderr, code } = await this.runCommand(
+        process.execPath,
+        args,
+        absolutePath,
+      );
+      const combined = `${stdout}\n${stderr}`.trim();
+      const dest = /Build Dest: (.+)$/mu.exec(combined)?.[1]?.trim();
+      if (code !== 0 || !dest) {
+        return {
+          ok: false,
+          platform,
+          exitCode: code,
+          error: combined.slice(-4000) || "cocos build failed",
+        };
       }
-    }
-    if (code !== 0) {
       return {
-        ok: false,
+        ok: true,
         platform,
-        outDir,
-        exitCode: code,
-        error:
-          (typeof parsed?.error === "string" && parsed.error) ||
-          combined.slice(-4000) ||
-          "publish failed",
-        logTail: combined.slice(-2000),
+        outDir: dest.startsWith("project://")
+          ? join(absolutePath, dest.slice("project://".length))
+          : resolve(absolutePath, dest),
+        logTail: combined.slice(-1500),
       };
+    } finally {
+      if (configDir) await rm(configDir, { recursive: true, force: true });
     }
-    return {
-      ok: true,
-      platform,
-      outDir,
-      ...(parsed ?? {}),
-      logTail: combined.slice(-1500),
-    };
   }
 
   setSelection(
-    sessionId: string,
+    projectPath: string,
     selection: SelectionContext | undefined,
   ): void {
-    if (selection) this.selections.set(sessionId, selection);
-    else this.selections.delete(sessionId);
+    const key = normalizePath(projectPath);
+    if (selection) this.selections.set(key, selection);
+    else this.selections.delete(key);
   }
 
-  contextText(sessionId: string, projectPath: string): string {
+  getSelection(projectPath: string): SelectionContext | undefined {
+    return this.selections.get(normalizePath(projectPath));
+  }
+
+  /** `preview` overrides the in-process preview, e.g. a host started by the CLI. */
+  contextText(projectPath: string, preview?: Pick<PreviewState, "phase" | "url">): string {
     const absolutePath = resolve(projectPath);
     const key = normalizePath(absolutePath);
     const project = this.projects.get(key) ?? inspectProjectSync(absolutePath);
     if (project) this.projects.set(key, project);
-    const preview = this.previews.get(key)?.snapshot();
-    const selection = this.selections.get(sessionId);
+    preview ??= this.previews.get(key)?.snapshot();
+    const selection = this.selections.get(key);
     const lines = [
       "[Kurenai current Cocos context]",
       `workspace: ${absolutePath}`,
@@ -331,7 +311,7 @@ export class ProjectControl {
     if (authoringGuide) {
       lines.push(
         "",
-        "[Kurenai headless authoring skill]",
+        "[Kurenai project authoring guide]",
         "These project-specific rules are mandatory for every Cocos edit in this session:",
         authoringGuide,
       );
@@ -373,20 +353,18 @@ export class ProjectControl {
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/project") {
-        const sessionId = requireText(url.searchParams.get("sessionId"), "sessionId");
         const projectPath = requireText(
           url.searchParams.get("projectPath"),
           "projectPath",
         );
-        json(response, 200, await this.state(sessionId, projectPath));
+        json(response, 200, await this.state(projectPath));
         return;
       }
       if (request.method === "POST") {
         const body = await readJson(request);
-        const sessionId = requireText(body.sessionId, "sessionId");
         const projectPath = requireText(body.projectPath, "projectPath");
         if (url.pathname === "/api/context/selection") {
-          this.setSelection(sessionId, selectionOf(body.selection));
+          this.setSelection(projectPath, selectionOf(body.selection));
           json(response, 200, { ok: true });
           return;
         }
@@ -398,7 +376,7 @@ export class ProjectControl {
             ok: true,
             project,
             preview,
-            state: await this.state(sessionId, projectPath),
+            state: await this.state(projectPath),
           });
           return;
         }
@@ -419,12 +397,10 @@ export class ProjectControl {
         if (url.pathname === "/api/publish") {
           json(response, 200, {
             ...(await this.publish(projectPath, {
-              platform:
-                typeof body.platform === "string" ? body.platform : "web",
+              platform: requirePublishPlatform(body.platform),
               ...(typeof body.outDir === "string"
                 ? { outDir: body.outDir }
                 : {}),
-              skipPacker: body.skipPacker === true,
             })),
           });
           return;
@@ -445,11 +421,14 @@ async function copyDirectoryContents(
   target: string,
 ): Promise<void> {
   for (const entry of await readdir(source, { withFileTypes: true })) {
-    await cp(join(source, entry.name), join(target, entry.name), {
-      recursive: entry.isDirectory(),
-      errorOnExist: true,
-      force: false,
-    });
+    const from = join(source, entry.name);
+    const to = join(target, entry.name);
+    if (entry.isDirectory()) {
+      await mkdir(to, { recursive: true });
+      await copyDirectoryContents(from, to);
+    } else {
+      await cp(from, to, { errorOnExist: true, force: false });
+    }
   }
 }
 
@@ -488,6 +467,20 @@ function requireText(value: unknown, label: string): string {
 function requireTemplate(value: unknown): ProjectTemplateId {
   if (value === "base-ai" || value === "base-ai-3d") return value;
   throw new Error("template must be base-ai or base-ai-3d");
+}
+
+function requirePublishPlatform(value: unknown): PublishPlatform {
+  if (value === undefined) return "web-desktop";
+  if (value === "web-desktop" || value === "web-mobile") return value;
+  throw new Error("platform must be web-desktop or web-mobile");
+}
+
+async function assignProjectIdentity(projectPath: string): Promise<void> {
+  const packagePath = join(projectPath, "package.json");
+  const packageJson = JSON.parse(await readFile(packagePath, "utf8")) as Record<string, unknown>;
+  packageJson.name = basename(projectPath);
+  packageJson.uuid = randomUUID();
+  await writeFile(packagePath, `${JSON.stringify(packageJson, null, 4)}\n`);
 }
 
 async function detectDimension(projectPath: string): Promise<"2d" | "3d"> {
@@ -535,15 +528,15 @@ function inspectProjectSync(projectPath: string): CocosProject | undefined {
 }
 
 function readAuthoringGuide(projectPath: string): string | undefined {
-  try {
-    const guide = readFileSync(
-      join(projectPath, "AGENT_AUTHORING.md"),
-      "utf8",
-    ).trim();
-    return guide ? guide.slice(0, 48_000) : undefined;
-  } catch {
-    return undefined;
+  for (const file of ["AGENTS.md", "AGENT_AUTHORING.md"]) {
+    try {
+      const guide = readFileSync(join(projectPath, file), "utf8").trim();
+      if (guide) return guide.slice(0, 48_000);
+    } catch {
+      // Try the next file name.
+    }
   }
+  return undefined;
 }
 
 function detectDimensionSync(projectPath: string): "2d" | "3d" {
@@ -601,7 +594,7 @@ async function findAvailablePortPair(start: number): Promise<number> {
       return port;
     }
   }
-  throw new Error(`No free Headless Cocos port pair near ${start}`);
+  throw new Error(`No free preview port pair near ${start}`);
 }
 
 async function portAvailable(port: number): Promise<boolean> {
@@ -628,34 +621,11 @@ function isMissingFile(error: unknown): boolean {
   );
 }
 
-async function runCommand(
-  command: string,
-  args: string[],
-  cwd: string,
-): Promise<void> {
-  await new Promise<void>((resolvePromise, reject) => {
-    const child = spawn(command, args, {
-      cwd,
-      stdio: "pipe",
-      windowsHide: true,
-    });
-    let stderr = "";
-    child.stderr.on("data", (chunk: Buffer | string) => {
-      stderr += String(chunk);
-    });
-    child.once("error", reject);
-    child.once("exit", (code) => {
-      if (code === 0) resolvePromise();
-      else reject(new Error(`${command} failed (${String(code)}): ${stderr.trim()}`));
-    });
-  });
-}
-
 async function runCommandCapture(
   command: string,
   args: string[],
   cwd: string,
-): Promise<{ stdout: string; stderr: string; code: number }> {
+): Promise<CommandResult> {
   return await new Promise((resolvePromise, reject) => {
     const child = spawn(command, args, {
       cwd,
@@ -675,11 +645,4 @@ async function runCommandCapture(
       resolvePromise({ stdout, stderr, code: code ?? 1 });
     });
   });
-}
-
-function requireDirectory(label: string, value: string | undefined): string {
-  if (!value?.trim()) throw new Error(`${label} is required`);
-  const absolute = resolve(value);
-  if (!existsSync(absolute)) throw new Error(`${label} does not exist: ${absolute}`);
-  return absolute;
 }

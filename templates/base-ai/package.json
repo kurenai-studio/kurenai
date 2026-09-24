@@ -1,0 +1,10 @@
+{
+    "name": "base-ai",
+    "type": "2d",
+    "version": "4.0.0",
+    "uuid": "3f222722-b91b-4c1d-b835-f2677f2e2ce7",
+    "creator": {
+        "version": "4.0.0",
+        "dependencies": {}
+    }
+}

@@ -1,16 +1,22 @@
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { packageFile, resolveCocosCliRoot } from "../cocos/paths.js";
 import { PreviewBridge } from "./bridge.js";
 
 export interface PreviewConfig {
   project?: string;
-  headlessRoot?: string;
-  previewEntry?: string;
+  cocosCliRoot?: string;
+  hostEntry?: string;
+  scene?: string;
   port?: number;
   bridgePort?: number;
   inspectorScriptPath?: string;
-  packer?: "mini" | "creator";
+  maxOldSpaceSizeMb?: number;
+  watch?: boolean;
+  /** Poll assets/ instead of fs.watch; needed on Docker bind mounts. */
+  watchPoll?: boolean;
   autoStart?: boolean;
   readinessTimeoutMs?: number;
 }
@@ -22,6 +28,8 @@ export interface PreviewState {
   url: string;
   project?: string;
   pid?: number;
+  /** The host was already running and is not owned (or stopped) by this controller. */
+  attached?: boolean;
   startedAt?: string;
   lastError?: string;
   recentLogs: string[];
@@ -33,13 +41,23 @@ export interface PreviewControllerOptions {
   killProcessTree?: (child: ChildProcessWithoutNullStreams) => Promise<void>;
 }
 
+interface HostStatus {
+  ready?: unknown;
+  url?: unknown;
+  lastError?: unknown;
+}
+
 const DEFAULT_PORT = 7460;
+const DEFAULT_READINESS_TIMEOUT_MS = 180_000;
+const DEFAULT_MAX_OLD_SPACE_SIZE_MB = 8192;
 const MAX_LOG_LINES = 80;
+const HOST_READY_LINE = /\[kurenai-host\] ready (http\S+)/u;
 
 export class PreviewController {
   private child: ChildProcessWithoutNullStreams | undefined;
   private bridge: PreviewBridge | undefined;
   private upstreamUrl: string;
+  private hostPageUrl: string | undefined;
   private state: PreviewState;
   private readonly spawnProcess: typeof spawn;
   private readonly fetchImpl: typeof fetch;
@@ -82,23 +100,16 @@ export class PreviewController {
       "project",
       merged.project ?? process.env.KURENAI_PROJECT ?? process.cwd(),
     );
-    const headlessRoot = requireDirectory(
-      "headlessRoot",
-      merged.headlessRoot ??
-        process.env.KURENAI_HEADLESS_ROOT ??
-        process.env.HEADLESS_STACK,
-    );
-    const entry = resolve(
-      headlessRoot,
-      merged.previewEntry ?? "spike/preview-mirror.mjs",
-    );
+    const entry = resolve(merged.hostEntry ?? packageFile("bin/kurenai-cocos-host.mjs"));
     if (!existsSync(entry)) {
-      throw new Error(`Headless Cocos preview entry does not exist: ${entry}`);
+      throw new Error(`Kurenai cocos host entry does not exist: ${entry}`);
     }
+    const cocosCliRoot = resolveCocosCliRoot(merged.cocosCliRoot);
 
     const port = merged.port ?? DEFAULT_PORT;
     const bridgePort = merged.bridgePort ?? port + 1;
     this.upstreamUrl = `http://127.0.0.1:${port}/`;
+    this.hostPageUrl = undefined;
     this.state = {
       phase: "starting",
       url: `http://127.0.0.1:${bridgePort}/`,
@@ -107,17 +118,42 @@ export class PreviewController {
       recentLogs: [],
     };
 
-    const child = this.spawnProcess(process.execPath, [entry], {
-      cwd: headlessRoot,
-      env: {
-        ...process.env,
-        PROJECT: project,
-        PORT: String(port),
-        PACKER: merged.packer ?? "mini",
+    const running = await this.findRunningHost(project);
+    if (running) {
+      this.adoptHostUrl(running.previewUrl);
+      this.state.pid = running.pid;
+      this.state.attached = true;
+      try {
+        await this.startBridge(merged, bridgePort);
+      } catch (error) {
+        this.state.phase = "failed";
+        this.state.lastError = error instanceof Error ? error.message : String(error);
+        throw error;
+      }
+      return this.snapshot();
+    }
+
+    const child = this.spawnProcess(
+      process.execPath,
+      [
+        `--max-old-space-size=${merged.maxOldSpaceSizeMb ?? DEFAULT_MAX_OLD_SPACE_SIZE_MB}`,
+        entry,
+      ],
+      {
+        cwd: project,
+        env: {
+          ...process.env,
+          PROJECT: project,
+          PORT: String(port),
+          KURENAI_COCOS_CLI_ROOT: cocosCliRoot,
+          ...(merged.scene ? { LAUNCH_SCENE: merged.scene } : {}),
+          ...(merged.watch === false ? { WATCH: "0" } : {}),
+          ...(merged.watchPoll ? { WATCH_POLL: "1" } : {}),
+        },
+        stdio: "pipe",
+        windowsHide: true,
       },
-      stdio: "pipe",
-      windowsHide: true,
-    });
+    );
     this.child = child;
     if (child.pid !== undefined) this.state.pid = child.pid;
 
@@ -128,22 +164,13 @@ export class PreviewController {
       this.child = undefined;
       if (this.state.phase !== "stopped") {
         this.state.phase = code === 0 ? "stopped" : "failed";
-        this.state.lastError = `preview exited (code=${String(code)}, signal=${String(signal)})`;
+        this.state.lastError = `cocos host exited (code=${String(code)}, signal=${String(signal)})`;
       }
     });
 
     try {
-      await this.waitUntilReady(merged.readinessTimeoutMs ?? 30_000);
-      const bridgeConfig = {
-        upstreamUrl: this.upstreamUrl,
-        port: bridgePort,
-        ...(merged.inspectorScriptPath
-          ? { inspectorScriptPath: merged.inspectorScriptPath }
-          : {}),
-      };
-      this.bridge = new PreviewBridge(bridgeConfig);
-      this.state.url = await this.bridge.start();
-      this.state.phase = "ready";
+      await this.waitUntilReady(merged.readinessTimeoutMs ?? DEFAULT_READINESS_TIMEOUT_MS);
+      await this.startBridge(merged, bridgePort);
     } catch (error) {
       this.state.phase = "failed";
       this.state.lastError = error instanceof Error ? error.message : String(error);
@@ -167,38 +194,105 @@ export class PreviewController {
     return this.snapshot();
   }
 
+  private async startBridge(config: PreviewConfig, bridgePort: number): Promise<void> {
+    this.bridge = new PreviewBridge({
+      upstreamUrl: this.upstreamUrl,
+      port: bridgePort,
+      ...(config.inspectorScriptPath ? { inspectorScriptPath: config.inspectorScriptPath } : {}),
+    });
+    this.state.url = withPageOf(await this.bridge.start(), this.hostPageUrl);
+    this.state.phase = "ready";
+  }
+
+  /** A ready host started elsewhere (e.g. by the kurenai CLI), advertised in temp/kurenai-host.json. */
+  private async findRunningHost(
+    project: string,
+  ): Promise<{ pid: number; previewUrl: string } | undefined> {
+    let host: { pid?: unknown; serverUrl?: unknown; previewUrl?: unknown };
+    try {
+      host = JSON.parse(await readFile(join(project, "temp", "kurenai-host.json"), "utf8"));
+    } catch {
+      return undefined;
+    }
+    if (typeof host.pid !== "number" || typeof host.serverUrl !== "string") return undefined;
+    if (typeof host.previewUrl !== "string" || !isAlive(host.pid)) return undefined;
+    try {
+      const response = await this.fetchImpl(new URL("/__kurenai/status", host.serverUrl), {
+        signal: AbortSignal.timeout(1_500),
+      });
+      const status = response.ok ? ((await response.json()) as HostStatus) : undefined;
+      return status?.ready === true ? { pid: host.pid, previewUrl: host.previewUrl } : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   private recordLog(chunk: string): void {
     const next = chunk
       .split(/\r?\n/u)
       .map((line) => line.trimEnd())
       .filter(Boolean);
+    for (const line of next) {
+      const ready = HOST_READY_LINE.exec(line);
+      if (ready?.[1]) this.adoptHostUrl(ready[1]);
+    }
     this.state.recentLogs.push(...next);
     if (this.state.recentLogs.length > MAX_LOG_LINES) {
       this.state.recentLogs.splice(0, this.state.recentLogs.length - MAX_LOG_LINES);
     }
   }
 
+  // cocos-cli may move to another port when the requested one is taken.
+  private adoptHostUrl(value: string): void {
+    try {
+      const url = new URL(value);
+      this.upstreamUrl = `http://127.0.0.1:${url.port}/`;
+      this.hostPageUrl = value;
+    } catch {
+      // Ignore malformed log lines; readiness polling still applies.
+    }
+  }
+
   private async waitUntilReady(timeoutMs: number): Promise<void> {
     const deadline = Date.now() + timeoutMs;
-    let lastError = "preview did not answer";
+    let lastError = "cocos host did not answer";
     while (Date.now() < deadline) {
-      if (!this.child) throw new Error(this.state.lastError ?? "preview exited before ready");
+      if (!this.child) {
+        throw new Error(
+          [this.state.lastError ?? "cocos host exited before ready", this.state.recentLogs.at(-1)]
+            .filter(Boolean)
+            .join(": "),
+        );
+      }
       try {
         const response = await this.fetchImpl(
-          new URL("/__hmr/status", this.upstreamUrl),
-          {
-          signal: AbortSignal.timeout(1_500),
-          },
+          new URL("/__kurenai/status", this.upstreamUrl),
+          { signal: AbortSignal.timeout(1_500) },
         );
-        if (response.ok) return;
-        lastError = `HTTP ${response.status}`;
+        if (response.ok) {
+          const status = (await response.json()) as HostStatus;
+          if (status.ready === true) {
+            if (typeof status.url === "string" && status.url) this.adoptHostUrl(status.url);
+            return;
+          }
+          lastError =
+            typeof status.lastError === "string" ? status.lastError : "preview settings not ready";
+        } else {
+          lastError = `HTTP ${response.status}`;
+        }
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
       }
-      await new Promise((done) => setTimeout(done, 250));
+      await new Promise((done) => setTimeout(done, 500));
     }
-    throw new Error(`Headless Cocos preview was not ready after ${timeoutMs}ms: ${lastError}`);
+    throw new Error(`Kurenai cocos host was not ready after ${timeoutMs}ms: ${lastError}`);
   }
+}
+
+function withPageOf(bridgeUrl: string, hostPageUrl: string | undefined): string {
+  if (!hostPageUrl) return bridgeUrl;
+  const page = new URL(hostPageUrl);
+  return new URL(`${page.pathname}${page.search}`, bridgeUrl).toString();
 }
 
 async function terminateProcessTree(
@@ -228,9 +322,18 @@ async function terminateProcessTree(
       setTimeout(() => {
         if (child.exitCode === null) child.kill("SIGKILL");
         done();
-      }, 2_000),
+      }, 6_000),
     ),
   ]);
+}
+
+function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function requireDirectory(label: string, value: string | undefined): string {

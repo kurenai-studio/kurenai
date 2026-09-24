@@ -1,70 +1,40 @@
 import { ChildProcessWithoutNullStreams, spawn } from "node:child_process";
-//#region src/dsh.d.ts
-interface DshToolDefinition {
-  name: string;
-  description: string;
-  parameters: Record<string, unknown>;
-  output: {
-    schema: Record<string, unknown>;
-    render(args: unknown, value: unknown): Array<{
-      type: "text";
-      text: string;
-    }>;
-  };
-  execute(args: unknown, execution?: DshToolExecution): Promise<unknown>;
+//#region src/cocos/paths.d.ts
+declare const DEFAULT_COCOS_CLI_ROOT: string;
+declare function resolveCocosCliRoot(configured?: string): string;
+//#endregion
+//#region src/preview/bridge.d.ts
+interface PreviewBridgeConfig {
+  upstreamUrl: string;
+  port: number;
+  host?: string;
+  inspectorScriptPath?: string;
 }
-interface DshToolExecution {
-  agent?: {
-    id: string;
-    session?: {
-      header?: {
-        cwd?: string;
-      };
-    };
-  };
+declare class PreviewBridge {
+  private readonly config;
+  private server;
+  private inspectorScript;
+  constructor(config: PreviewBridgeConfig);
+  get url(): string;
+  start(): Promise<string>;
+  stop(): Promise<void>;
+  private handleHttp;
 }
-interface DshContext {
-  tools: {
-    register(definition: DshToolDefinition): unknown;
-  };
-  effect?(setup: () => void | (() => void | Promise<void>)): unknown;
-  systemPrompt?: {
-    section(section: {
-      name: string;
-      order: number;
-      text: string;
-    }): unknown;
-    context(context: {
-      name: string;
-      order: number;
-      text: string | ((assembly: {
-        agent?: {
-          id: string;
-          session: {
-            header: {
-              cwd?: string;
-            };
-          };
-        };
-      }) => string);
-    }): unknown;
-  };
-  logger?(name: string): {
-    info?(...args: unknown[]): void;
-    warn?(...args: unknown[]): void;
-    error?(...args: unknown[]): void;
-  };
-}
+declare function injectInspector(html: string): string;
 //#endregion
 //#region src/preview/controller.d.ts
 interface PreviewConfig {
   project?: string;
-  headlessRoot?: string;
-  previewEntry?: string;
+  cocosCliRoot?: string;
+  hostEntry?: string;
+  scene?: string;
   port?: number;
   bridgePort?: number;
   inspectorScriptPath?: string;
-  packer?: "mini" | "creator";
+  maxOldSpaceSizeMb?: number;
+  watch?: boolean;
+  /** Poll assets/ instead of fs.watch; needed on Docker bind mounts. */
+  watchPoll?: boolean;
   autoStart?: boolean;
   readinessTimeoutMs?: number;
 }
@@ -74,6 +44,8 @@ interface PreviewState {
   url: string;
   project?: string;
   pid?: number;
+  /** The host was already running and is not owned (or stopped) by this controller. */
+  attached?: boolean;
   startedAt?: string;
   lastError?: string;
   recentLogs: string[];
@@ -88,6 +60,7 @@ declare class PreviewController {
   private child;
   private bridge;
   private upstreamUrl;
+  private hostPageUrl;
   private state;
   private readonly spawnProcess;
   private readonly fetchImpl;
@@ -96,18 +69,28 @@ declare class PreviewController {
   snapshot(): PreviewState;
   start(overrides?: Partial<PreviewConfig>): Promise<PreviewState>;
   stop(): Promise<PreviewState>;
+  private startBridge;
+  /** A ready host started elsewhere (e.g. by the kurenai CLI), advertised in temp/kurenai-host.json. */
+  private findRunningHost;
   private recordLog;
+  private adoptHostUrl;
   private waitUntilReady;
 }
 //#endregion
 //#region src/project/control.d.ts
 type ProjectTemplateId = "base-ai" | "base-ai-3d";
+type PublishPlatform = "web-desktop" | "web-mobile";
+interface CommandResult {
+  stdout: string;
+  stderr: string;
+  code: number;
+}
 interface ProjectControlConfig extends PreviewConfig {
   controlPort?: number;
   controlHost?: string;
   templateRoot?: string;
   template3dRoot?: string;
-  runCommand?: (command: string, args: string[], cwd: string) => Promise<void>;
+  runCommand?: (command: string, args: string[], cwd: string) => Promise<CommandResult>;
 }
 interface CocosProject {
   name: string;
@@ -135,21 +118,22 @@ declare class ProjectControl {
   stopServer(): Promise<void>;
   inspect(projectPath: string): Promise<CocosProject | undefined>;
   initialize(projectPath: string, template: ProjectTemplateId): Promise<CocosProject>;
-  state(sessionId: string, projectPath: string): Promise<{
-    sessionId: string;
+  state(projectPath: string): Promise<{
     projectPath: string;
     project?: CocosProject;
     preview?: PreviewState;
+    selection?: SelectionContext;
   }>;
   startPreview(projectPath: string): Promise<PreviewState>;
   stopPreview(projectPath: string): Promise<PreviewState>;
   publish(projectPath: string, options?: {
-    platform?: string;
+    platform?: PublishPlatform;
     outDir?: string;
-    skipPacker?: boolean;
   }): Promise<Record<string, unknown>>;
-  setSelection(sessionId: string, selection: SelectionContext | undefined): void;
-  contextText(sessionId: string, projectPath: string): string;
+  setSelection(projectPath: string, selection: SelectionContext | undefined): void;
+  getSelection(projectPath: string): SelectionContext | undefined;
+  /** `preview` overrides the in-process preview, e.g. a host started by the CLI. */
+  contextText(projectPath: string, preview?: Pick<PreviewState, "phase" | "url">): string;
   private previewFor;
   private handle;
 }
@@ -208,10 +192,5 @@ type HostToInspectorMessage = {
 declare function isInspectorMessage(value: unknown): value is InspectorToHostMessage;
 declare function formatSelectionContext(node: SelectedNodeSummary): string;
 //#endregion
-//#region src/index.d.ts
-declare const name = "kurenai";
-declare const inject: string[];
-declare function apply(ctx: DshContext, config?: ProjectControlConfig): void;
-//#endregion
-export { type CocosProject, HostToInspectorMessage, InspectorToHostMessage, KURENAI_PROTOCOL_VERSION, PreviewController, type PreviewControllerOptions, type PreviewPhase, type PreviewState, ProjectControl, type ProjectControlConfig, type ProjectTemplateId, SceneNodeSummary, SelectedNodeSummary, apply, formatSelectionContext, inject, isInspectorMessage, name };
+export { type CocosProject, type CommandResult, DEFAULT_COCOS_CLI_ROOT, HostToInspectorMessage, InspectorToHostMessage, KURENAI_PROTOCOL_VERSION, PreviewBridge, type PreviewBridgeConfig, type PreviewConfig, PreviewController, type PreviewControllerOptions, type PreviewPhase, type PreviewState, ProjectControl, type ProjectControlConfig, type ProjectTemplateId, type PublishPlatform, SceneNodeSummary, SelectedNodeSummary, type SelectionContext, formatSelectionContext, injectInspector, isInspectorMessage, resolveCocosCliRoot };
 //# sourceMappingURL=index.d.ts.map

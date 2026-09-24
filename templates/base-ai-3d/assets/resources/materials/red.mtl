@@ -1,0 +1,7 @@
+{
+  "__type__": "cc.Material",
+  "_effectAsset": { "__uuid__": "c8f66d17-351a-48da-a12c-0212d28575c4" },
+  "_techIdx": 0,
+  "_defines": [{}],
+  "_props": [{ "mainColor": { "__type__": "cc.Color", "r": 220, "g": 60, "b": 50, "a": 255 }, "roughness": 0.5, "metallic": 0.1 }]
+}

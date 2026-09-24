@@ -88,7 +88,7 @@ export class PreviewBridge {
         const upstream = await fetch(
           new URL(`${url.pathname}${url.search}`, this.config.upstreamUrl),
         );
-        const html = injectInspector(await upstream.text());
+        const html = injectInspector(routeServerUrlThroughBridge(await upstream.text()));
         response.writeHead(upstream.status, {
           "content-type": "text/html; charset=utf-8",
           "cache-control": "no-store",
@@ -109,6 +109,14 @@ export class PreviewBridge {
 
     proxy.web(request, response);
   }
+}
+
+// cocos-cli bakes its own origin into the page; keep every request on the bridge.
+export function routeServerUrlThroughBridge(html: string): string {
+  return html.replace(
+    /(window\.WebEnv\s*=\s*\{\s*serverURL:\s*)(['"])[^'"]*\2/u,
+    "$1location.origin",
+  );
 }
 
 export function injectInspector(html: string): string {

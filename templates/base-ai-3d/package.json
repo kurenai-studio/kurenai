@@ -1,0 +1,10 @@
+{
+    "name": "base-ai-3d",
+    "type": "3d",
+    "version": "4.0.0",
+    "uuid": "18fa11e7-d6f3-434e-a573-a2e6cef35b2d",
+    "creator": {
+        "version": "4.0.0",
+        "dependencies": {}
+    }
+}
