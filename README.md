@@ -79,6 +79,14 @@ kurenai host stop
 
 Commands that need the host start it when it is not running. Output is JSON.
 
+### Puzzle scaffold (M2 acceptance)
+
+From a clean clone, `node scripts/run-puzzle.mjs` creates a temp 2D project
+(`base-ai`), writes a placeholder tile prefab and `MainView`, runs
+`kurenai asset info` on the prefab (prints uuids), and starts the preview
+host. Pass `--dir <path>` to use a fixed directory, `--no-host` to skip the
+host, or `--cleanup` to remove the project (and stop the host) when finished.
+
 ## Library
 
 ```ts
