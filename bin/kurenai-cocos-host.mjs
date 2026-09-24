@@ -107,6 +107,17 @@ function log(...args) {
   console.log('[kurenai-host]', ...args);
 }
 
+/** Structured import failure for `kurenai logs --errors` (matches /error|fail/i). */
+function logAssetError(assetPath, reason) {
+  const pathLabel =
+    typeof assetPath === 'string' && assetPath
+      ? isAbsolute(assetPath)
+        ? relative(project, assetPath)
+        : assetPath
+      : '?';
+  log(`asset-error path=${pathLabel} reason=${reason}`);
+}
+
 function fail(message) {
   console.error('[kurenai-host]', message);
   process.exit(1);
@@ -343,12 +354,16 @@ function registerRoutes() {
           const { assetManager } = load('core/assets');
           const info = assetManager.queryAssetInfo(target);
           if (!info) {
-            res.status(404).json({ ok: false, error: 'asset-db has no asset for this path', lastError: state.lastError });
+            const reason = 'asset-db has no asset for this path';
+            logAssetError(target, reason);
+            res.status(404).json({ ok: false, error: reason, lastError: state.lastError });
             return;
           }
           const asset = describeAsset(info);
           if (!info.imported || info.invalid) {
-            res.json({ ok: false, error: 'import failed', asset });
+            const reason = 'import failed';
+            logAssetError(target, reason);
+            res.json({ ok: false, error: reason, asset });
             return;
           }
           // A typed importer that rejects the content makes asset-db fall back to
@@ -356,7 +371,9 @@ function registerRoutes() {
           const ext = extname(target).toLowerCase();
           const typed = load('core/assets/manager/asset-handler').default.extname2registerInfo[ext] ?? [];
           if (info.importer === '*' && typed.length) {
-            res.json({ ok: false, error: `content not accepted by the ${ext} importer; check the file format`, asset });
+            const reason = `content not accepted by the ${ext} importer; check the file format`;
+            logAssetError(target, reason);
+            res.json({ ok: false, error: reason, asset });
             return;
           }
           res.json({ ok: true, asset });

@@ -89,6 +89,10 @@ Write `.mtl` files that point at a builtin effect. Lit material example
 Saving a file refreshes the asset database, recompiles scripts and reloads the
 preview automatically. Change source files, not the running page.
 
+When `kurenai asset info` returns `ok: false`, the host also writes a line like
+`[kurenai-host] asset-error path=… reason=…` to its log buffer. Run
+`kurenai logs --errors` to list import failures alongside compile errors.
+
 ## Cookbook: material → prefab → View
 
 End-to-end pattern for one mesh with a custom lit material (3D template paths).
