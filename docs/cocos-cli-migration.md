@@ -188,7 +188,7 @@ Docker bind mount 下 `fs.watch` 不可靠，所以 host 支持 `WATCH_POLL=1`�
 
 - **内部 API**：M4 之前依赖 cocos-cli 的 `dist/core/*`，cocos-cli 升级可能直接断。
 - **冷启动**：asset-db 首次建库约 1 分钟（见 `live-reload.ts` 注释），比 headless mirror 慢。子进程要常驻，就绪以 settings 可用为准。
-- **资源占用**：现在的 shim 用了 `--max-old-space-size=8192`，每个工程一个完整 cocos-cli 进程，内存需要实测（可以复用 webgame-docker 资源基准那套相位和指标）。
+- **资源占用**：现在的 shim 用了 `--max-old-space-size=8192`，每个工程一个完整 cocos-cli 进程，内存需要实测。仓库内 `node scripts/bench-host.mjs` 会 init 临时工程、`kurenai host start`，输出就绪耗时与 `ps` RSS（需本机 cocos-cli；无 cocos 时脚本只打印 JSON 错误，不落大日志）。`--concurrent` 可测双 host，端口 7460/7461，负载高时结果可能波动。
 - **inspector**：Cocos4 预览下已验证可用（见第 9 节的加载时序问题）。
 - **安装体积**：kurenai 会依赖约 5.7 GB 的 cocos-cli 发行物，直到有瘦身后的核心包。
 - **importer 覆盖差异**：headless 有、cocos-cli 没有的资源类型，切换后会出现回退。

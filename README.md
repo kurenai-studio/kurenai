@@ -87,6 +87,15 @@ From a clean clone, `node scripts/run-puzzle.mjs` creates a temp 2D project
 host. Pass `--dir <path>` to use a fixed directory, `--no-host` to skip the
 host, or `--cleanup` to remove the project (and stop the host) when finished.
 
+### Host benchmark (RSS / ready time)
+
+`node scripts/bench-host.mjs` initializes a temp project (default
+`base-ai-3d`), runs `kurenai host start`, prints JSON with wall time to
+ready and host process RSS (via `ps`), then stops the host. Requires a local
+cocos-cli install; if cocos-cli is missing the script exits with a JSON error
+and does not write log files. Pass `--concurrent` to start two hosts on ports
+7460/7461 (useful but can be flaky under load); `--cleanup` removes temp dirs.
+
 ## Library
 
 ```ts
@@ -122,6 +131,8 @@ manager review rules live in [`docs/SWARM.md`](docs/SWARM.md).
 - Materials created from code can only use `builtin-unlit`; write `.mtl` files
   for lit materials.
 - Publishing supports `web-desktop` and `web-mobile`.
+- Each preview host is a full cocos-cli process (~ hundreds of MB RSS); use
+  `node scripts/bench-host.mjs` on your machine for repeatable numbers.
 
 ## License
 
