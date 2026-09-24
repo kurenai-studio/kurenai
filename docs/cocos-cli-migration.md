@@ -56,7 +56,7 @@ Agent 写 assets/**  →  host watcher（去抖）→  assetManager.refreshAsset
 
 `src/core/preview/live-reload.ts` 已经监听 `compiled`、`asset-change`、`assets:refresh-finish` 并广播刷新，watcher 只需要负责触发 refresh。
 
-Docker bind mount 下 `fs.watch` 不可靠，所以 host 支持 `WATCH_POLL=1`：按 `WATCH_POLL_MS`（默认 1000）扫描 `assets/`，比较每个文件的修改时间和大小，变化交给同一个去抖刷新队列。`PreviewController` 对应的配置项是 `watchPoll: true`。已实测（macOS 本机，非 Docker）：新增目录和脚本、修改材质、删除目录都能检测到，`.meta` 重写不会引发循环刷新。
+Docker bind mount 下 `fs.watch` 不可靠，所以 host 支持 `WATCH_POLL=1`：按 `WATCH_POLL_MS`（默认 1000）扫描 `assets/`，比较每个文件的修改时间和大小，变化交给同一个去抖刷新队列。`PreviewController` 对应的配置项是 `watchPoll: true`。已实测（macOS 本机，非 Docker）：新增目录和脚本、修改材质、删除目录都能检测到，`.meta` 重写不会引发循环刷新。Docker 手动 smoke 与 Compose 示例见 [`docker-watch-poll.md`](docker-watch-poll.md)。
 
 ## 3. 迁移清单：kurenai 仓（`kurenai-studio/kurenai`）
 
