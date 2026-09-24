@@ -14,9 +14,10 @@
  * contains assets/ and package.json. Output is JSON on stdout.
  */
 import { spawn } from 'node:child_process';
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync } from 'node:fs';
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseArgs, resolveProjectDir, wantsHelp } from '../lib/cli/parse.js';
 
 const HOST_ENTRY = join(dirname(fileURLToPath(import.meta.url)), 'kurenai-cocos-host.mjs');
 const READY_TIMEOUT_MS = 180_000;
@@ -30,20 +31,6 @@ const USAGE = `usage:
   kurenai logs [--since <seq>] [--errors] [--project <dir>]
   kurenai context [--project <dir>]
   kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--verbose] [--project <dir>]`;
-
-const FLAGS = new Set(['errors', 'verbose']);
-
-function parseArgs(argv) {
-  const positional = [];
-  const options = {};
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (!arg.startsWith('--')) positional.push(arg);
-    else if (FLAGS.has(arg.slice(2))) options[arg.slice(2)] = true;
-    else options[arg.slice(2)] = argv[++i];
-  }
-  return { positional, options };
-}
 
 async function projectControl() {
   const { ProjectControl } = await import('../lib/index.js');
@@ -59,21 +46,12 @@ function exitWith(message, code = 1) {
   process.exit(code);
 }
 
-function findProject(from) {
-  let dir = resolve(from);
-  if (existsSync(dir) && statSync(dir).isFile()) dir = dirname(dir);
-  for (;;) {
-    if (existsSync(join(dir, 'assets')) && existsSync(join(dir, 'package.json'))) return dir;
-    const parent = dirname(dir);
-    if (parent === dir) return undefined;
-    dir = parent;
-  }
-}
-
 function resolveProject(options, hint) {
-  const project = options.project ? resolve(options.project) : findProject(hint ?? process.cwd());
-  if (!project || !existsSync(join(project, 'assets'))) exitWith('no Cocos project found; pass --project <dir>');
-  return project;
+  try {
+    return resolveProjectDir(options, hint);
+  } catch (error) {
+    exitWith(error instanceof Error ? error.message : String(error));
+  }
 }
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -157,10 +135,6 @@ async function stopHost(project) {
 function printUsage(exitCode) {
   process.stderr.write(`${USAGE}\n`);
   process.exit(exitCode);
-}
-
-function wantsHelp(argv) {
-  return argv[0] === 'help' || argv.includes('--help') || argv.includes('-h');
 }
 
 async function main() {

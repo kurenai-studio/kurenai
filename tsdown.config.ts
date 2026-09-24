@@ -3,7 +3,7 @@ import { defineConfig } from "tsdown";
 export default defineConfig([
   {
     name: "kurenai",
-    entry: ["src/index.ts", "src/inspector-runtime/index.ts"],
+    entry: ["src/index.ts", "src/inspector-runtime/index.ts", "src/cli/parse.ts"],
     outDir: "lib",
     format: ["esm"],
     platform: "node",
