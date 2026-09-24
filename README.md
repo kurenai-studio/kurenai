@@ -108,6 +108,8 @@ npm install
 npm run check
 ```
 
+CI runs `npm run check` on pull requests to `main` (see `.github/workflows/check.yml`).
+
 ## Agent swarm
 
 Parallel workers claim GitHub issues labeled `swarm:available`. Claim, branch, PR, and
