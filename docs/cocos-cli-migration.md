@@ -84,6 +84,8 @@ Docker bind mount 下 `fs.watch` 不可靠，所以 host 支持 `WATCH_POLL=1`�
 
 ## 4. 迁移清单：本机 stack 与 headless-cocos
 
+本机实测路径清单（用途与归档建议）：[`archive-headless-inventory.md`](./archive-headless-inventory.md)。
+
 路径前缀 `rubik-workspace/engines/kurenai/`（`puzzle-workspace` 下是同一份拷贝）。
 
 | 文件 | 处理 | 被什么替代 |
