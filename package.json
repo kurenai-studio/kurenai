@@ -30,7 +30,7 @@
   "scripts": {
     "build": "tsdown",
     "test": "vitest run",
-    "check": "tsc --noEmit && npm run test && npm run build"
+    "check": "tsc --noEmit && npm run build && npm run test"
   },
   "keywords": [
     "cocos",
