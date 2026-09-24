@@ -88,3 +88,36 @@ Write `.mtl` files that point at a builtin effect. Lit material example
 
 Saving a file refreshes the asset database, recompiles scripts and reloads the
 preview automatically. Change source files, not the running page.
+
+## Cookbook: material → prefab → View
+
+End-to-end pattern for one mesh with a custom lit material (3D template paths).
+
+1. **Write the material** — create `assets/resources/materials/red.mtl` (see
+   [Materials](#materials) for `_effectAsset` / `_props`). Do not add a `.meta`.
+2. **Import and read uuid** — from the project root:
+
+   ```sh
+   kurenai asset info assets/resources/materials/red.mtl
+   ```
+
+   Copy `asset.uuid` from the JSON when `ok` is true; fix the file if import
+   failed.
+3. **Write the prefab** — add `assets/resources/prefabs/RedBox.prefab`: root
+   `cc.Node` + `cc.MeshRenderer` with `_mesh` from
+   [Builtin asset uuids](#builtin-asset-uuids) (e.g. box) and `_materials`:
+   `[{ "__uuid__": "<material-uuid-from-step-2>" }]`. No script components.
+4. **Load and bind in code** — in `MainView` (or another view), spawn the prefab
+   and attach behaviour on the instance:
+
+   ```ts
+   const box = await loadPrefab('prefabs/RedBox');
+   root.addChild(box);
+   box.addComponent(RedBoxView).bind(box);
+   ```
+
+   Implement `RedBoxView` with `bind(root)` using `getChildByPath` if the
+   prefab has named children.
+
+After each file change, the host refreshes imports and reloads the preview;
+re-run `kurenai asset info` only when you need an updated uuid.
