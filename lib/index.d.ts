@@ -129,6 +129,7 @@ declare class ProjectControl {
   publish(projectPath: string, options?: {
     platform?: PublishPlatform;
     outDir?: string;
+    verbose?: boolean;
   }): Promise<Record<string, unknown>>;
   setSelection(projectPath: string, selection: SelectionContext | undefined): void;
   getSelection(projectPath: string): SelectionContext | undefined;
