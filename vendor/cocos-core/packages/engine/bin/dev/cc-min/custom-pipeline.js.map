@@ -1,0 +1,1 @@
+{"version":3,"file":"custom-pipeline.js","sources":["../../../exports/custom-pipeline.ts"],"sourcesContent":["import { legacyCC } from '../cocos/core/global-exports';\nimport * as rendering from '../cocos/rendering/custom';\n\nexport { rendering };\n\nlegacyCC.rendering = rendering;\n"],"names":["legacyCC","rendering"],"mappings":"urBAKAA,EAASC,UAAYA"}

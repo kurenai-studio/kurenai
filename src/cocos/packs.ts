@@ -4,7 +4,12 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pipeline } from "node:stream/promises";
-import { packageFile, resolveCocosCliRoot } from "./paths.js";
+import {
+  KURENAI_COCOS_CORE_VERSION,
+  bundledCocosCoreRoot,
+  packageFile,
+  resolveCocosCliRoot,
+} from "./paths.js";
 
 export type PackId = string;
 
@@ -212,9 +217,18 @@ export function packsStatus(configuredRoot?: string): PacksStatus {
 
 function packDownloadUrl(packId: PackId, baseUrl: string, version: string): string {
   const base = baseUrl.replace(/\/$/, "");
-  // e.g. https://cdn.example/cocos-packs/4.0.0-alpha.33/platform/wechat.tgz
+  // e.g. https://cdn.example/cocos-packs/4.0.0-alpha.33/core.tgz
   const slug = packId.replaceAll(":", "/");
   return `${base}/${version}/${slug}.tgz`;
+}
+
+function resolvePackBaseUrl(options: EnsurePacksOptions): string | undefined {
+  return (
+    options.baseUrl ||
+    process.env.KURENAI_COCOS_PACK_BASE_URL ||
+    process.env.KURENAI_DEFAULT_COCOS_PACK_BASE_URL ||
+    undefined
+  );
 }
 
 async function downloadToFile(url: string, dest: string): Promise<void> {
@@ -248,6 +262,11 @@ async function installPack(
   packId: PackId,
   options: { baseUrl: string; version: string },
 ): Promise<void> {
+  if (packId === "core") {
+    throw new Error(
+      "core is the vendor/cocos-core source tree inside kurenai — it is not downloaded as a pack",
+    );
+  }
   const url = packDownloadUrl(packId, options.baseUrl, options.version);
   const tmp = await mkdtemp(join(tmpdir(), "kurenai-pack-"));
   const archive = join(tmp, "pack.tgz");
@@ -266,18 +285,63 @@ async function installPack(
   }
 }
 
+function runNpmInstall(dir: string): Promise<void> {
+  return new Promise((resolvePromise, reject) => {
+    const child = spawn(
+      "npm",
+      ["install", "--omit=dev", "--no-audit", "--no-fund", "--foreground-scripts"],
+      {
+        cwd: dir,
+        stdio: ["ignore", "ignore", "pipe"],
+        env: { ...process.env, npm_config_progress: "false" },
+      },
+    );
+    let stderr = "";
+    child.stderr.on("data", (chunk) => {
+      stderr += String(chunk);
+    });
+    child.on("error", reject);
+    child.on("exit", (code) => {
+      if (code === 0) resolvePromise();
+      else reject(new Error(`npm install failed in ${dir} (code=${String(code)}): ${stderr.trim()}`));
+    });
+  });
+}
+
+function coreDepsInstalled(root: string): boolean {
+  return existsSync(join(root, "node_modules/@babel/core"));
+}
+
+/** vendor/cocos-core ships without full node_modules; install on first use. */
+async function ensureCoreDependencies(root: string): Promise<void> {
+  if (coreDepsInstalled(root)) return;
+  if (!existsSync(join(root, "package.json"))) return;
+  await runNpmInstall(root);
+  if (existsSync(join(root, "packages/engine/package.json"))) {
+    await runNpmInstall(join(root, "packages/engine"));
+  }
+}
+
 export type EnsurePacksOptions = {
   cocosCliRoot?: string;
-  /** Attempt HTTP install when packs are missing (needs KURENAI_COCOS_PACK_BASE_URL). */
+  /** Attempt remote install for optional platform/native packs. Default true when base URL set. */
   fetch?: boolean;
   baseUrl?: string;
   version?: string;
 };
 
+function coreVersion(options: EnsurePacksOptions): string {
+  return (
+    options.version ||
+    process.env.KURENAI_COCOS_CORE_VERSION ||
+    loadManifest().measuredAgainst?.engineVersion ||
+    KURENAI_COCOS_CORE_VERSION
+  );
+}
+
 /**
- * Make sure the given packs exist under the cocos-cli root.
- * Missing packs are downloaded when `fetch` is true and a base URL is configured;
- * otherwise throws with an actionable error.
+ * Ensure required packs under the kurenai runtime root (`vendor/cocos-core`).
+ * Core is the in-tree source; optional platform packs may still fetch from a CDN.
  */
 export async function ensurePacks(
   packIds: PackId[],
@@ -289,13 +353,6 @@ export async function ensurePacks(
     return { root, required, alreadyPresent: [], installed: [], missing: [] };
   }
 
-  if (!existsSync(root) && !options.fetch && !options.baseUrl && !process.env.KURENAI_COCOS_PACK_BASE_URL) {
-    throw new Error(
-      `cocos-cli not found: ${root}. Install PinK/cocos-cli or set KURENAI_COCOS_CLI_ROOT. ` +
-        `For on-demand packs set KURENAI_COCOS_PACK_BASE_URL (see docs/cocos-cli-split.md).`,
-    );
-  }
-
   const alreadyPresent: PackId[] = [];
   const missing: PackId[] = [];
   for (const id of required) {
@@ -304,40 +361,30 @@ export async function ensurePacks(
   }
 
   const installed: PackId[] = [];
-  const wantFetch =
-    options.fetch === true ||
-    Boolean(options.baseUrl) ||
-    Boolean(process.env.KURENAI_COCOS_PACK_BASE_URL);
+  const version = coreVersion(options);
+  const wantRemote = options.fetch !== false;
+  const baseUrl = resolvePackBaseUrl(options);
 
-  if (missing.length && wantFetch) {
-    const baseUrl = options.baseUrl ?? process.env.KURENAI_COCOS_PACK_BASE_URL;
-    if (!baseUrl) {
-      throw new Error(
-        `Missing cocos packs ${missing.join(", ")} under ${root}, and no KURENAI_COCOS_PACK_BASE_URL to fetch them.`,
-      );
-    }
-    const version =
-      options.version ??
-      loadManifest().measuredAgainst?.engineVersion ??
-      "4.0.0-alpha.33";
-    for (const id of missing) {
+  for (const id of [...missing]) {
+    if (id === "core") continue;
+    if (wantRemote && baseUrl) {
       await installPack(root, id, { baseUrl, version });
       installed.push(id);
     }
-  } else if (missing.length) {
-    const hints = missing.map((id) => {
-      if (id === "core") {
-        return `${id}: install cocos-cli core (dist/cli.js) at ${root}`;
-      }
-      if (id.startsWith("platform:")) {
-        return `${id}: run with a full PinK install or fetch on-demand pack (see docs/cocos-cli-split.md)`;
-      }
-      return `${id}: native/tool pack not present under ${root}`;
-    });
+  }
+
+  const stillMissing = required.filter((id) => !inspectPack(id, root).present);
+  if (stillMissing.length) {
+    const hint = stillMissing.includes("core")
+      ? `Core must exist at ${bundledCocosCoreRoot()} (run: npm run vendor:cocos).`
+      : `Set KURENAI_COCOS_PACK_BASE_URL for optional platform/native packs.`;
     throw new Error(
-      `Missing cocos packs: ${missing.join(", ")}.\n${hints.join("\n")}\n` +
-        `Set KURENAI_COCOS_PACK_BASE_URL to enable on-demand download, or install the full cocos-cli.`,
+      `Missing kurenai packs: ${stillMissing.join(", ")} (under ${root}).\n${hint}`,
     );
+  }
+
+  if (required.includes("core")) {
+    await ensureCoreDependencies(root);
   }
 
   return {
@@ -345,7 +392,7 @@ export async function ensurePacks(
     required,
     alreadyPresent,
     installed,
-    missing: missing.filter((id) => !installed.includes(id)),
+    missing: stillMissing,
   };
 }
 

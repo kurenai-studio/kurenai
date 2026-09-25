@@ -1,0 +1,31 @@
+import TransformBaseGizmo from './transform-base';
+import { Node, Vec3, Quat } from 'cc';
+import type { GizmoMouseEvent } from '../utils/defines';
+declare class RotationGizmo extends TransformBaseGizmo {
+    private _rotList;
+    private _offsetList;
+    private _center;
+    private _rotating;
+    private _keydownDelta;
+    private _curDeltaAngle;
+    private _curDeltaRotation;
+    isNodeLocked(node: Node): boolean;
+    init(): void;
+    layer(): string;
+    onTargetUpdate(): void;
+    createController(): void;
+    onControllerMouseDown(): void;
+    onControllerMouseMove(event: any): void;
+    onControllerMouseUp(): void;
+    onKeyDown(event: any): boolean | undefined;
+    onKeyUp(event: any): boolean;
+    updateDataFromController(event: GizmoMouseEvent): void;
+    getLocalRotFromWorldRot(node: Node, worldRot: Quat, localRot: Quat): Quat;
+    repeat(t: number, l: number): number;
+    setNodeWorldRotation3D(node: Node, worldRot: Quat): void;
+    checkSnap(deltaRotation: Quat, deltaAngle: number, axisDir: Vec3, snapStep: number): Quat;
+    updateDataFromController3D(event: GizmoMouseEvent): void;
+    updateRotationByZDeltaAngle(zDeltaAngle: number): void;
+    updateControllerTransform(): void;
+}
+export default RotationGizmo;

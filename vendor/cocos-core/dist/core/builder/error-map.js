@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const BuildErrorMap = {
+    [37 /* BuildExitCode.BUILD_BUSY */]: '其他构建正在运行中，请稍后再试',
+    [34 /* BuildExitCode.BUILD_FAILED */]: '构建失败，请参考错误日志排查错误原因',
+    [32 /* BuildExitCode.PARAM_ERROR */]: '构建参数错误，请参考错误日志调整构建参数后重试',
+    [50 /* BuildExitCode.UNKNOWN_ERROR */]: '未知错误，请联系 cocos 官方',
+    [38 /* BuildExitCode.STATIC_COMPILE_ERROR */]: '静态编译检查失败，发现 assets 相关的 TypeScript 错误',
+};
+exports.default = BuildErrorMap;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZXJyb3ItbWFwLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2NvcmUvYnVpbGRlci9lcnJvci1tYXAudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFFQSxNQUFNLGFBQWEsR0FBRztJQUNsQixtQ0FBMEIsRUFBRSxpQkFBaUI7SUFDN0MscUNBQTRCLEVBQUUsb0JBQW9CO0lBQ2xELG9DQUEyQixFQUFFLHlCQUF5QjtJQUN0RCxzQ0FBNkIsRUFBRSxtQkFBbUI7SUFDbEQsNkNBQW9DLEVBQUUsc0NBQXNDO0NBQy9FLENBQUM7QUFFRixrQkFBZSxhQUFhLENBQUMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBCdWlsZEV4aXRDb2RlIH0gZnJvbSAnLi9AdHlwZXMvcHJpdmF0ZSc7XG5cbmNvbnN0IEJ1aWxkRXJyb3JNYXAgPSB7XG4gICAgW0J1aWxkRXhpdENvZGUuQlVJTERfQlVTWV06ICflhbbku5bmnoTlu7rmraPlnKjov5DooYzkuK3vvIzor7fnqI3lkI7lho3or5UnLFxuICAgIFtCdWlsZEV4aXRDb2RlLkJVSUxEX0ZBSUxFRF06ICfmnoTlu7rlpLHotKXvvIzor7flj4LogIPplJnor6/ml6Xlv5fmjpLmn6XplJnor6/ljp/lm6AnLFxuICAgIFtCdWlsZEV4aXRDb2RlLlBBUkFNX0VSUk9SXTogJ+aehOW7uuWPguaVsOmUmeivr++8jOivt+WPguiAg+mUmeivr+aXpeW/l+iwg+aVtOaehOW7uuWPguaVsOWQjumHjeivlScsXG4gICAgW0J1aWxkRXhpdENvZGUuVU5LTk9XTl9FUlJPUl06ICfmnKrnn6XplJnor6/vvIzor7fogZTns7sgY29jb3Mg5a6Y5pa5JyxcbiAgICBbQnVpbGRFeGl0Q29kZS5TVEFUSUNfQ09NUElMRV9FUlJPUl06ICfpnZnmgIHnvJbor5Hmo4Dmn6XlpLHotKXvvIzlj5HnjrAgYXNzZXRzIOebuOWFs+eahCBUeXBlU2NyaXB0IOmUmeivrycsXG59O1xuXG5leHBvcnQgZGVmYXVsdCBCdWlsZEVycm9yTWFwOyJdfQ==

@@ -1,0 +1,176 @@
+System.register("q-bundled:///fs/cocos/rendering/shadow/shadow-stage.js", ["../../core/data/decorators/index.js", "../../gfx/index.js", "../render-stage.js", "../enum.js", "../render-shadow-map-batched-queue.js", "../define.js", "../../render-scene/scene/light.js", "../../render-scene/scene/shadows.js"], function (_export, _context) {
+  "use strict";
+
+  var ccclass, Color, Rect, RenderStage, ForwardStagePriority, RenderShadowMapBatchedQueue, SetIndex, LightType, CSMLevel, _dec, _class, _ShadowStage, colors, ShadowStage;
+  return {
+    setters: [function (_coreDataDecoratorsIndexJs) {
+      ccclass = _coreDataDecoratorsIndexJs.ccclass;
+    }, function (_gfxIndexJs) {
+      Color = _gfxIndexJs.Color;
+      Rect = _gfxIndexJs.Rect;
+    }, function (_renderStageJs) {
+      RenderStage = _renderStageJs.RenderStage;
+    }, function (_enumJs) {
+      ForwardStagePriority = _enumJs.ForwardStagePriority;
+    }, function (_renderShadowMapBatchedQueueJs) {
+      RenderShadowMapBatchedQueue = _renderShadowMapBatchedQueueJs.RenderShadowMapBatchedQueue;
+    }, function (_defineJs) {
+      SetIndex = _defineJs.SetIndex;
+    }, function (_renderSceneSceneLightJs) {
+      LightType = _renderSceneSceneLightJs.LightType;
+    }, function (_renderSceneSceneShadowsJs) {
+      CSMLevel = _renderSceneSceneShadowsJs.CSMLevel;
+    }],
+    execute: function () {
+      /*
+       Copyright (c) 2020-2023 Xiamen Yaji Software Co., Ltd.
+      
+       https://www.cocos.com/
+      
+       Permission is hereby granted, free of charge, to any person obtaining a copy
+       of this software and associated documentation files (the "Software"), to deal
+       in the Software without restriction, including without limitation the rights to
+       use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+       of the Software, and to permit persons to whom the Software is furnished to do so,
+       subject to the following conditions:
+      
+       The above copyright notice and this permission notice shall be included in
+       all copies or substantial portions of the Software.
+      
+       THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+       IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+       FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+       AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+       LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+       OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+       THE SOFTWARE.
+      */
+      colors = [new Color(1, 1, 1, 1)];
+      /**
+       * @en Shadow map render stage
+       * @zh 阴影渲染阶段。
+       */
+      _export("ShadowStage", ShadowStage = (_dec = ccclass('ShadowStage'), _dec(_class = (_ShadowStage = class ShadowStage extends RenderStage {
+        constructor() {
+          super();
+          this._additiveShadowQueue = void 0;
+          this._shadowFrameBuffer = null;
+          this._renderArea = new Rect();
+          this._light = null;
+          this._globalDS = null;
+          this._level = 0;
+          this._isShadowMapCleared = false;
+        }
+
+        /**
+         * @en A common initialization info for shadow map render stage
+         * @zh 一个通用的 ShadowStage 的初始化信息对象
+         */
+
+        /**
+         * @en Sets the render shadow map info
+         * @zh 设置阴影渲染信息
+         * @param light
+         * @param shadowFrameBuffer
+         * @param level 层级
+         */
+        setUsage(globalDS, light, shadowFrameBuffer, level = 0) {
+          this._globalDS = globalDS;
+          this._light = light;
+          this._shadowFrameBuffer = shadowFrameBuffer;
+          this._level = level;
+        }
+        destroy() {
+          var _this$_additiveShadow;
+          this._shadowFrameBuffer = null;
+          this._globalDS = null;
+          this._light = null;
+          (_this$_additiveShadow = this._additiveShadowQueue) == null || _this$_additiveShadow.clear();
+        }
+        clearFramebuffer(camera) {
+          if (!this._light || !this._shadowFrameBuffer || this._isShadowMapCleared) {
+            return;
+          }
+          colors[0].w = camera.clearColor.w;
+          const pipeline = this._pipeline;
+          const pipelineSceneData = pipeline.pipelineSceneData;
+          const shadingScale = pipelineSceneData.shadingScale;
+          const shadowInfo = pipelineSceneData.shadows;
+          const vp = camera.viewport;
+          const shadowMapSize = shadowInfo.size;
+          this._renderArea.x = vp.x * shadowMapSize.x;
+          this._renderArea.y = vp.y * shadowMapSize.y;
+          this._renderArea.width = vp.width * shadowMapSize.x * shadingScale;
+          this._renderArea.height = vp.height * shadowMapSize.y * shadingScale;
+          const cmdBuff = pipeline.commandBuffers[0];
+          const renderPass = this._shadowFrameBuffer.renderPass;
+          cmdBuff.beginRenderPass(renderPass, this._shadowFrameBuffer, this._renderArea, colors, camera.clearDepth, camera.clearStencil);
+          cmdBuff.endRenderPass();
+          this._isShadowMapCleared = true;
+        }
+        render(camera) {
+          const pipeline = this._pipeline;
+          const pipelineSceneData = pipeline.pipelineSceneData;
+          const shadowInfo = pipelineSceneData.shadows;
+          const descriptorSet = this._globalDS;
+          const cmdBuff = pipeline.commandBuffers[0];
+          const level = this._level;
+          const device = pipeline.device;
+          if (!this._light || !this._shadowFrameBuffer) {
+            return;
+          }
+          this._pipeline.pipelineUBO.updateShadowUBOLight(descriptorSet, this._light, level);
+          this._additiveShadowQueue.gatherLightPasses(camera, this._light, cmdBuff, level);
+          const shadowMapSize = shadowInfo.size;
+          switch (this._light.type) {
+            case LightType.DIRECTIONAL:
+              {
+                const mainLight = this._light;
+                if (mainLight.shadowFixedArea || mainLight.csmLevel === CSMLevel.LEVEL_1 || !pipelineSceneData.csmSupported) {
+                  this._renderArea.x = 0;
+                  this._renderArea.y = 0;
+                  this._renderArea.width = shadowMapSize.x;
+                  this._renderArea.height = shadowMapSize.y;
+                } else {
+                  const screenSpaceSignY = device.capabilities.screenSpaceSignY;
+                  this._renderArea.x = level % 2 * 0.5 * shadowMapSize.x;
+                  if (screenSpaceSignY > 0.0) {
+                    this._renderArea.y = (1 - Math.floor(level / 2)) * 0.5 * shadowMapSize.y;
+                  } else {
+                    this._renderArea.y = Math.floor(level / 2) * 0.5 * shadowMapSize.y;
+                  }
+                  this._renderArea.width = 0.5 * shadowMapSize.x;
+                  this._renderArea.height = 0.5 * shadowMapSize.y;
+                }
+                break;
+              }
+            case LightType.SPOT:
+              {
+                this._renderArea.x = 0;
+                this._renderArea.y = 0;
+                this._renderArea.width = shadowMapSize.x;
+                this._renderArea.height = shadowMapSize.y;
+                break;
+              }
+            default:
+          }
+          const renderPass = this._shadowFrameBuffer.renderPass;
+          cmdBuff.beginRenderPass(renderPass, this._shadowFrameBuffer, this._renderArea, colors, camera.clearDepth, camera.clearStencil);
+          cmdBuff.bindDescriptorSet(SetIndex.GLOBAL, descriptorSet);
+          this._additiveShadowQueue.recordCommandBuffer(device, renderPass, cmdBuff);
+          cmdBuff.endRenderPass();
+          this._isShadowMapCleared = false;
+        }
+        activate(pipeline, flow) {
+          super.activate(pipeline, flow);
+          this._additiveShadowQueue = new RenderShadowMapBatchedQueue(pipeline);
+          this._isShadowMapCleared = false;
+        }
+      }, _ShadowStage.initInfo = {
+        name: 'ShadowStage',
+        priority: ForwardStagePriority.FORWARD,
+        tag: 0
+      }, _ShadowStage)) || _class));
+    }
+  };
+});

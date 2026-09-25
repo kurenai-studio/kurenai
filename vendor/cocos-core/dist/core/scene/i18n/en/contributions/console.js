@@ -1,0 +1,7 @@
+"use strict";
+module.exports = {
+    console: {
+        clearOnPlay: 'Clear on Play',
+    },
+};
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY29uc29sZS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uLy4uLy4uLy4uL3NyYy9jb3JlL3NjZW5lL2kxOG4vZW4vY29udHJpYnV0aW9ucy9jb25zb2xlLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7QUFBQSxNQUFNLENBQUMsT0FBTyxHQUFHO0lBQ2IsT0FBTyxFQUFFO1FBQ0wsV0FBVyxFQUFFLGVBQWU7S0FDL0I7Q0FDSixDQUFBIiwic291cmNlc0NvbnRlbnQiOlsibW9kdWxlLmV4cG9ydHMgPSB7XG4gICAgY29uc29sZToge1xuICAgICAgICBjbGVhck9uUGxheTogJ0NsZWFyIG9uIFBsYXknLFxuICAgIH0sXG59Il19

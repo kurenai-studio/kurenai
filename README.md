@@ -1,35 +1,29 @@
 # Kurenai Studio
 
-Cocos vibe coding on top of [cocos-cli](https://github.com/SUD-GLOBAL/cocos-cli):
-a live preview per project, a runtime scene inspector, and a command line for
-coding agents.
+PinK 的升级版：项目管理、资源编译、预览、构建在同一产品里。
 
-> Status: migrated off the DSH plugin and the historical `headless-cocos` stack.
-> The preview runs cocos-cli's own runtime, asset-db and script packer. Agents
-> use the `kurenai` CLI; there is no MCP server.
-> See [`docs/cocos-cli-migration.md`](docs/cocos-cli-migration.md).
+> Agents install **only kurenai** — no PinK / separate cocos-cli.
+> The trimmed cocos runtime is the `vendor/cocos-core` source tree in this package.
 
 ## One-liner (for agents)
 
 Paste this into a coding agent so it can install and use Kurenai on its own:
 
 ```text
-自学并只用最新 kurenai（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`；预览/构建所需的精简 cocos 运行时由 kurenai 按需拉取，不要单独安装完整 cocos-cli / PinK）开发 Cocos 游戏：`kurenai init` → `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `asset info` / `logs` / `context` 闭环，禁止手写 .meta、prefab 不挂脚本；交付时再 `kurenai publish --platform web-desktop`。
+自学并只用最新 kurenai（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`；不要单独安装完整 cocos-cli / PinK）开发 Cocos 游戏：`kurenai init` → `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `asset info` / `logs` / `context` 闭环，禁止手写 .meta、prefab 不挂脚本；交付时再 `kurenai publish --platform web-desktop`。
 ```
 
 中文安装与用法入口：[docs/安装方法.md](docs/安装方法.md) · [docs/简单使用方法.md](docs/简单使用方法.md)
 
-> **Direction:** Kurenai must not require a separate full cocos-cli install. Ship a trimmed, on-demand cocos runtime (web `core` first; platform/native packs later). Today’s PinK/`KURENAI_COCOS_CLI_ROOT` path is a temporary bridge, not the product.
-
-## Product goal (runtime)
+## Product shape
 
 ```text
-kurenai (≈1MB CLI)
-  └─ on demand: trimmed cocos "core" (~web preview + asset-db + web publish)
-       └─ on demand: platform:* / native:* packs
+kurenai
+  ├─ CLI / inspector / templates     (agent 面)
+  └─ vendor/cocos-core               (裁剪后的运行时：asset-db + preview + web build)
 ```
 
-Agents and humans install **only kurenai**. They do **not** install full cocos-cli / PinK as a prerequisite. The split inventory lives in [`docs/cocos-cli-split.md`](docs/cocos-cli-split.md).
+四个核心能力在一起：**项目管理 · 资源编译 · 预览 · 构建**。
 
 ```text
 Agent writes files under assets/ (prefabs, materials, TypeScript views)

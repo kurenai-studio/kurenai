@@ -42,22 +42,27 @@ native:<target>（按需）
 
 ## 3. 裁剪产物（已可本地打出）
 
-从完整 PinK/cocos-cli 安装打 **web core**：
+策略（已落地）：
+
+- **主包不含完整 `node_modules`**：解压后 `npm install --omit=dev`（仅附带预编译 `gl` / `sharp` / `@ffprobe-installer`，避免带空格路径下 node-gyp 失败）
+- **主包含 webgame 打包模块**：`dist/.../web-desktop|web-mobile|web-common`；其余平台 builder 不进主包
+- **其它平台打包模块不进主包**（android/ios/微信等）
+- **预览必需**：`engine/bin/.cache/dev-cli` + emscripten wasm
+- **少量预编译原生模块**（`gl` / `sharp` / `@ffprobe-installer`）打进 tarball（路径含空格时 node-gyp 编不过）
 
 ```bash
-node scripts/pack-cocos-core.mjs --source "$HOME/Library/Application Support/cocos-default/cocos-4.0.0-alpha.33" --drop-temp --tgz
+node scripts/pack-cocos-core.mjs --source "$HOME/Library/Application Support/cocos-default/cocos-4.0.0-alpha.33" --tgz --npm-install
 ```
 
-默认输出：
+实测（本机）：
 
-- 目录：`~/Library/Application Support/kurenai/cocos-core/4.0.0-alpha.33`（约 **1.8 GB**）
-- 压缩包：`…/kurenai-cocos-core-4.0.0-alpha.33.tgz`（约 **350 MB**）
+| | 体积 |
+|---|---:|
+| 主包目录（未 npm） | **~444 MB** |
+| 主包 `.tgz`（下载） | **~96 MB** |
+| 解压 + `npm install` 后 | **~1.4 GB** |
 
-相对全量约省 **4 GB**。`packages/engine/native` 整棵砍掉，但保留 web 必需的 `native/external/emscripten`（box2d/physx 等 wasm）。
-
-`resolveCocosCliRoot()` 优先用上述 managed core，不再默认依赖 PinK。本机已验证：`KURENAI_COCOS_CLI_ROOT` 指向该 core 时，`run-puzzle.mjs` 可起 host 并完成 asset import。
-
-CDN 发布与「零本地 PinK、首次自动下载 tgz」仍待接上。
+`resolveCocosCliRoot()` 默认指向包内 `vendor/cocos-core`。
 
 | 包 | 约计 |
 |---|---:|

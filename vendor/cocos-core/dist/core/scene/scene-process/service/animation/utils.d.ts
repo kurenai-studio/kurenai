@@ -1,0 +1,11 @@
+import type { AnimationClip } from 'cc';
+export declare function cloneDump<T>(dump: T): T;
+export declare function cloneValue<T>(value: T): T;
+export declare function cloneSerializableValue<T>(value: T): T;
+export declare function clipUuid(clip: AnimationClip | null | undefined): string;
+export declare function getClipSample(clip: AnimationClip): number;
+export declare function queryClipEvents(clip: AnimationClip): any[] | null;
+export declare function ensureClipEvents(clip: AnimationClip): any[];
+export declare function normalizeFrames(value: unknown): number[];
+export declare function updateClipEventData(clip: AnimationClip): void;
+export declare function normalizeAuxiliaryCurveValue(value: unknown): number;

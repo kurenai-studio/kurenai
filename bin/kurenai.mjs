@@ -97,8 +97,9 @@ async function ensureHost(project) {
   const running = readHostFile(project);
   if (running && (await hostStatus(running))?.ready) return running;
 
-  const { ensureCorePack } = await import('../lib/index.js');
-  await ensureCorePack({});
+  const { ensureCorePack, resolveCocosCliRoot } = await import('../lib/index.js');
+  const cocosCliRoot = resolveCocosCliRoot();
+  await ensureCorePack({ cocosCliRoot });
 
   const logFile = join(project, 'temp', 'kurenai-host.log');
   if (!running) {
@@ -106,7 +107,12 @@ async function ensureHost(project) {
     const out = openSync(logFile, 'w');
     const child = spawn(process.execPath, ['--max-old-space-size=8192', HOST_ENTRY], {
       cwd: project,
-      env: { ...process.env, PROJECT: project, PORT: process.env.PORT || '7460' },
+      env: {
+        ...process.env,
+        PROJECT: project,
+        PORT: process.env.PORT || '7460',
+        KURENAI_COCOS_CLI_ROOT: cocosCliRoot,
+      },
       stdio: ['ignore', out, out],
       detached: true,
     });

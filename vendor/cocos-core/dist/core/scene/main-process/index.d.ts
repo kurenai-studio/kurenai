@@ -1,0 +1,45 @@
+import { assetManager } from '../../assets';
+import scriptManager from '../../scripting';
+import { sceneConfigInstance } from '../scene-configs';
+import i18n from '../../base/i18n';
+import { referenceImageFiles } from './reference-image-files';
+import { referenceImageStore } from './reference-image-store';
+export interface IMainModule {
+    'assetManager': typeof assetManager;
+    'programming': typeof scriptManager;
+    'sceneConfigInstance': typeof sceneConfigInstance;
+    'i18n': typeof i18n;
+    'referenceImageFiles': typeof referenceImageFiles;
+    'referenceImageStore': typeof referenceImageStore;
+}
+export declare const Scene: {
+    ReferenceImage: import("..").IPublicReferenceImageService;
+    Particle: import("..").IPublicParticleService;
+    Node: import("./proxy/node-proxy").INodeProxy;
+    Component: import("./proxy/component-proxy").IComponentProxy;
+    worker: import("./scene-worker").SceneWorker;
+    createPrefabFromNode(params: import("..").ICreatePrefabFromNodeParams): Promise<import("..").INodeInfo>;
+    unpackPrefabInstance(params: import("..").IUnpackPrefabInstanceParams): Promise<import("..").INodeInfo>;
+    getPrefabInfo(params: import("..").IGetPrefabInfoParams): Promise<import("..").IPrefabInfo | null>;
+    applyPrefabChanges: (params: import("..").IApplyPrefabChangesParams) => Promise<boolean>;
+    revertToPrefab: (params: import("..").IRevertToPrefabParams) => Promise<boolean>;
+    isPrefabInstance: (params: import("..").IIsPrefabInstanceParams) => Promise<boolean>;
+    init: () => Promise<void>;
+    repaintInEditMode: () => Promise<void>;
+    assetChanged: (uuid: string) => Promise<void>;
+    assetDeleted: (uuid: string) => Promise<void>;
+    investigatePackerDriver: () => Promise<void>;
+    loadScript: () => Promise<void>;
+    removeScript: () => Promise<void>;
+    scriptChange: () => Promise<void>;
+    queryScriptCid: (uuid: string) => Promise<string | null>;
+    queryScriptName: (uuid: string) => Promise<string | null>;
+    open(params: import("..").IOpenOptions): Promise<import("..").ISceneInfo | import("..").INodeInfo>;
+    queryCurrent(): Promise<import("..").ISceneInfo | import("..").INodeInfo | null>;
+    close: (params: import("..").ICloseOptions) => Promise<boolean>;
+    save: (params: import("..").ISaveOptions) => Promise<import("../../assets/@types/public").IAssetInfo>;
+    create: (params: import("..").ICreateOptions) => Promise<import("..").IBaseIdentifier>;
+    reload: (params: import("..").IReloadOptions) => Promise<import("..").ReloadResult>;
+    hasOpen: () => Promise<boolean>;
+    querySceneSerializedData: () => Promise<string>;
+};

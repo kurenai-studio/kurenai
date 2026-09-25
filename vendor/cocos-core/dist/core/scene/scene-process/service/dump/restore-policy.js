@@ -1,0 +1,42 @@
+"use strict";
+/**
+ * 快照恢复策略：定义 undo/redo 恢复时，哪些属性可以安全写回。
+ *
+ * Node/component 的快照恢复策略需要和 dump encode 函数保持一致：
+ * - NODE_SNAPSHOT_RESTORE_PROPERTY_PATHS  ↔  encodeNode()  (encode.ts)
+ * - COMPONENT_SNAPSHOT_RESTORE_SKIP_KEYS  ↔  encodeComponent()  (encode.ts)
+ *
+ * Scene 的恢复器不负责决定一个属性是否应该进入 undo；
+ * 它只负责恢复已经由 Scene 编辑 API 纳入 snapshot command 的属性。
+ * 对普通 Scene 属性可以按 IProperty dump 形状恢复，name、locked、uuid 仍由特殊规则处理。
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.COMPONENT_SNAPSHOT_RESTORE_SKIP_KEYS = exports.SCENE_SNAPSHOT_SPECIAL_PROPERTY_KEYS = exports.NODE_SNAPSHOT_RESTORE_PROPERTY_PATHS = void 0;
+/**
+ * Node 快照可恢复属性路径（白名单）。
+ *
+ * undo/redo 从 node 快照 dump 恢复时，只会写回这些属性。
+ * 结构字段（uuid、parent、children、__comps__、__type__、__prefab__ 等）
+ * 不在这里恢复，因为它们由 node-structure command 管理，不由 snapshot command 管理。
+ *
+ * `name` 和 `locked` 也不在这里恢复，因为它们需要特殊处理：
+ * `name` 需要通知编辑器名称映射，`locked` 需要操作 objFlags bit；
+ * 这两个属性由 undo 层单独处理。
+ */
+exports.NODE_SNAPSHOT_RESTORE_PROPERTY_PATHS = ['active', 'layer', 'mobility', 'position', 'rotation', 'scale'];
+/**
+ * Scene 快照中由 undo 层特殊处理或属于身份的字段。
+ *
+ * 普通 Scene 属性可以复用通用 snapshot 恢复器；
+ * 但是否纳入 undo 仍由 Scene 编辑 API 的持久化/可编辑性契约决定，不能由 dump 形状推断。
+ */
+exports.SCENE_SNAPSHOT_SPECIAL_PROPERTY_KEYS = ['name', 'locked', 'uuid'];
+/**
+ * Component 快照身份字段 / 编辑器内部字段（黑名单）。
+ *
+ * 恢复 component 快照 dump 时会跳过这些 key。
+ * `dump.value` 里的其他 key 会被当成用户可编辑属性，
+ * 并交给 `restoreProperty` 写回。
+ */
+exports.COMPONENT_SNAPSHOT_RESTORE_SKIP_KEYS = ['uuid', 'node', '__scriptAsset', '__eventTargets'];
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzdG9yZS1wb2xpY3kuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi8uLi8uLi8uLi9zcmMvY29yZS9zY2VuZS9zY2VuZS1wcm9jZXNzL3NlcnZpY2UvZHVtcC9yZXN0b3JlLXBvbGljeS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiO0FBQUE7Ozs7Ozs7Ozs7R0FVRzs7O0FBRUg7Ozs7Ozs7Ozs7R0FVRztBQUNVLFFBQUEsb0NBQW9DLEdBQUcsQ0FBQyxRQUFRLEVBQUUsT0FBTyxFQUFFLFVBQVUsRUFBRSxVQUFVLEVBQUUsVUFBVSxFQUFFLE9BQU8sQ0FBVSxDQUFDO0FBRTlIOzs7OztHQUtHO0FBQ1UsUUFBQSxvQ0FBb0MsR0FBRyxDQUFDLE1BQU0sRUFBRSxRQUFRLEVBQUUsTUFBTSxDQUFVLENBQUM7QUFFeEY7Ozs7OztHQU1HO0FBQ1UsUUFBQSxvQ0FBb0MsR0FBRyxDQUFDLE1BQU0sRUFBRSxNQUFNLEVBQUUsZUFBZSxFQUFFLGdCQUFnQixDQUFVLENBQUMiLCJzb3VyY2VzQ29udGVudCI6WyIvKipcbiAqIOW/q+eFp+aBouWkjeetlueVpe+8muWumuS5iSB1bmRvL3JlZG8g5oGi5aSN5pe277yM5ZOq5Lqb5bGe5oCn5Y+v5Lul5a6J5YWo5YaZ5Zue44CCXG4gKlxuICogTm9kZS9jb21wb25lbnQg55qE5b+r54Wn5oGi5aSN562W55Wl6ZyA6KaB5ZKMIGR1bXAgZW5jb2RlIOWHveaVsOS/neaMgeS4gOiHtO+8mlxuICogLSBOT0RFX1NOQVBTSE9UX1JFU1RPUkVfUFJPUEVSVFlfUEFUSFMgIOKGlCAgZW5jb2RlTm9kZSgpICAoZW5jb2RlLnRzKVxuICogLSBDT01QT05FTlRfU05BUFNIT1RfUkVTVE9SRV9TS0lQX0tFWVMgIOKGlCAgZW5jb2RlQ29tcG9uZW50KCkgIChlbmNvZGUudHMpXG4gKlxuICogU2NlbmUg55qE5oGi5aSN5Zmo5LiN6LSf6LSj5Yaz5a6a5LiA5Liq5bGe5oCn5piv5ZCm5bqU6K+l6L+b5YWlIHVuZG/vvJtcbiAqIOWug+WPqui0n+i0o+aBouWkjeW3sue7j+eUsSBTY2VuZSDnvJbovpEgQVBJIOe6s+WFpSBzbmFwc2hvdCBjb21tYW5kIOeahOWxnuaAp+OAglxuICog5a+55pmu6YCaIFNjZW5lIOWxnuaAp+WPr+S7peaMiSBJUHJvcGVydHkgZHVtcCDlvaLnirbmgaLlpI3vvIxuYW1l44CBbG9ja2Vk44CBdXVpZCDku43nlLHnibnmrorop4TliJnlpITnkIbjgIJcbiAqL1xuXG4vKipcbiAqIE5vZGUg5b+r54Wn5Y+v5oGi5aSN5bGe5oCn6Lev5b6E77yI55m95ZCN5Y2V77yJ44CCXG4gKlxuICogdW5kby9yZWRvIOS7jiBub2RlIOW/q+eFpyBkdW1wIOaBouWkjeaXtu+8jOWPquS8muWGmeWbnui/meS6m+WxnuaAp+OAglxuICog57uT5p6E5a2X5q6177yIdXVpZOOAgXBhcmVudOOAgWNoaWxkcmVu44CBX19jb21wc19f44CBX190eXBlX1/jgIFfX3ByZWZhYl9fIOetie+8iVxuICog5LiN5Zyo6L+Z6YeM5oGi5aSN77yM5Zug5Li65a6D5Lus55SxIG5vZGUtc3RydWN0dXJlIGNvbW1hbmQg566h55CG77yM5LiN55SxIHNuYXBzaG90IGNvbW1hbmQg566h55CG44CCXG4gKlxuICogYG5hbWVgIOWSjCBgbG9ja2VkYCDkuZ/kuI3lnKjov5nph4zmgaLlpI3vvIzlm6DkuLrlroPku6zpnIDopoHnibnmrorlpITnkIbvvJpcbiAqIGBuYW1lYCDpnIDopoHpgJrnn6XnvJbovpHlmajlkI3np7DmmKDlsITvvIxgbG9ja2VkYCDpnIDopoHmk43kvZwgb2JqRmxhZ3MgYml077ybXG4gKiDov5nkuKTkuKrlsZ7mgKfnlLEgdW5kbyDlsYLljZXni6zlpITnkIbjgIJcbiAqL1xuZXhwb3J0IGNvbnN0IE5PREVfU05BUFNIT1RfUkVTVE9SRV9QUk9QRVJUWV9QQVRIUyA9IFsnYWN0aXZlJywgJ2xheWVyJywgJ21vYmlsaXR5JywgJ3Bvc2l0aW9uJywgJ3JvdGF0aW9uJywgJ3NjYWxlJ10gYXMgY29uc3Q7XG5cbi8qKlxuICogU2NlbmUg5b+r54Wn5Lit55SxIHVuZG8g5bGC54m55q6K5aSE55CG5oiW5bGe5LqO6Lqr5Lu955qE5a2X5q6144CCXG4gKlxuICog5pmu6YCaIFNjZW5lIOWxnuaAp+WPr+S7peWkjeeUqOmAmueUqCBzbmFwc2hvdCDmgaLlpI3lmajvvJtcbiAqIOS9huaYr+WQpue6s+WFpSB1bmRvIOS7jeeUsSBTY2VuZSDnvJbovpEgQVBJIOeahOaMgeS5heWMli/lj6/nvJbovpHmgKflpZHnuqblhrPlrprvvIzkuI3og73nlLEgZHVtcCDlvaLnirbmjqjmlq3jgIJcbiAqL1xuZXhwb3J0IGNvbnN0IFNDRU5FX1NOQVBTSE9UX1NQRUNJQUxfUFJPUEVSVFlfS0VZUyA9IFsnbmFtZScsICdsb2NrZWQnLCAndXVpZCddIGFzIGNvbnN0O1xuXG4vKipcbiAqIENvbXBvbmVudCDlv6vnhafouqvku73lrZfmrrUgLyDnvJbovpHlmajlhoXpg6jlrZfmrrXvvIjpu5HlkI3ljZXvvInjgIJcbiAqXG4gKiDmgaLlpI0gY29tcG9uZW50IOW/q+eFpyBkdW1wIOaXtuS8mui3s+i/h+i/meS6myBrZXnjgIJcbiAqIGBkdW1wLnZhbHVlYCDph4znmoTlhbbku5Yga2V5IOS8muiiq+W9k+aIkOeUqOaIt+WPr+e8lui+keWxnuaAp++8jFxuICog5bm25Lqk57uZIGByZXN0b3JlUHJvcGVydHlgIOWGmeWbnuOAglxuICovXG5leHBvcnQgY29uc3QgQ09NUE9ORU5UX1NOQVBTSE9UX1JFU1RPUkVfU0tJUF9LRVlTID0gWyd1dWlkJywgJ25vZGUnLCAnX19zY3JpcHRBc3NldCcsICdfX2V2ZW50VGFyZ2V0cyddIGFzIGNvbnN0O1xuIl19

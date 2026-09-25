@@ -1,0 +1,30 @@
+import { IScreenOptions, SafeAreaEdge } from 'pal/screen-adapter';
+import { EventTarget } from '@cocos/engine/cocos/core/event/event-target';
+import { Size } from '@cocos/engine/cocos/core/math';
+import { Orientation } from '../enum-type';
+declare class ScreenAdapter extends EventTarget {
+    isFrameRotated: boolean;
+    handleResizeEvent: boolean;
+    get supportFullScreen(): boolean;
+    get isFullScreen(): boolean;
+    get devicePixelRatio(): number;
+    get windowSize(): Size;
+    set windowSize(size: Size);
+    get resolution(): Size;
+    get resolutionScale(): number;
+    set resolutionScale(value: number);
+    get orientation(): Orientation;
+    set orientation(value: Orientation);
+    get safeAreaEdge(): SafeAreaEdge;
+    get isProportionalToFrame(): boolean;
+    set isProportionalToFrame(v: boolean);
+    private _cbToUpdateFrameBuffer?;
+    private _resolutionScale;
+    private _isProportionalToFrame;
+    constructor();
+    init(options: IScreenOptions, cbToRebuildFrameBuffer: () => void): void;
+    requestFullScreen(): Promise<void>;
+    exitFullScreen(): Promise<void>;
+}
+export declare const screenAdapter: ScreenAdapter;
+export {};

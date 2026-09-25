@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getOriginalAnimationLibraryPath = getOriginalAnimationLibraryPath;
+/**
+ * get original animation in library path
+ * @param index - animation index
+ */
+function getOriginalAnimationLibraryPath(index) {
+    return `__original-animation-${index}.bin`;
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib3JpZ2luYWwtYW5pbWF0aW9uLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vLi4vLi4vLi4vc3JjL2NvcmUvYXNzZXRzL2Fzc2V0LWhhbmRsZXIvYXNzZXRzL2dsdGYvb3JpZ2luYWwtYW5pbWF0aW9uLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O0FBSUEsMEVBRUM7QUFORDs7O0dBR0c7QUFDSCxTQUFnQiwrQkFBK0IsQ0FBQyxLQUFhO0lBQ3pELE9BQU8sd0JBQXdCLEtBQUssTUFBTSxDQUFDO0FBQy9DLENBQUMiLCJzb3VyY2VzQ29udGVudCI6WyIvKipcbiAqIGdldCBvcmlnaW5hbCBhbmltYXRpb24gaW4gbGlicmFyeSBwYXRoXG4gKiBAcGFyYW0gaW5kZXggLSBhbmltYXRpb24gaW5kZXhcbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIGdldE9yaWdpbmFsQW5pbWF0aW9uTGlicmFyeVBhdGgoaW5kZXg6IG51bWJlcikge1xuICAgIHJldHVybiBgX19vcmlnaW5hbC1hbmltYXRpb24tJHtpbmRleH0uYmluYDtcbn1cbiJdfQ==

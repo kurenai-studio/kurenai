@@ -1,0 +1,302 @@
+System.register("q-bundled:///fs/cocos/core/utils/misc.js", ["../../../../virtual/internal%253Aconstants.js", "./js.js", "../global-exports.js", "../platform/debug.js", "../platform/macro.js", "../../../pal/utils.js"], function (_export, _context) {
+  "use strict";
+
+  var DEV, getClassName, getset, isEmptyObject, legacyCC, warnID, macro, setTimeoutRAF, BUILTIN_CLASSID_RE, BASE64_KEYS, values, BASE64_VALUES;
+  /**
+   * @en Defines properties for a class, or replaces getter, setter of existing properties.
+   * @param ctor @en Class to modify.
+   * @param sameNameGetSets @en Getters and setters of properties. The getter and setter
+   * have the same name. So a property getter and setter occupy one position in `sameNameGetSets`.
+   * @param diffNameGetSets @en Getters and setters of properties. The getter and setter
+   * have different names. So a property getter and setter occupy two positions in `diffNameGetSets`.
+   * @engineInternal
+   */
+  function propertyDefine(ctor, sameNameGetSets, diffNameGetSets) {
+    function define(np, propName, getter, setter) {
+      const pd = Object.getOwnPropertyDescriptor(np, propName);
+      if (pd) {
+        if (pd.get && getter) {
+          np[getter] = pd.get;
+        }
+        if (pd.set && setter) {
+          np[setter] = pd.set;
+        }
+      } else {
+        const getterFunc = np[getter];
+        if (DEV && !getterFunc) {
+          const clsName = legacyCC.Class._isCCClass(ctor) && getClassName(ctor) || ctor.name || '(anonymous class)';
+          warnID(5700, propName, getter, clsName);
+        } else {
+          getset(np, propName, getterFunc, np[setter]);
+        }
+      }
+    }
+    let propName;
+    const np = ctor.prototype;
+    for (let i = 0, len = sameNameGetSets.length; i < len; ++i) {
+      propName = sameNameGetSets[i];
+      const suffix = propName[0].toUpperCase() + propName.slice(1);
+      define(np, propName, `get${suffix}`, `set${suffix}`);
+    }
+    for (propName in diffNameGetSets) {
+      const gs = diffNameGetSets[propName];
+      define(np, propName, gs[0], gs[1]);
+    }
+  }
+
+  /**
+   * @en Inserts a new element into a map. All values corresponding to the same key are stored in an array.
+   * @zh 往 map 插入一个元素。同一个关键字对应的所有值存储在一个数组里。
+   * @param map @en The map to insert element. @zh 插入元素的 map。
+   * @param key @en The key of new element. @zh 新插入元素的关键字。
+   * @param value @en The value of new element. @zh 新插入元素的值。
+   * @param pushFront @en Whether to put new value in front of the vector if key exists.
+   * @zh 如果关键字已经存在，是否把新插入的值放到数组第一个位置。
+   */
+  function pushToMap(map, key, value, pushFront) {
+    const exists = map[key];
+    if (exists) {
+      if (Array.isArray(exists)) {
+        if (pushFront) {
+          exists.push(exists[0]);
+          exists[0] = value;
+        } else {
+          exists.push(value);
+        }
+      } else {
+        map[key] = pushFront ? [value, exists] : [exists, value];
+      }
+    } else {
+      map[key] = value;
+    }
+  }
+
+  /**
+   * @en Checks whether a node is a descendant of a given node, that is the node itself, one of its direct
+   * children (childNodes), one of the children's direct children, and so on.
+   * @zh 检查节点是否是一个给定的节点的后代，即节点本身、它的一个直接子节点（childNodes）、该子节点的一个直接子节点，依此类推。
+   * @param refNode @en The node to check. @zh 检查的节点。
+   * @param otherNode @en The node to test with. @zh 用来测试的节点。
+   * @returns @en True if otherNode is contained in refNode, false if not.
+   * @zh 如果 refNode 包含 otherNode，返回 true；否则返回 false。
+   */
+  function contains(refNode, otherNode) {
+    if (typeof refNode.contains === 'function') {
+      return refNode.contains(otherNode);
+    } else if (typeof refNode.compareDocumentPosition === 'function') {
+      return !!(refNode.compareDocumentPosition(otherNode) & 16);
+    } else {
+      let node = otherNode.parentNode;
+      if (node) {
+        do {
+          if (node === refNode) {
+            return true;
+          } else {
+            node = node.parentNode;
+          }
+        } while (node !== null);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * @en Checks whether a node is a DOM node. @zh 检查一个节点是否是一个 DOM 节点。
+   * @param node @en The node the check. @zh 被检查节点。
+   * @returns @en True if node is a DOM node, false else.
+   * @zh 如果 DOM 节点，返回 true；否则返回 false。
+   */
+  function isDomNode(node) {
+    if (typeof window === 'object' && typeof Node === 'function') {
+      // If "TypeError: Right-hand side of 'instanceof' is not callback" is thrown,
+      // it should because window.Node was overwritten.
+      return node instanceof Node;
+    } else {
+      return !!node && typeof node === 'object' && typeof node.nodeType === 'number' && typeof node.nodeName === 'string';
+    }
+  }
+
+  /**
+   * @en Invoke a function in next frame. @zh 在下一帧执行传入的函数。
+   * @param callback @en The function to be invoked next frame. @zh 下一帧要执行的函数。
+   * @param p1 @en The first parameter passed to `callback`. @zh 传给回调函数的第一个参数。
+   * @param p2 @en The seconde parameter passed to `callback`. @zh 传给回调函数的第二个参数。
+   */
+  function callInNextTick(callback, ...args) {
+    if (callback) {
+      setTimeoutRAF(() => {
+        callback(...args);
+      }, 0);
+    }
+  }
+
+  // use anonymous function here to ensure it will not being hoisted without EDITOR
+  /**
+   * @en Create a new function that will invoke `functionName` with try catch.
+   * @zh 创建一个新函数，该函数会使用 try catch 机制调用 `functionName`.
+   * @param funcName @en The function name to be invoked with try catch.
+   * @zh 被 try catch 包裹的函数名。
+   * @returns @en A new function that will invoke `functionName` with try catch.
+   * @zh 使用 try catch 机制调用 `functionName` 的新函数.
+   */
+  function tryCatchFunctor_EDITOR(funcName) {
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    return Function('target', `${'try {\n' + '  target.'}${funcName}();\n` + `}\n` + `catch (e) {\n` + `  cc._throw(e);\n` + `}`);
+  }
+
+  /**
+   * @en Checks whether an object is an empty object.
+   * @zh 检查一个对象是否为空对象。
+   * @param obj @en The object to check. @zh 要检查的对象。
+   * @returns @en True if it is an empty object. False if it is not an empty object, not Object type, null or undefined.
+   * @ 如果是空对象，返回 true。如果不是空对象，不是Object类型，空或未定义，则为假。
+   */
+  function isPlainEmptyObj_DEV(obj) {
+    if (!obj || obj.constructor !== Object) {
+      return false;
+    }
+    return isEmptyObject(obj);
+  }
+
+  /**
+   * @en Clamps a value between a min and a max value. </br>
+   * If the original value is greater than max_inclusive, returns max_inclusive. </br>
+   * If the original value is less than min_inclusive, returns min_inclusive. </br>
+   * Else returns the original value.
+   * @zh 限定浮点数的最大最小值。<br/>
+   * 如果数值大于 max_inclusive 则返回 max_inclusive。<br/>
+   * 如果数值小于 min_inclusive 则返回 min_inclusive。<br/>
+   * 否则返回自身。
+   * @param value @en Original value. @zh 初始值。
+   * @param min_inclusive @en Minimum value in range. @zh 最小值。
+   * @param max_inclusive @en Maximum value in range. @zh 最大值。
+   * @returns @en The clamped value. @zh 目标值。
+   * @example
+   * var v1 = clampf(20, 0, 20); // 20;
+   * var v2 = clampf(-1, 0, 20); //  0;
+   * var v3 = clampf(10, 0, 20); // 10;
+   */
+  function clampf(value, min_inclusive, max_inclusive) {
+    if (min_inclusive > max_inclusive) {
+      const temp = min_inclusive;
+      min_inclusive = max_inclusive;
+      max_inclusive = temp;
+    }
+    return value < min_inclusive ? min_inclusive : value < max_inclusive ? value : max_inclusive;
+  }
+
+  /**
+   * @en Converts degree to radian.
+   * @zh 将度数转换为弧度。
+   * @param angle @en The degree to convert. @zh 角度。
+   * @returns @en The radian. @zh 弧度。
+   */
+  function degreesToRadians(angle) {
+    return angle * macro.RAD;
+  }
+
+  /**
+   * @en Converts radian to degree.
+   * @zh 将弧度转换为角度。
+   * @param angle @en The radian to convert. @zh 弧度。
+   * @returns @en The degree. @zh 角度。
+   */
+  function radiansToDegrees(angle) {
+    return angle * macro.DEG;
+  }
+
+  // if (TEST) {
+  //     // editor mocks using in unit tests
+  //     if (typeof Editor === 'undefined') {
+  //         window.Editor = {
+  //             UuidUtils: {
+  //                 NonUuidMark: '.',
+  //                 uuid () {
+  //                     return '' + ((new Date()).getTime() + Math.random());
+  //                 },
+  //             },
+  //         };
+  //     }
+  // }
+  _export({
+    propertyDefine: propertyDefine,
+    pushToMap: pushToMap,
+    contains: contains,
+    isDomNode: isDomNode,
+    callInNextTick: callInNextTick,
+    tryCatchFunctor_EDITOR: tryCatchFunctor_EDITOR,
+    isPlainEmptyObj_DEV: isPlainEmptyObj_DEV,
+    clampf: clampf,
+    degreesToRadians: degreesToRadians,
+    radiansToDegrees: radiansToDegrees
+  });
+  return {
+    setters: [function (_virtualInternal253AconstantsJs) {
+      DEV = _virtualInternal253AconstantsJs.DEV;
+    }, function (_jsJs) {
+      getClassName = _jsJs.getClassName;
+      getset = _jsJs.getset;
+      isEmptyObject = _jsJs.isEmptyObject;
+    }, function (_globalExportsJs) {
+      legacyCC = _globalExportsJs.legacyCC;
+    }, function (_platformDebugJs) {
+      warnID = _platformDebugJs.warnID;
+    }, function (_platformMacroJs) {
+      macro = _platformMacroJs.macro;
+    }, function (_palUtilsJs) {
+      setTimeoutRAF = _palUtilsJs.setTimeoutRAF;
+    }],
+    execute: function () {
+      /*
+       Copyright (c) 2013-2016 Chukong Technologies Inc.
+       Copyright (c) 2017-2023 Xiamen Yaji Software Co., Ltd.
+      
+       http://www.cocos.com
+      
+       Permission is hereby granted, free of charge, to any person obtaining a copy
+       of this software and associated documentation files (the "Software"), to deal
+       in the Software without restriction, including without limitation the rights to
+       use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+       of the Software, and to permit persons to whom the Software is furnished to do so,
+       subject to the following conditions:
+      
+       The above copyright notice and this permission notice shall be included in
+       all copies or substantial portions of the Software.
+      
+       THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+       IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+       FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+       AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+       LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+       OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+       THE SOFTWARE.
+      */
+      /* eslint-disable no-new-func */
+      _export("BUILTIN_CLASSID_RE", BUILTIN_CLASSID_RE = /^(?:cc|dragonBones|sp|ccsg)\..+/);
+      BASE64_KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+      values = new Array(123); // max char code in base64Keys
+      for (let i = 0; i < 123; ++i) {
+        values[i] = 64;
+      } // fill with placeholder('=') index
+      for (let i = 0; i < 64; ++i) {
+        values[BASE64_KEYS.charCodeAt(i)] = i;
+      }
+
+      // decoded value indexed by base64 char code
+      _export("BASE64_VALUES", BASE64_VALUES = values);
+      legacyCC.misc = {
+        BUILTIN_CLASSID_RE,
+        BASE64_VALUES,
+        propertyDefine,
+        pushToMap,
+        contains,
+        isDomNode,
+        callInNextTick,
+        isPlainEmptyObj_DEV,
+        clampf,
+        degreesToRadians,
+        radiansToDegrees
+      };
+    }
+  };
+});

@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getExternalGamePreviewUrl = getExternalGamePreviewUrl;
+/**
+ * Build the URL opened by the CLI's external game preview entry.
+ * Unflagged URLs remain available to lightweight embedded preview consumers.
+ */
+function getExternalGamePreviewUrl(serverUrl, scene) {
+    const url = new URL(serverUrl);
+    if (scene) {
+        url.searchParams.set('scene', scene);
+    }
+    url.searchParams.set('previewToolbar', '1');
+    return url.toString();
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZ2FtZS1wcmV2aWV3LXVybC5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9jb3JlL3ByZXZpZXcvZ2FtZS1wcmV2aWV3LXVybC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUlBLDhEQU9DO0FBWEQ7OztHQUdHO0FBQ0gsU0FBZ0IseUJBQXlCLENBQUMsU0FBaUIsRUFBRSxLQUFjO0lBQ3ZFLE1BQU0sR0FBRyxHQUFHLElBQUksR0FBRyxDQUFDLFNBQVMsQ0FBQyxDQUFDO0lBQy9CLElBQUksS0FBSyxFQUFFLENBQUM7UUFDUixHQUFHLENBQUMsWUFBWSxDQUFDLEdBQUcsQ0FBQyxPQUFPLEVBQUUsS0FBSyxDQUFDLENBQUM7SUFDekMsQ0FBQztJQUNELEdBQUcsQ0FBQyxZQUFZLENBQUMsR0FBRyxDQUFDLGdCQUFnQixFQUFFLEdBQUcsQ0FBQyxDQUFDO0lBQzVDLE9BQU8sR0FBRyxDQUFDLFFBQVEsRUFBRSxDQUFDO0FBQzFCLENBQUMiLCJzb3VyY2VzQ29udGVudCI6WyIvKipcbiAqIEJ1aWxkIHRoZSBVUkwgb3BlbmVkIGJ5IHRoZSBDTEkncyBleHRlcm5hbCBnYW1lIHByZXZpZXcgZW50cnkuXG4gKiBVbmZsYWdnZWQgVVJMcyByZW1haW4gYXZhaWxhYmxlIHRvIGxpZ2h0d2VpZ2h0IGVtYmVkZGVkIHByZXZpZXcgY29uc3VtZXJzLlxuICovXG5leHBvcnQgZnVuY3Rpb24gZ2V0RXh0ZXJuYWxHYW1lUHJldmlld1VybChzZXJ2ZXJVcmw6IHN0cmluZywgc2NlbmU/OiBzdHJpbmcpOiBzdHJpbmcge1xuICAgIGNvbnN0IHVybCA9IG5ldyBVUkwoc2VydmVyVXJsKTtcbiAgICBpZiAoc2NlbmUpIHtcbiAgICAgICAgdXJsLnNlYXJjaFBhcmFtcy5zZXQoJ3NjZW5lJywgc2NlbmUpO1xuICAgIH1cbiAgICB1cmwuc2VhcmNoUGFyYW1zLnNldCgncHJldmlld1Rvb2xiYXInLCAnMScpO1xuICAgIHJldHVybiB1cmwudG9TdHJpbmcoKTtcbn1cbiJdfQ==

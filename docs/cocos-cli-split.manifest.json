@@ -12,8 +12,9 @@
   "goals": {
     "primary": "webgame preview + web-desktop/web-mobile publish without downloading native or mini-game platforms",
     "outputNote": "Final webgame *build artifact* stays small; this inventory only splits the *toolchain* download.",
-    "phase1Target": "core ≈ 1.7 GB (from ≈ 5.4 GB full)",
-    "phase2Target": "further trim core node_modules / engine bin temp toward < 1 GB if possible"
+    "phase1Target": "core without full node_modules in the tarball; npm install on first use; ship only prebuilt gl/sharp/@ffprobe-installer",
+    "phase2Target": "optional platform/native packs; no non-web builder platforms in core",
+    "mainPackPolicy": "Ship webgame builder (web-desktop/web-mobile/web-common) in core. Other build/platform packs stay out of the main pack."
   },
   "packs": {
     "core": {
@@ -25,7 +26,6 @@
         "package.json",
         "package-lock.json",
         "workflow/**",
-        "node_modules/**",
         "packages/cc-module/**",
         "packages/cocos-cli-types/**",
         "packages/engine-compiler/**",
@@ -49,6 +49,12 @@
         "static/tools/keystore/**"
       ],
       "exclude": [
+        "node_modules/**",
+        "packages/engine/node_modules/**",
+        "packages/engine/bin/.cache/dev/**",
+        "packages/engine/bin/.cache/logs/**",
+        "packages/engine/bin/.cache/editor-cache/**",
+        "packages/engine/bin/temp/**",
         "packages/engine/native/**",
         "packages/engine/tests/**",
         "packages/engine/docs/**",
@@ -56,16 +62,31 @@
         "static/tools/cmake/**",
         "static/tools/quickgame-toolkit/**",
         "static/tools/xiaomi-pack-tools/**",
-        "static/tools/huawei-rpk-tools/**"
+        "static/tools/huawei-rpk-tools/**",
+        "dist/core/builder/platforms/android/**",
+        "dist/core/builder/platforms/ios/**",
+        "dist/core/builder/platforms/mac/**",
+        "dist/core/builder/platforms/windows/**",
+        "dist/core/builder/platforms/ohos/**",
+        "dist/core/builder/platforms/google-play/**",
+        "dist/core/builder/platforms/harmonyos-next/**",
+        "dist/core/builder/platforms/huawei-agc/**",
+        "dist/core/builder/platforms/native-common/**"
       ],
       "excludeExcept": [
         "packages/engine/native/external/emscripten/**"
       ],
+      "keepInMainPack": [
+        "dist/core/builder/platforms/web-common/**",
+        "dist/core/builder/platforms/web-desktop/**",
+        "dist/core/builder/platforms/web-mobile/**",
+        "static/build-templates/web-desktop/**",
+        "static/build-templates/web-mobile/**",
+        "static/web/**"
+      ],
+      "postInstall": "npm install --omit=dev",
       "trimCandidates": [
-        "packages/engine/bin/temp",
-        "packages/engine/templates",
-        "packages/engine/node_modules",
-        "node_modules"
+        "packages/engine/templates"
       ]
     },
     "platform": {
@@ -117,7 +138,7 @@
     }
   },
   "kurenaiHooks": {
-    "resolveRoot": "KURENAI_COCOS_CLI_ROOT → ~/Library/Application Support/kurenai/cocos-core/<ver> → legacy PinK",
+    "resolveRoot": "vendor/cocos-core inside kurenai package (override with KURENAI_COCOS_CLI_ROOT)",
     "ensurePack": "kurenai host start / publish call ensurePacks; pack with scripts/pack-cocos-core.mjs",
     "packScript": "scripts/pack-cocos-core.mjs",
     "webDefault": ["core"],

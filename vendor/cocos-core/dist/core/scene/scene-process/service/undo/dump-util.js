@@ -1,0 +1,8 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getDumpUtil = getDumpUtil;
+/** 惰性获取 dump 工具，避免与 dump 模块的循环依赖（运行时按需加载）。 */
+function getDumpUtil() {
+    return require('../dump/index').default;
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZHVtcC11dGlsLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vLi4vLi4vLi4vc3JjL2NvcmUvc2NlbmUvc2NlbmUtcHJvY2Vzcy9zZXJ2aWNlL3VuZG8vZHVtcC11dGlsLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O0FBQ0Esa0NBRUM7QUFIRCw4Q0FBOEM7QUFDOUMsU0FBZ0IsV0FBVztJQUN2QixPQUFPLE9BQU8sQ0FBQyxlQUFlLENBQUMsQ0FBQyxPQUFPLENBQUM7QUFDNUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbIi8qKiDmg7DmgKfojrflj5YgZHVtcCDlt6XlhbfvvIzpgb/lhY3kuI4gZHVtcCDmqKHlnZfnmoTlvqrnjq/kvp3otZbvvIjov5DooYzml7bmjInpnIDliqDovb3vvInjgIIgKi9cbmV4cG9ydCBmdW5jdGlvbiBnZXREdW1wVXRpbCgpOiB0eXBlb2YgaW1wb3J0KCcuLi9kdW1wL2luZGV4JykuZGVmYXVsdCB7XG4gICAgcmV0dXJuIHJlcXVpcmUoJy4uL2R1bXAvaW5kZXgnKS5kZWZhdWx0O1xufVxuIl19

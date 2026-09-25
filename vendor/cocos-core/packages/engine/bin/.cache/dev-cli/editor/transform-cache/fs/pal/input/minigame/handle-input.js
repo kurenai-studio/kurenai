@@ -1,0 +1,217 @@
+System.register("q-bundled:///fs/pal/input/minigame/handle-input.js", ["../../../cocos/core/event/index.js", "../input-source.js", "../../../cocos/core/math/index.js"], function (_export, _context) {
+  "use strict";
+
+  var EventTarget, InputSourceButton, InputSourceStick, InputSourcePosition, InputSourceOrientation, InputSourceTouch, Vec3, Quat, HandleInputDevice;
+  return {
+    setters: [function (_cocosCoreEventIndexJs) {
+      EventTarget = _cocosCoreEventIndexJs.EventTarget;
+    }, function (_inputSourceJs) {
+      InputSourceButton = _inputSourceJs.InputSourceButton;
+      InputSourceStick = _inputSourceJs.InputSourceStick;
+      InputSourcePosition = _inputSourceJs.InputSourcePosition;
+      InputSourceOrientation = _inputSourceJs.InputSourceOrientation;
+      InputSourceTouch = _inputSourceJs.InputSourceTouch;
+    }, function (_cocosCoreMathIndexJs) {
+      Vec3 = _cocosCoreMathIndexJs.Vec3;
+      Quat = _cocosCoreMathIndexJs.Quat;
+    }],
+    execute: function () {
+      _export("HandleInputDevice", HandleInputDevice = class HandleInputDevice {
+        get buttonNorth() {
+          return this._ccprivate$_buttonNorth;
+        }
+        get buttonEast() {
+          return this._ccprivate$_buttonEast;
+        }
+        get buttonWest() {
+          return this._ccprivate$_buttonWest;
+        }
+        get buttonSouth() {
+          return this._ccprivate$_buttonSouth;
+        }
+        get buttonTriggerLeft() {
+          return this._ccprivate$_buttonTriggerLeft;
+        }
+        get buttonTriggerRight() {
+          return this._ccprivate$_buttonTriggerRight;
+        }
+        get triggerLeft() {
+          return this._ccprivate$_triggerLeft;
+        }
+        get triggerRight() {
+          return this._ccprivate$_triggerRight;
+        }
+        get gripLeft() {
+          return this._ccprivate$_gripLeft;
+        }
+        get gripRight() {
+          return this._ccprivate$_gripRight;
+        }
+        get leftStick() {
+          return this._ccprivate$_leftStick;
+        }
+        get rightStick() {
+          return this._ccprivate$_rightStick;
+        }
+        get buttonLeftStick() {
+          return this._ccprivate$_buttonLeftStick;
+        }
+        get buttonRightStick() {
+          return this._ccprivate$_buttonRightStick;
+        }
+        get buttonOptions() {
+          return this._ccprivate$_buttonOptions;
+        }
+        get buttonStart() {
+          return this._ccprivate$_buttonStart;
+        }
+        get handLeftPosition() {
+          return this._ccprivate$_handLeftPosition;
+        }
+        get handLeftOrientation() {
+          return this._ccprivate$_handLeftOrientation;
+        }
+        get handRightPosition() {
+          return this._ccprivate$_handRightPosition;
+        }
+        get handRightOrientation() {
+          return this._ccprivate$_handRightOrientation;
+        }
+        get aimLeftPosition() {
+          return this._ccprivate$_aimLeftPosition;
+        }
+        get aimLeftOrientation() {
+          return this._ccprivate$_aimLeftOrientation;
+        }
+        get aimRightPosition() {
+          return this._ccprivate$_aimRightPosition;
+        }
+        get aimRightOrientation() {
+          return this._ccprivate$_aimRightOrientation;
+        }
+        get touchButtonA() {
+          return this._ccprivate$_touchButtonA;
+        }
+        get touchButtonB() {
+          return this._ccprivate$_touchButtonB;
+        }
+        get touchButtonX() {
+          return this._ccprivate$_touchButtonX;
+        }
+        get touchButtonY() {
+          return this._ccprivate$_touchButtonY;
+        }
+        get touchButtonTriggerLeft() {
+          return this._ccprivate$_touchButtonTriggerLeft;
+        }
+        get touchButtonTriggerRight() {
+          return this._ccprivate$_touchButtonTriggerRight;
+        }
+        get touchButtonThumbStickLeft() {
+          return this._ccprivate$_touchButtonThumbStickLeft;
+        }
+        get touchButtonThumbStickRight() {
+          return this._ccprivate$_touchButtonThumbStickRight;
+        }
+        constructor() {
+          this._ccprivate$_eventTarget = new EventTarget();
+          this._ccprivate$_initInputSource();
+        }
+        _on(eventType, callback, target) {
+          this._ccprivate$_eventTarget.on(eventType, callback, target);
+        }
+        _ccprivate$_initInputSource() {
+          const self = this;
+          self._ccprivate$_buttonNorth = new InputSourceButton();
+          self._ccprivate$_buttonNorth.getValue = () => 0;
+          self._ccprivate$_buttonEast = new InputSourceButton();
+          self._ccprivate$_buttonEast.getValue = () => 0;
+          self._ccprivate$_buttonWest = new InputSourceButton();
+          self._ccprivate$_buttonWest.getValue = () => 0;
+          self._ccprivate$_buttonSouth = new InputSourceButton();
+          self._ccprivate$_buttonSouth.getValue = () => 0;
+          self._ccprivate$_buttonTriggerLeft = new InputSourceButton();
+          self._ccprivate$_buttonTriggerLeft.getValue = () => 0;
+          self._ccprivate$_buttonTriggerRight = new InputSourceButton();
+          self._ccprivate$_buttonTriggerRight.getValue = () => 0;
+          self._ccprivate$_triggerLeft = new InputSourceButton();
+          self._ccprivate$_triggerLeft.getValue = () => 0;
+          self._ccprivate$_triggerRight = new InputSourceButton();
+          self._ccprivate$_triggerRight.getValue = () => 0;
+          self._ccprivate$_gripLeft = new InputSourceButton();
+          self._ccprivate$_gripLeft.getValue = () => 0;
+          self._ccprivate$_gripRight = new InputSourceButton();
+          self._ccprivate$_gripRight.getValue = () => 0;
+          self._ccprivate$_buttonLeftStick = new InputSourceButton();
+          self._ccprivate$_buttonLeftStick.getValue = () => 0;
+          const leftStickUp = new InputSourceButton();
+          leftStickUp.getValue = () => 0;
+          const leftStickDown = new InputSourceButton();
+          leftStickDown.getValue = () => 0;
+          const leftStickLeft = new InputSourceButton();
+          leftStickLeft.getValue = () => 0;
+          const leftStickRight = new InputSourceButton();
+          leftStickRight.getValue = () => 0;
+          self._ccprivate$_leftStick = new InputSourceStick({
+            up: leftStickUp,
+            down: leftStickDown,
+            left: leftStickLeft,
+            right: leftStickRight
+          });
+          self._ccprivate$_buttonRightStick = new InputSourceButton();
+          self._ccprivate$_buttonRightStick.getValue = () => 0;
+          const rightStickUp = new InputSourceButton();
+          rightStickUp.getValue = () => 0;
+          const rightStickDown = new InputSourceButton();
+          rightStickDown.getValue = () => 0;
+          const rightStickLeft = new InputSourceButton();
+          rightStickLeft.getValue = () => 0;
+          const rightStickRight = new InputSourceButton();
+          rightStickRight.getValue = () => 0;
+          self._ccprivate$_rightStick = new InputSourceStick({
+            up: rightStickUp,
+            down: rightStickDown,
+            left: rightStickLeft,
+            right: rightStickRight
+          });
+          self._ccprivate$_buttonOptions = new InputSourceButton();
+          self._ccprivate$_buttonOptions.getValue = () => 0;
+          self._ccprivate$_buttonStart = new InputSourceButton();
+          self._ccprivate$_buttonStart.getValue = () => 0;
+          self._ccprivate$_handLeftPosition = new InputSourcePosition();
+          self._ccprivate$_handLeftPosition.getValue = () => Vec3.ZERO;
+          self._ccprivate$_handLeftOrientation = new InputSourceOrientation();
+          self._ccprivate$_handLeftOrientation.getValue = () => Quat.IDENTITY;
+          self._ccprivate$_handRightPosition = new InputSourcePosition();
+          self._ccprivate$_handRightPosition.getValue = () => Vec3.ZERO;
+          self._ccprivate$_handRightOrientation = new InputSourceOrientation();
+          self._ccprivate$_handRightOrientation.getValue = () => Quat.IDENTITY;
+          self._ccprivate$_aimLeftPosition = new InputSourcePosition();
+          self._ccprivate$_aimLeftPosition.getValue = () => Vec3.ZERO;
+          self._ccprivate$_aimLeftOrientation = new InputSourceOrientation();
+          self._ccprivate$_aimLeftOrientation.getValue = () => Quat.IDENTITY;
+          self._ccprivate$_aimRightPosition = new InputSourcePosition();
+          self._ccprivate$_aimRightPosition.getValue = () => Vec3.ZERO;
+          self._ccprivate$_aimRightOrientation = new InputSourceOrientation();
+          self._ccprivate$_aimRightOrientation.getValue = () => Quat.IDENTITY;
+          self._ccprivate$_touchButtonA = new InputSourceTouch();
+          self._ccprivate$_touchButtonA.getValue = () => 0;
+          self._ccprivate$_touchButtonB = new InputSourceTouch();
+          self._ccprivate$_touchButtonB.getValue = () => 0;
+          self._ccprivate$_touchButtonX = new InputSourceTouch();
+          self._ccprivate$_touchButtonX.getValue = () => 0;
+          self._ccprivate$_touchButtonY = new InputSourceTouch();
+          self._ccprivate$_touchButtonY.getValue = () => 0;
+          self._ccprivate$_touchButtonTriggerLeft = new InputSourceTouch();
+          self._ccprivate$_touchButtonTriggerLeft.getValue = () => 0;
+          self._ccprivate$_touchButtonTriggerRight = new InputSourceTouch();
+          self._ccprivate$_touchButtonTriggerRight.getValue = () => 0;
+          self._ccprivate$_touchButtonThumbStickLeft = new InputSourceTouch();
+          self._ccprivate$_touchButtonThumbStickLeft.getValue = () => 0;
+          self._ccprivate$_touchButtonThumbStickRight = new InputSourceTouch();
+          self._ccprivate$_touchButtonThumbStickRight.getValue = () => 0;
+        }
+      });
+    }
+  };
+});

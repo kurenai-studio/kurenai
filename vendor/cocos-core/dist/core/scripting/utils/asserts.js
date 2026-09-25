@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.asserts = asserts;
+exports.assertsNonNullable = assertsNonNullable;
+const assert_1 = require("assert");
+function asserts(expr, message) {
+    if (!expr) {
+        throw new assert_1.AssertionError({ message });
+    }
+}
+function assertsNonNullable(expr, message) {
+    asserts(!(expr === null || expr === undefined), message);
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYXNzZXJ0cy5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uLy4uL3NyYy9jb3JlL3NjcmlwdGluZy91dGlscy9hc3NlcnRzLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O0FBRUEsMEJBSUM7QUFFRCxnREFFQztBQVZELG1DQUF3QztBQUV4QyxTQUFnQixPQUFPLENBQUMsSUFBYSxFQUFFLE9BQWdCO0lBQ25ELElBQUksQ0FBQyxJQUFJLEVBQUUsQ0FBQztRQUNSLE1BQU0sSUFBSSx1QkFBYyxDQUFDLEVBQUUsT0FBTyxFQUFFLENBQUMsQ0FBQztJQUMxQyxDQUFDO0FBQ0wsQ0FBQztBQUVELFNBQWdCLGtCQUFrQixDQUFJLElBQU8sRUFBRSxPQUFnQjtJQUMzRCxPQUFPLENBQUMsQ0FBQyxDQUFDLElBQUksS0FBSyxJQUFJLElBQUksSUFBSSxLQUFLLFNBQVMsQ0FBQyxFQUFFLE9BQU8sQ0FBQyxDQUFDO0FBQzdELENBQUMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBBc3NlcnRpb25FcnJvciB9IGZyb20gJ2Fzc2VydCc7XG5cbmV4cG9ydCBmdW5jdGlvbiBhc3NlcnRzKGV4cHI6IHVua25vd24sIG1lc3NhZ2U/OiBzdHJpbmcpOiBhc3NlcnRzIGV4cHIgaXMgdHJ1ZSB7XG4gICAgaWYgKCFleHByKSB7XG4gICAgICAgIHRocm93IG5ldyBBc3NlcnRpb25FcnJvcih7IG1lc3NhZ2UgfSk7XG4gICAgfVxufVxuXG5leHBvcnQgZnVuY3Rpb24gYXNzZXJ0c05vbk51bGxhYmxlPFQ+KGV4cHI6IFQsIG1lc3NhZ2U/OiBzdHJpbmcpOiBhc3NlcnRzIGV4cHIgaXMgTm9uTnVsbGFibGU8VD4ge1xuICAgIGFzc2VydHMoIShleHByID09PSBudWxsIHx8IGV4cHIgPT09IHVuZGVmaW5lZCksIG1lc3NhZ2UpO1xufVxuIl19

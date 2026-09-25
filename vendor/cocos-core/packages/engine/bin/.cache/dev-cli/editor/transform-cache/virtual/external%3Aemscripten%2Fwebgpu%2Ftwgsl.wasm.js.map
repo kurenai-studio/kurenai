@@ -1,0 +1,1 @@
+{"version":3,"names":[],"sources":["virtual:///external:emscripten/webgpu/twgsl.wasm"],"sourcesContent":["export default 'external:emscripten/webgpu/twgsl.wasm';"],"mappings":";;;;;;yBAAe,uCAAuC;IAAA;EAAA;AAAA","ignoreList":[]}

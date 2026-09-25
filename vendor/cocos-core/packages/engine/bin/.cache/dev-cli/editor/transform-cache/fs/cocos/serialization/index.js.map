@@ -1,0 +1,1 @@
+{"version":3,"names":["deserialize","Details","_deserializeJs","_instantiateJs","_export","instantiate","execute"],"sources":["file:///Users/cocos/Documents/cocos-cli/packages/engine/cocos/serialization/index.ts"],"mappings":";;;;;;oCAwBSA,WAAW;QAAAC,OAAA,EAAAC,cAAA,CACXD;MAAO;IAAA,aAAAE,cAAA;MAAAC,OAAA,gBAAAD,cAAA,CACPE,WAAW;IAAA;IAAAC,OAAA,WAAAA,CAAA;EAAA;AAAA","ignoreList":[]}

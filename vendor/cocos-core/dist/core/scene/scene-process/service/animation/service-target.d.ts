@@ -1,0 +1,16 @@
+import { AnimationClip, AnimationState, Node } from 'cc';
+import type { AnimationEventReason, IAnimationClipDump, IAnimationClipEvent, IAnimationEnterOptions, IAnimationPropertyInfo, IAnimationQueryClipOptions, IAnimationQueryPropertyValueAtFrameOptions, IAnimationTargetOptions } from '../../../common';
+import type { IPropertyCurveMetadataContext } from './property-curve';
+import { IAnimationSession } from './types';
+export { upgradeUntypedAnimationTracks } from './untyped-animation-track';
+export declare function assertAnimationEditorOpened(editorRoot: Node | null): asserts editorRoot is Node;
+export declare function requireAnimationSession(session: IAnimationSession | null): IAnimationSession;
+export declare function resolveAnimationRootTarget(options: IAnimationTargetOptions, editorRoot: Node | null, selection: string[]): Node;
+export declare function resolveAnimationTargetNode(options: IAnimationTargetOptions | IAnimationEnterOptions, editorRoot: Node | null, selection: string[]): Node;
+export declare function resolveAnimationFrameQueryNode(options: IAnimationQueryPropertyValueAtFrameOptions, session: IAnimationSession): Node;
+export declare function isCurrentAnimationSessionClipQuery(session: IAnimationSession | null, options: IAnimationQueryClipOptions, uuid: string, hasTarget: boolean): boolean;
+export declare function queryAnimationServiceProperties(node: Node, root: Node | null): IAnimationPropertyInfo[];
+export declare function createAnimationServiceClipDump(rootNode: Node, clip: AnimationClip, state?: AnimationState): IAnimationClipDump;
+export declare function createAnimationPropertyCurveMetadataContext(rootNode: Node): IPropertyCurveMetadataContext;
+export declare function createAnimationServiceClipEvent(session: IAnimationSession | null, reason: AnimationEventReason): IAnimationClipEvent | null;
+export declare function getAnimationSessionRootNode(session: IAnimationSession): Node;

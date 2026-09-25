@@ -2,7 +2,9 @@ export {
   DEFAULT_COCOS_CLI_ROOT,
   KURENAI_COCOS_CORE_VERSION,
   LEGACY_PINK_COCOS_CLI_ROOT,
+  bundledCocosCoreRoot,
   managedCocosCoreRoot,
+  packageRoot,
   resolveCocosCliRoot,
 } from "./cocos/paths.js";
 export {

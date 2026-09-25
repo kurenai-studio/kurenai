@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.changeImageDefaultType = changeImageDefaultType;
+async function changeImageDefaultType(imageAsset, type) {
+    if (!imageAsset) {
+        return;
+    }
+    // 如果同时导入，image 还在导入，则把 image 的类型改为 sprite-frame
+    if (imageAsset.imported === false && imageAsset.init === false && imageAsset.task > 0) {
+        imageAsset.userData.type = type;
+    }
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW1hZ2UtdXRpbHMuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi8uLi8uLi8uLi9zcmMvY29yZS9hc3NldHMvYXNzZXQtaGFuZGxlci9hc3NldHMvdXRpbHMvaW1hZ2UtdXRpbHMudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFFQSx3REFRQztBQVJNLEtBQUssVUFBVSxzQkFBc0IsQ0FBQyxVQUErQixFQUFFLElBQVk7SUFDdEYsSUFBSSxDQUFDLFVBQVUsRUFBRSxDQUFDO1FBQ2QsT0FBTztJQUNYLENBQUM7SUFDRCxnREFBZ0Q7SUFDaEQsSUFBSSxVQUFVLENBQUMsUUFBUSxLQUFLLEtBQUssSUFBSSxVQUFVLENBQUMsSUFBSSxLQUFLLEtBQUssSUFBSSxVQUFVLENBQUMsSUFBSSxHQUFHLENBQUMsRUFBRSxDQUFDO1FBQ3BGLFVBQVUsQ0FBQyxRQUFRLENBQUMsSUFBSSxHQUFHLElBQUksQ0FBQztJQUNwQyxDQUFDO0FBQ0wsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IFZpcnR1YWxBc3NldCB9IGZyb20gJ0Bjb2Nvcy9hc3NldC1kYic7XG5cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBjaGFuZ2VJbWFnZURlZmF1bHRUeXBlKGltYWdlQXNzZXQ6IFZpcnR1YWxBc3NldCB8IG51bGwsIHR5cGU6IHN0cmluZykge1xuICAgIGlmICghaW1hZ2VBc3NldCkge1xuICAgICAgICByZXR1cm47XG4gICAgfVxuICAgIC8vIOWmguaenOWQjOaXtuWvvOWFpe+8jGltYWdlIOi/mOWcqOWvvOWFpe+8jOWImeaKiiBpbWFnZSDnmoTnsbvlnovmlLnkuLogc3ByaXRlLWZyYW1lXG4gICAgaWYgKGltYWdlQXNzZXQuaW1wb3J0ZWQgPT09IGZhbHNlICYmIGltYWdlQXNzZXQuaW5pdCA9PT0gZmFsc2UgJiYgaW1hZ2VBc3NldC50YXNrID4gMCkge1xuICAgICAgICBpbWFnZUFzc2V0LnVzZXJEYXRhLnR5cGUgPSB0eXBlO1xuICAgIH1cbn1cbiJdfQ==

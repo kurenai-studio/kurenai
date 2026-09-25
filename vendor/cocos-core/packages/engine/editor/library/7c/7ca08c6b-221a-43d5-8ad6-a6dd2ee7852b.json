@@ -1,0 +1,1673 @@
+{
+  "__type__": "cc.EffectAsset",
+  "_name": "pipeline/post-process/bloom-mipmap-blur",
+  "_objFlags": 0,
+  "__editorExtras__": {},
+  "_native": "",
+  "techniques": [
+    {
+      "passes": [
+        {
+          "pass": "cc-bloom-mipmap-prefilter",
+          "program": "pipeline/post-process/bloom-mipmap-blur|base-vs:vert|prefilter-fs:frag",
+          "depthStencilState": {
+            "depthTest": false,
+            "depthWrite": false
+          }
+        },
+        {
+          "pass": "cc-bloom-mipmap-downsample",
+          "program": "pipeline/post-process/bloom-mipmap-blur|downsample-vs:vert|downsample-fs:frag",
+          "depthStencilState": {
+            "depthTest": false,
+            "depthWrite": false
+          }
+        },
+        {
+          "pass": "cc-bloom-mipmap-upsample",
+          "program": "pipeline/post-process/bloom-mipmap-blur|upsample-vs:vert|upsample-fs:frag",
+          "depthStencilState": {
+            "depthTest": false,
+            "depthWrite": false
+          }
+        },
+        {
+          "pass": "cc-bloom-mipmap-combine",
+          "blendState": {
+            "targets": [
+              {
+                "blend": true,
+                "blendSrc": 1,
+                "blendDst": 1,
+                "blendSrcAlpha": 0,
+                "blendDstAlpha": 1
+              }
+            ]
+          },
+          "program": "pipeline/post-process/bloom-mipmap-blur|base-vs:vert|combine-fs:frag",
+          "depthStencilState": {
+            "depthTest": false,
+            "depthWrite": false
+          }
+        }
+      ]
+    }
+  ],
+  "shaders": [
+    {
+      "blocks": [],
+      "samplerTextures": [],
+      "samplers": [],
+      "textures": [],
+      "buffers": [],
+      "images": [],
+      "subpassInputs": [],
+      "attributes": [
+        {
+          "name": "a_position",
+          "defines": [],
+          "format": 32,
+          "location": 0
+        },
+        {
+          "name": "a_normal",
+          "defines": [],
+          "format": 32,
+          "location": 1
+        },
+        {
+          "name": "a_texCoord",
+          "defines": [],
+          "format": 21,
+          "location": 2
+        },
+        {
+          "name": "a_tangent",
+          "defines": [],
+          "format": 44,
+          "location": 3
+        },
+        {
+          "name": "a_joints",
+          "defines": [
+            "CC_USE_SKINNING"
+          ],
+          "location": 4
+        },
+        {
+          "name": "a_weights",
+          "defines": [
+            "CC_USE_SKINNING"
+          ],
+          "format": 44,
+          "location": 5
+        },
+        {
+          "name": "a_jointAnimInfo",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_BAKED_ANIMATION"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 6
+        },
+        {
+          "name": "a_matWorld0",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 7
+        },
+        {
+          "name": "a_matWorld1",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 8
+        },
+        {
+          "name": "a_matWorld2",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 9
+        },
+        {
+          "name": "a_lightingMapUVParam",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHTMAP"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 10
+        },
+        {
+          "name": "a_localShadowBiasAndProbeId",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 11
+        },
+        {
+          "name": "a_reflectionProbeData",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_REFLECTION_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 12
+        },
+        {
+          "name": "a_sh_linear_const_r",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 13
+        },
+        {
+          "name": "a_sh_linear_const_g",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 14
+        },
+        {
+          "name": "a_sh_linear_const_b",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 15
+        },
+        {
+          "name": "a_vertexId",
+          "defines": [
+            "CC_USE_MORPH"
+          ],
+          "format": 11,
+          "location": 16
+        }
+      ],
+      "varyings": [
+        {
+          "name": "vUv",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 0
+        },
+        {
+          "name": "vUv00",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 1,
+          "location": 1
+        },
+        {
+          "name": "vUv01",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 1,
+          "location": 2
+        },
+        {
+          "name": "vUv02",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 1,
+          "location": 3
+        },
+        {
+          "name": "vUv03",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 1,
+          "location": 4
+        },
+        {
+          "name": "vUv04",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 1,
+          "location": 5
+        }
+      ],
+      "fragColors": [
+        {
+          "name": "cc_FragColor",
+          "typename": "vec4",
+          "type": 16,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 16,
+          "location": 0
+        }
+      ],
+      "descriptors": [
+        {
+          "rate": 0,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 1,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 2,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 3,
+          "blocks": [
+            {
+              "name": "Pipeline",
+              "members": [
+                {
+                  "name": "g_platform",
+                  "type": 16,
+                  "count": 1
+                }
+              ],
+              "defines": [],
+              "stageFlags": 1,
+              "binding": 0
+            },
+            {
+              "name": "BloomUBO",
+              "members": [
+                {
+                  "name": "bloomParams",
+                  "type": 16,
+                  "count": 1
+                }
+              ],
+              "defines": [],
+              "stageFlags": 16,
+              "binding": 1
+            }
+          ],
+          "samplerTextures": [
+            {
+              "name": "mainTexture",
+              "type": 28,
+              "count": 1,
+              "defines": [],
+              "stageFlags": 16,
+              "sampleType": 0,
+              "binding": 2
+            }
+          ],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        }
+      ],
+      "hash": 382871905,
+      "glsl4": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nlayout(location = 0) in vec3 a_position;\nlayout(location = 1) in vec3 a_normal;\nlayout(location = 2) in vec2 a_texCoord;\nlayout(location = 3) in vec4 a_tangent;\n#if CC_USE_SKINNING\n    layout(location = 4) in u32vec4 a_joints;\n  layout(location = 5) in vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    layout(location = 6) in highp vec4 a_jointAnimInfo;\n  #endif\n  layout(location = 7) in vec4 a_matWorld0;\n  layout(location = 8) in vec4 a_matWorld1;\n  layout(location = 9) in vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    layout(location = 10) in vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    layout(location = 11) in vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    layout(location = 12) in vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    layout(location = 13) in vec4 a_sh_linear_const_r;\n    layout(location = 14) in vec4 a_sh_linear_const_g;\n    layout(location = 15) in vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n#endif\nlayout(set = 1, binding = 0) uniform Pipeline {\n    vec4 g_platform;\n};\nlayout(location = 0) out vec2 vUv;\nlayout(location = 1) out vec2 vUv00;\nlayout(location = 2) out vec2 vUv01;\nlayout(location = 3) out vec2 vUv02;\nlayout(location = 4) out vec2 vUv03;\nlayout(location = 5) out vec2 vUv04;\nvec4 vert() {\n    vUv = a_texCoord;\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\nlayout(set = 1, binding = 1) uniform BloomUBO {\n  mediump vec4 bloomParams;\n};\nlayout(location = 0) in vec2 vUv;\nlayout(set = 1, binding = 2) uniform sampler2D mainTexture;\nfloat luminance(vec3 color) {\n    return dot(color, vec3(0.2126729, 0.7151522, 0.0721750));\n}\nvec4 frag() {\n    vec4 pixel = texture(mainTexture, vUv);\n    float l = smoothstep(bloomParams.z, bloomParams.z + 0.025, luminance(pixel.rgb));\n    return vec4(pixel.rgb * l, l);\n}\nlayout(location = 0) out vec4 cc_FragColor;\nvoid main() { cc_FragColor = frag(); }"
+      },
+      "glsl3": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nin vec3 a_position;\nin vec3 a_normal;\nin vec2 a_texCoord;\nin vec4 a_tangent;\n#if CC_USE_SKINNING\n    in vec4 a_joints;\n  in vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    in highp vec4 a_jointAnimInfo;\n  #endif\n  in vec4 a_matWorld0;\n  in vec4 a_matWorld1;\n  in vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    in vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    in vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    in vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    in vec4 a_sh_linear_const_r;\n    in vec4 a_sh_linear_const_g;\n    in vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n    in float a_vertexId;\n#endif\nlayout(std140) uniform Pipeline {\n    vec4 g_platform;\n};\nout vec2 vUv;\nout vec2 vUv00;\nout vec2 vUv01;\nout vec2 vUv02;\nout vec2 vUv03;\nout vec2 vUv04;\nvec4 vert() {\n    vUv = a_texCoord;\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\nlayout(std140) uniform BloomUBO {\n  mediump vec4 bloomParams;\n};\nin vec2 vUv;\nuniform sampler2D mainTexture;\nfloat luminance(vec3 color) {\n    return dot(color, vec3(0.2126729, 0.7151522, 0.0721750));\n}\nvec4 frag() {\n    vec4 pixel = texture(mainTexture, vUv);\n    float l = smoothstep(bloomParams.z, bloomParams.z + 0.025, luminance(pixel.rgb));\n    return vec4(pixel.rgb * l, l);\n}\nlayout(location = 0) out vec4 cc_FragColor;\nvoid main() { cc_FragColor = frag(); }"
+      },
+      "glsl1": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nattribute vec3 a_position;\nattribute vec3 a_normal;\nattribute vec2 a_texCoord;\nattribute vec4 a_tangent;\n#if CC_USE_SKINNING\n    attribute vec4 a_joints;\n  attribute vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    attribute highp vec4 a_jointAnimInfo;\n  #endif\n  attribute vec4 a_matWorld0;\n  attribute vec4 a_matWorld1;\n  attribute vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    attribute vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    attribute vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    attribute vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    attribute vec4 a_sh_linear_const_r;\n    attribute vec4 a_sh_linear_const_g;\n    attribute vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n    attribute float a_vertexId;\n#endif\n  uniform vec4 g_platform;\nvarying vec2 vUv;\nvarying vec2 vUv00;\nvarying vec2 vUv01;\nvarying vec2 vUv02;\nvarying vec2 vUv03;\nvarying vec2 vUv04;\nvec4 vert() {\n    vUv = a_texCoord;\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\n  uniform mediump vec4 bloomParams;\nvarying vec2 vUv;\nuniform sampler2D mainTexture;\nfloat luminance(vec3 color) {\n    return dot(color, vec3(0.2126729, 0.7151522, 0.0721750));\n}\nvec4 frag() {\n    vec4 pixel = texture2D(mainTexture, vUv);\n    float l = smoothstep(bloomParams.z, bloomParams.z + 0.025, luminance(pixel.rgb));\n    return vec4(pixel.rgb * l, l);\n}\nvoid main() { gl_FragColor = frag(); }"
+      },
+      "builtins": {
+        "globals": {
+          "blocks": [],
+          "samplerTextures": [],
+          "buffers": [],
+          "images": []
+        },
+        "locals": {
+          "blocks": [],
+          "samplerTextures": [],
+          "buffers": [],
+          "images": []
+        },
+        "statistics": {
+          "CC_EFFECT_USED_VERTEX_UNIFORM_VECTORS": 1,
+          "CC_EFFECT_USED_FRAGMENT_UNIFORM_VECTORS": 1
+        }
+      },
+      "defines": [
+        {
+          "name": "USE_INSTANCING",
+          "type": "boolean",
+          "defines": [],
+          "editor": {
+            "elevated": true
+          }
+        },
+        {
+          "name": "CC_USE_SKINNING",
+          "type": "boolean",
+          "defines": []
+        },
+        {
+          "name": "CC_USE_BAKED_ANIMATION",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_LIGHTMAP",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_REFLECTION_PROBE",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_RECEIVE_SHADOW",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_LIGHT_PROBE",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_MORPH",
+          "type": "boolean",
+          "defines": []
+        }
+      ],
+      "name": "pipeline/post-process/bloom-mipmap-blur|base-vs:vert|prefilter-fs:frag"
+    },
+    {
+      "blocks": [],
+      "samplerTextures": [],
+      "samplers": [],
+      "textures": [],
+      "buffers": [],
+      "images": [],
+      "subpassInputs": [],
+      "attributes": [
+        {
+          "name": "a_position",
+          "defines": [],
+          "format": 32,
+          "location": 0
+        },
+        {
+          "name": "a_normal",
+          "defines": [],
+          "format": 32,
+          "location": 1
+        },
+        {
+          "name": "a_texCoord",
+          "defines": [],
+          "format": 21,
+          "location": 2
+        },
+        {
+          "name": "a_tangent",
+          "defines": [],
+          "format": 44,
+          "location": 3
+        },
+        {
+          "name": "a_joints",
+          "defines": [
+            "CC_USE_SKINNING"
+          ],
+          "location": 4
+        },
+        {
+          "name": "a_weights",
+          "defines": [
+            "CC_USE_SKINNING"
+          ],
+          "format": 44,
+          "location": 5
+        },
+        {
+          "name": "a_jointAnimInfo",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_BAKED_ANIMATION"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 6
+        },
+        {
+          "name": "a_matWorld0",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 7
+        },
+        {
+          "name": "a_matWorld1",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 8
+        },
+        {
+          "name": "a_matWorld2",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 9
+        },
+        {
+          "name": "a_lightingMapUVParam",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHTMAP"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 10
+        },
+        {
+          "name": "a_localShadowBiasAndProbeId",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 11
+        },
+        {
+          "name": "a_reflectionProbeData",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_REFLECTION_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 12
+        },
+        {
+          "name": "a_sh_linear_const_r",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 13
+        },
+        {
+          "name": "a_sh_linear_const_g",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 14
+        },
+        {
+          "name": "a_sh_linear_const_b",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 15
+        },
+        {
+          "name": "a_vertexId",
+          "defines": [
+            "CC_USE_MORPH"
+          ],
+          "format": 11,
+          "location": 16
+        }
+      ],
+      "varyings": [
+        {
+          "name": "vUv",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 0
+        },
+        {
+          "name": "vUv00",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 1
+        },
+        {
+          "name": "vUv01",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 2
+        },
+        {
+          "name": "vUv02",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 3
+        },
+        {
+          "name": "vUv03",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 4
+        },
+        {
+          "name": "vUv04",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 5
+        },
+        {
+          "name": "vUv05",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 6
+        },
+        {
+          "name": "vUv06",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 7
+        },
+        {
+          "name": "vUv07",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 8
+        },
+        {
+          "name": "vUv08",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 9
+        },
+        {
+          "name": "vUv09",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 10
+        },
+        {
+          "name": "vUv10",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 11
+        },
+        {
+          "name": "vUv11",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 12
+        }
+      ],
+      "fragColors": [
+        {
+          "name": "cc_FragColor",
+          "typename": "vec4",
+          "type": 16,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 16,
+          "location": 0
+        }
+      ],
+      "descriptors": [
+        {
+          "rate": 0,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 1,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 2,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 3,
+          "blocks": [
+            {
+              "name": "Pipeline",
+              "members": [
+                {
+                  "name": "g_platform",
+                  "type": 16,
+                  "count": 1
+                }
+              ],
+              "defines": [],
+              "stageFlags": 1,
+              "binding": 0
+            },
+            {
+              "name": "BloomUBO",
+              "members": [
+                {
+                  "name": "bloomParams",
+                  "type": 16,
+                  "count": 1
+                }
+              ],
+              "defines": [],
+              "stageFlags": 1,
+              "binding": 1
+            }
+          ],
+          "samplerTextures": [
+            {
+              "name": "mainTexture",
+              "type": 28,
+              "count": 1,
+              "defines": [],
+              "stageFlags": 16,
+              "sampleType": 0,
+              "binding": 2
+            }
+          ],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        }
+      ],
+      "hash": 3041977745,
+      "glsl4": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nlayout(location = 0) in vec3 a_position;\nlayout(location = 1) in vec3 a_normal;\nlayout(location = 2) in vec2 a_texCoord;\nlayout(location = 3) in vec4 a_tangent;\n#if CC_USE_SKINNING\n    layout(location = 4) in u32vec4 a_joints;\n  layout(location = 5) in vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    layout(location = 6) in highp vec4 a_jointAnimInfo;\n  #endif\n  layout(location = 7) in vec4 a_matWorld0;\n  layout(location = 8) in vec4 a_matWorld1;\n  layout(location = 9) in vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    layout(location = 10) in vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    layout(location = 11) in vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    layout(location = 12) in vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    layout(location = 13) in vec4 a_sh_linear_const_r;\n    layout(location = 14) in vec4 a_sh_linear_const_g;\n    layout(location = 15) in vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n#endif\nlayout(set = 1, binding = 0) uniform Pipeline {\n    vec4 g_platform;\n};\nlayout(set = 1, binding = 1) uniform BloomUBO {\n  mediump vec4 bloomParams;\n};\nlayout(location = 0) out vec2 vUv;\nlayout(location = 1) out vec2 vUv00;\nlayout(location = 2) out vec2 vUv01;\nlayout(location = 3) out vec2 vUv02;\nlayout(location = 4) out vec2 vUv03;\nlayout(location = 5) out vec2 vUv04;\nlayout(location = 6) out vec2 vUv05;\nlayout(location = 7) out vec2 vUv06;\nlayout(location = 8) out vec2 vUv07;\nlayout(location = 9) out vec2 vUv08;\nlayout(location = 10) out vec2 vUv09;\nlayout(location = 11) out vec2 vUv10;\nlayout(location = 12) out vec2 vUv11;\nvec4 vert() {\n    vUv = a_texCoord;\n    vUv00 = vUv + bloomParams.xy * vec2(-1.0, 1.0);\n    vUv01 = vUv + bloomParams.xy * vec2(1.0, 1.0);\n    vUv02 = vUv + bloomParams.xy * vec2(-1.0, - 1.0);\n    vUv03 = vUv + bloomParams.xy * vec2(1.0, - 1.0);\n    vUv04 = vUv + bloomParams.xy * vec2(-2.0, 2.0);\n    vUv05 = vUv + bloomParams.xy * vec2(0.0, 2.0);\n    vUv06 = vUv + bloomParams.xy * vec2(2.0, 2.0);\n    vUv07 = vUv + bloomParams.xy * vec2(-2.0, 0.0);\n    vUv08 = vUv + bloomParams.xy * vec2(2.0, 0.0);\n    vUv09 = vUv + bloomParams.xy * vec2(-2.0, - 2.0);\n    vUv10 = vUv + bloomParams.xy * vec2(0.0, - 2.0);\n    vUv11 = vUv + bloomParams.xy * vec2(2.0, - 2.0);\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\n#define WEIGHT_INNER 0.125\n#define WEIGHT_OUTER 0.0555555\nlayout(location = 0) in vec2 vUv;\nlayout(location = 1) in vec2 vUv00;\nlayout(location = 2) in vec2 vUv01;\nlayout(location = 3) in vec2 vUv02;\nlayout(location = 4) in vec2 vUv03;\nlayout(location = 5) in vec2 vUv04;\nlayout(location = 6) in vec2 vUv05;\nlayout(location = 7) in vec2 vUv06;\nlayout(location = 8) in vec2 vUv07;\nlayout(location = 9) in vec2 vUv08;\nlayout(location = 10) in vec2 vUv09;\nlayout(location = 11) in vec2 vUv10;\nlayout(location = 12) in vec2 vUv11;\nlayout(set = 1, binding = 2) uniform sampler2D mainTexture;\nfloat clampToBorder(const in vec2 uv) {\n    return float(uv.s >= 0.0 && uv.s <= 1.0 && uv.t >= 0.0 && uv.t <= 1.0);\n}\nvec4 frag() {\n    vec4 c = vec4(0.0);\n    vec4 w = WEIGHT_INNER * vec4(\n        clampToBorder(vUv00),\n        clampToBorder(vUv01),\n        clampToBorder(vUv02),\n        clampToBorder(vUv03)\n    );\n    c += w.x * texture(mainTexture, vUv00);\n    c += w.y * texture(mainTexture, vUv01);\n    c += w.z * texture(mainTexture, vUv02);\n    c += w.w * texture(mainTexture, vUv03);\n    w = WEIGHT_OUTER * vec4(\n        clampToBorder(vUv04),\n        clampToBorder(vUv05),\n        clampToBorder(vUv06),\n        clampToBorder(vUv07)\n    );\n    c += w.x * texture(mainTexture, vUv04);\n    c += w.y * texture(mainTexture, vUv05);\n    c += w.z * texture(mainTexture, vUv06);\n    c += w.w * texture(mainTexture, vUv07);\n    w = WEIGHT_OUTER * vec4(\n        clampToBorder(vUv08),\n        clampToBorder(vUv09),\n        clampToBorder(vUv10),\n        clampToBorder(vUv11)\n    );\n    c += w.x * texture(mainTexture, vUv08);\n    c += w.y * texture(mainTexture, vUv09);\n    c += w.z * texture(mainTexture, vUv10);\n    c += w.w * texture(mainTexture, vUv11);\n    c += WEIGHT_OUTER * texture(mainTexture, vUv);\n    return c;\n}\nlayout(location = 0) out vec4 cc_FragColor;\nvoid main() { cc_FragColor = frag(); }"
+      },
+      "glsl3": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nin vec3 a_position;\nin vec3 a_normal;\nin vec2 a_texCoord;\nin vec4 a_tangent;\n#if CC_USE_SKINNING\n    in vec4 a_joints;\n  in vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    in highp vec4 a_jointAnimInfo;\n  #endif\n  in vec4 a_matWorld0;\n  in vec4 a_matWorld1;\n  in vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    in vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    in vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    in vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    in vec4 a_sh_linear_const_r;\n    in vec4 a_sh_linear_const_g;\n    in vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n    in float a_vertexId;\n#endif\nlayout(std140) uniform Pipeline {\n    vec4 g_platform;\n};\nlayout(std140) uniform BloomUBO {\n  mediump vec4 bloomParams;\n};\nout vec2 vUv;\nout vec2 vUv00;\nout vec2 vUv01;\nout vec2 vUv02;\nout vec2 vUv03;\nout vec2 vUv04;\nout vec2 vUv05;\nout vec2 vUv06;\nout vec2 vUv07;\nout vec2 vUv08;\nout vec2 vUv09;\nout vec2 vUv10;\nout vec2 vUv11;\nvec4 vert() {\n    vUv = a_texCoord;\n    vUv00 = vUv + bloomParams.xy * vec2(-1.0, 1.0);\n    vUv01 = vUv + bloomParams.xy * vec2(1.0, 1.0);\n    vUv02 = vUv + bloomParams.xy * vec2(-1.0, - 1.0);\n    vUv03 = vUv + bloomParams.xy * vec2(1.0, - 1.0);\n    vUv04 = vUv + bloomParams.xy * vec2(-2.0, 2.0);\n    vUv05 = vUv + bloomParams.xy * vec2(0.0, 2.0);\n    vUv06 = vUv + bloomParams.xy * vec2(2.0, 2.0);\n    vUv07 = vUv + bloomParams.xy * vec2(-2.0, 0.0);\n    vUv08 = vUv + bloomParams.xy * vec2(2.0, 0.0);\n    vUv09 = vUv + bloomParams.xy * vec2(-2.0, - 2.0);\n    vUv10 = vUv + bloomParams.xy * vec2(0.0, - 2.0);\n    vUv11 = vUv + bloomParams.xy * vec2(2.0, - 2.0);\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\n#define WEIGHT_INNER 0.125\n#define WEIGHT_OUTER 0.0555555\nin vec2 vUv;\nin vec2 vUv00;\nin vec2 vUv01;\nin vec2 vUv02;\nin vec2 vUv03;\nin vec2 vUv04;\nin vec2 vUv05;\nin vec2 vUv06;\nin vec2 vUv07;\nin vec2 vUv08;\nin vec2 vUv09;\nin vec2 vUv10;\nin vec2 vUv11;\nuniform sampler2D mainTexture;\nfloat clampToBorder(const in vec2 uv) {\n    return float(uv.s >= 0.0 && uv.s <= 1.0 && uv.t >= 0.0 && uv.t <= 1.0);\n}\nvec4 frag() {\n    vec4 c = vec4(0.0);\n    vec4 w = WEIGHT_INNER * vec4(\n        clampToBorder(vUv00),\n        clampToBorder(vUv01),\n        clampToBorder(vUv02),\n        clampToBorder(vUv03)\n    );\n    c += w.x * texture(mainTexture, vUv00);\n    c += w.y * texture(mainTexture, vUv01);\n    c += w.z * texture(mainTexture, vUv02);\n    c += w.w * texture(mainTexture, vUv03);\n    w = WEIGHT_OUTER * vec4(\n        clampToBorder(vUv04),\n        clampToBorder(vUv05),\n        clampToBorder(vUv06),\n        clampToBorder(vUv07)\n    );\n    c += w.x * texture(mainTexture, vUv04);\n    c += w.y * texture(mainTexture, vUv05);\n    c += w.z * texture(mainTexture, vUv06);\n    c += w.w * texture(mainTexture, vUv07);\n    w = WEIGHT_OUTER * vec4(\n        clampToBorder(vUv08),\n        clampToBorder(vUv09),\n        clampToBorder(vUv10),\n        clampToBorder(vUv11)\n    );\n    c += w.x * texture(mainTexture, vUv08);\n    c += w.y * texture(mainTexture, vUv09);\n    c += w.z * texture(mainTexture, vUv10);\n    c += w.w * texture(mainTexture, vUv11);\n    c += WEIGHT_OUTER * texture(mainTexture, vUv);\n    return c;\n}\nlayout(location = 0) out vec4 cc_FragColor;\nvoid main() { cc_FragColor = frag(); }"
+      },
+      "glsl1": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nattribute vec3 a_position;\nattribute vec3 a_normal;\nattribute vec2 a_texCoord;\nattribute vec4 a_tangent;\n#if CC_USE_SKINNING\n    attribute vec4 a_joints;\n  attribute vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    attribute highp vec4 a_jointAnimInfo;\n  #endif\n  attribute vec4 a_matWorld0;\n  attribute vec4 a_matWorld1;\n  attribute vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    attribute vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    attribute vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    attribute vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    attribute vec4 a_sh_linear_const_r;\n    attribute vec4 a_sh_linear_const_g;\n    attribute vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n    attribute float a_vertexId;\n#endif\n  uniform vec4 g_platform;\n  uniform mediump vec4 bloomParams;\nvarying vec2 vUv;\nvarying vec2 vUv00;\nvarying vec2 vUv01;\nvarying vec2 vUv02;\nvarying vec2 vUv03;\nvarying vec2 vUv04;\nvarying vec2 vUv05;\nvarying vec2 vUv06;\nvarying vec2 vUv07;\nvarying vec2 vUv08;\nvarying vec2 vUv09;\nvarying vec2 vUv10;\nvarying vec2 vUv11;\nvec4 vert() {\n    vUv = a_texCoord;\n    vUv00 = vUv + bloomParams.xy * vec2(-1.0, 1.0);\n    vUv01 = vUv + bloomParams.xy * vec2(1.0, 1.0);\n    vUv02 = vUv + bloomParams.xy * vec2(-1.0, - 1.0);\n    vUv03 = vUv + bloomParams.xy * vec2(1.0, - 1.0);\n    vUv04 = vUv + bloomParams.xy * vec2(-2.0, 2.0);\n    vUv05 = vUv + bloomParams.xy * vec2(0.0, 2.0);\n    vUv06 = vUv + bloomParams.xy * vec2(2.0, 2.0);\n    vUv07 = vUv + bloomParams.xy * vec2(-2.0, 0.0);\n    vUv08 = vUv + bloomParams.xy * vec2(2.0, 0.0);\n    vUv09 = vUv + bloomParams.xy * vec2(-2.0, - 2.0);\n    vUv10 = vUv + bloomParams.xy * vec2(0.0, - 2.0);\n    vUv11 = vUv + bloomParams.xy * vec2(2.0, - 2.0);\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\n#define WEIGHT_INNER 0.125\n#define WEIGHT_OUTER 0.0555555\nvarying vec2 vUv;\nvarying vec2 vUv00;\nvarying vec2 vUv01;\nvarying vec2 vUv02;\nvarying vec2 vUv03;\nvarying vec2 vUv04;\nvarying vec2 vUv05;\nvarying vec2 vUv06;\nvarying vec2 vUv07;\nvarying vec2 vUv08;\nvarying vec2 vUv09;\nvarying vec2 vUv10;\nvarying vec2 vUv11;\nuniform sampler2D mainTexture;\nfloat clampToBorder(const in vec2 uv) {\n    return float(uv.s >= 0.0 && uv.s <= 1.0 && uv.t >= 0.0 && uv.t <= 1.0);\n}\nvec4 frag() {\n    vec4 c = vec4(0.0);\n    vec4 w = WEIGHT_INNER * vec4(\n        clampToBorder(vUv00),\n        clampToBorder(vUv01),\n        clampToBorder(vUv02),\n        clampToBorder(vUv03)\n    );\n    c += w.x * texture2D(mainTexture, vUv00);\n    c += w.y * texture2D(mainTexture, vUv01);\n    c += w.z * texture2D(mainTexture, vUv02);\n    c += w.w * texture2D(mainTexture, vUv03);\n    w = WEIGHT_OUTER * vec4(\n        clampToBorder(vUv04),\n        clampToBorder(vUv05),\n        clampToBorder(vUv06),\n        clampToBorder(vUv07)\n    );\n    c += w.x * texture2D(mainTexture, vUv04);\n    c += w.y * texture2D(mainTexture, vUv05);\n    c += w.z * texture2D(mainTexture, vUv06);\n    c += w.w * texture2D(mainTexture, vUv07);\n    w = WEIGHT_OUTER * vec4(\n        clampToBorder(vUv08),\n        clampToBorder(vUv09),\n        clampToBorder(vUv10),\n        clampToBorder(vUv11)\n    );\n    c += w.x * texture2D(mainTexture, vUv08);\n    c += w.y * texture2D(mainTexture, vUv09);\n    c += w.z * texture2D(mainTexture, vUv10);\n    c += w.w * texture2D(mainTexture, vUv11);\n    c += WEIGHT_OUTER * texture2D(mainTexture, vUv);\n    return c;\n}\nvoid main() { gl_FragColor = frag(); }"
+      },
+      "builtins": {
+        "globals": {
+          "blocks": [],
+          "samplerTextures": [],
+          "buffers": [],
+          "images": []
+        },
+        "locals": {
+          "blocks": [],
+          "samplerTextures": [],
+          "buffers": [],
+          "images": []
+        },
+        "statistics": {
+          "CC_EFFECT_USED_VERTEX_UNIFORM_VECTORS": 2,
+          "CC_EFFECT_USED_FRAGMENT_UNIFORM_VECTORS": 0
+        }
+      },
+      "defines": [
+        {
+          "name": "USE_INSTANCING",
+          "type": "boolean",
+          "defines": [],
+          "editor": {
+            "elevated": true
+          }
+        },
+        {
+          "name": "CC_USE_SKINNING",
+          "type": "boolean",
+          "defines": []
+        },
+        {
+          "name": "CC_USE_BAKED_ANIMATION",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_LIGHTMAP",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_REFLECTION_PROBE",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_RECEIVE_SHADOW",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_LIGHT_PROBE",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_MORPH",
+          "type": "boolean",
+          "defines": []
+        }
+      ],
+      "name": "pipeline/post-process/bloom-mipmap-blur|downsample-vs:vert|downsample-fs:frag"
+    },
+    {
+      "blocks": [],
+      "samplerTextures": [],
+      "samplers": [],
+      "textures": [],
+      "buffers": [],
+      "images": [],
+      "subpassInputs": [],
+      "attributes": [
+        {
+          "name": "a_position",
+          "defines": [],
+          "format": 32,
+          "location": 0
+        },
+        {
+          "name": "a_normal",
+          "defines": [],
+          "format": 32,
+          "location": 1
+        },
+        {
+          "name": "a_texCoord",
+          "defines": [],
+          "format": 21,
+          "location": 2
+        },
+        {
+          "name": "a_tangent",
+          "defines": [],
+          "format": 44,
+          "location": 3
+        },
+        {
+          "name": "a_joints",
+          "defines": [
+            "CC_USE_SKINNING"
+          ],
+          "location": 4
+        },
+        {
+          "name": "a_weights",
+          "defines": [
+            "CC_USE_SKINNING"
+          ],
+          "format": 44,
+          "location": 5
+        },
+        {
+          "name": "a_jointAnimInfo",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_BAKED_ANIMATION"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 6
+        },
+        {
+          "name": "a_matWorld0",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 7
+        },
+        {
+          "name": "a_matWorld1",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 8
+        },
+        {
+          "name": "a_matWorld2",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 9
+        },
+        {
+          "name": "a_lightingMapUVParam",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHTMAP"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 10
+        },
+        {
+          "name": "a_localShadowBiasAndProbeId",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 11
+        },
+        {
+          "name": "a_reflectionProbeData",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_REFLECTION_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 12
+        },
+        {
+          "name": "a_sh_linear_const_r",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 13
+        },
+        {
+          "name": "a_sh_linear_const_g",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 14
+        },
+        {
+          "name": "a_sh_linear_const_b",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 15
+        },
+        {
+          "name": "a_vertexId",
+          "defines": [
+            "CC_USE_MORPH"
+          ],
+          "format": 11,
+          "location": 16
+        }
+      ],
+      "varyings": [
+        {
+          "name": "vUv",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 0
+        },
+        {
+          "name": "vUv0",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 1
+        },
+        {
+          "name": "vUv1",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 2
+        },
+        {
+          "name": "vUv2",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 3
+        },
+        {
+          "name": "vUv3",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 4
+        },
+        {
+          "name": "vUv4",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 5
+        },
+        {
+          "name": "vUv5",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 6
+        },
+        {
+          "name": "vUv6",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 7
+        },
+        {
+          "name": "vUv7",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 8
+        }
+      ],
+      "fragColors": [
+        {
+          "name": "cc_FragColor",
+          "typename": "vec4",
+          "type": 16,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 16,
+          "location": 0
+        }
+      ],
+      "descriptors": [
+        {
+          "rate": 0,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 1,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 2,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 3,
+          "blocks": [
+            {
+              "name": "Pipeline",
+              "members": [
+                {
+                  "name": "g_platform",
+                  "type": 16,
+                  "count": 1
+                }
+              ],
+              "defines": [],
+              "stageFlags": 1,
+              "binding": 0
+            },
+            {
+              "name": "BloomUBO",
+              "members": [
+                {
+                  "name": "bloomParams",
+                  "type": 16,
+                  "count": 1
+                }
+              ],
+              "defines": [],
+              "stageFlags": 1,
+              "binding": 1
+            }
+          ],
+          "samplerTextures": [
+            {
+              "name": "mainTexture",
+              "type": 28,
+              "count": 1,
+              "defines": [],
+              "stageFlags": 16,
+              "sampleType": 0,
+              "binding": 2
+            },
+            {
+              "name": "downsampleTexture",
+              "type": 28,
+              "count": 1,
+              "defines": [],
+              "stageFlags": 16,
+              "sampleType": 0,
+              "binding": 3
+            }
+          ],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        }
+      ],
+      "hash": 2428684649,
+      "glsl4": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nlayout(location = 0) in vec3 a_position;\nlayout(location = 1) in vec3 a_normal;\nlayout(location = 2) in vec2 a_texCoord;\nlayout(location = 3) in vec4 a_tangent;\n#if CC_USE_SKINNING\n    layout(location = 4) in u32vec4 a_joints;\n  layout(location = 5) in vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    layout(location = 6) in highp vec4 a_jointAnimInfo;\n  #endif\n  layout(location = 7) in vec4 a_matWorld0;\n  layout(location = 8) in vec4 a_matWorld1;\n  layout(location = 9) in vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    layout(location = 10) in vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    layout(location = 11) in vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    layout(location = 12) in vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    layout(location = 13) in vec4 a_sh_linear_const_r;\n    layout(location = 14) in vec4 a_sh_linear_const_g;\n    layout(location = 15) in vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n#endif\nlayout(set = 1, binding = 0) uniform Pipeline {\n    vec4 g_platform;\n};\nlayout(set = 1, binding = 1) uniform BloomUBO {\n  mediump vec4 bloomParams;\n};\nlayout(location = 0) out vec2 vUv;\nlayout(location = 1) out vec2 vUv0;\nlayout(location = 2) out vec2 vUv1;\nlayout(location = 3) out vec2 vUv2;\nlayout(location = 4) out vec2 vUv3;\nlayout(location = 5) out vec2 vUv4;\nlayout(location = 6) out vec2 vUv5;\nlayout(location = 7) out vec2 vUv6;\nlayout(location = 8) out vec2 vUv7;\nvec4 vert() {\n    vUv = a_texCoord;\n    vUv0 = vUv + bloomParams.xy * vec2(-1.0, 1.0);\n    vUv1 = vUv + bloomParams.xy * vec2(0.0, 1.0);\n    vUv2 = vUv + bloomParams.xy * vec2(1.0, 1.0);\n    vUv3 = vUv + bloomParams.xy * vec2(-1.0, 0.0);\n    vUv4 = vUv + bloomParams.xy * vec2(1.0, 0.0);\n    vUv5 = vUv + bloomParams.xy * vec2(-1.0, - 1.0);\n    vUv6 = vUv + bloomParams.xy * vec2(0.0, - 1.0);\n    vUv7 = vUv + bloomParams.xy * vec2(1.0, - 1.0);\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\nlayout(location = 0) in vec2 vUv;\nlayout(location = 1) in vec2 vUv0;\nlayout(location = 2) in vec2 vUv1;\nlayout(location = 3) in vec2 vUv2;\nlayout(location = 4) in vec2 vUv3;\nlayout(location = 5) in vec2 vUv4;\nlayout(location = 6) in vec2 vUv5;\nlayout(location = 7) in vec2 vUv6;\nlayout(location = 8) in vec2 vUv7;\nlayout(set = 1, binding = 2) uniform lowp sampler2D mainTexture;\nlayout(set = 1, binding = 3) uniform lowp sampler2D downsampleTexture;\nvec4 frag() {\n    vec4 c = vec4(0.0);\n    c += texture(mainTexture, vUv0) * 0.0625;\n    c += texture(mainTexture, vUv1) * 0.125;\n    c += texture(mainTexture, vUv2) * 0.0625;\n    c += texture(mainTexture, vUv3) * 0.125;\n    c += texture(mainTexture, vUv) * 0.25;\n    c += texture(mainTexture, vUv4) * 0.125;\n    c += texture(mainTexture, vUv5) * 0.0625;\n    c += texture(mainTexture, vUv6) * 0.125;\n    c += texture(mainTexture, vUv7) * 0.0625;\n    vec4 baseColor = texture(downsampleTexture, vUv);\n    return mix(baseColor, c, 0.85);\n}\nlayout(location = 0) out vec4 cc_FragColor;\nvoid main() { cc_FragColor = frag(); }"
+      },
+      "glsl3": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nin vec3 a_position;\nin vec3 a_normal;\nin vec2 a_texCoord;\nin vec4 a_tangent;\n#if CC_USE_SKINNING\n    in vec4 a_joints;\n  in vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    in highp vec4 a_jointAnimInfo;\n  #endif\n  in vec4 a_matWorld0;\n  in vec4 a_matWorld1;\n  in vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    in vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    in vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    in vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    in vec4 a_sh_linear_const_r;\n    in vec4 a_sh_linear_const_g;\n    in vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n    in float a_vertexId;\n#endif\nlayout(std140) uniform Pipeline {\n    vec4 g_platform;\n};\nlayout(std140) uniform BloomUBO {\n  mediump vec4 bloomParams;\n};\nout vec2 vUv;\nout vec2 vUv0;\nout vec2 vUv1;\nout vec2 vUv2;\nout vec2 vUv3;\nout vec2 vUv4;\nout vec2 vUv5;\nout vec2 vUv6;\nout vec2 vUv7;\nvec4 vert() {\n    vUv = a_texCoord;\n    vUv0 = vUv + bloomParams.xy * vec2(-1.0, 1.0);\n    vUv1 = vUv + bloomParams.xy * vec2(0.0, 1.0);\n    vUv2 = vUv + bloomParams.xy * vec2(1.0, 1.0);\n    vUv3 = vUv + bloomParams.xy * vec2(-1.0, 0.0);\n    vUv4 = vUv + bloomParams.xy * vec2(1.0, 0.0);\n    vUv5 = vUv + bloomParams.xy * vec2(-1.0, - 1.0);\n    vUv6 = vUv + bloomParams.xy * vec2(0.0, - 1.0);\n    vUv7 = vUv + bloomParams.xy * vec2(1.0, - 1.0);\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\nin vec2 vUv;\nin vec2 vUv0;\nin vec2 vUv1;\nin vec2 vUv2;\nin vec2 vUv3;\nin vec2 vUv4;\nin vec2 vUv5;\nin vec2 vUv6;\nin vec2 vUv7;\nuniform lowp sampler2D mainTexture;\nuniform lowp sampler2D downsampleTexture;\nvec4 frag() {\n    vec4 c = vec4(0.0);\n    c += texture(mainTexture, vUv0) * 0.0625;\n    c += texture(mainTexture, vUv1) * 0.125;\n    c += texture(mainTexture, vUv2) * 0.0625;\n    c += texture(mainTexture, vUv3) * 0.125;\n    c += texture(mainTexture, vUv) * 0.25;\n    c += texture(mainTexture, vUv4) * 0.125;\n    c += texture(mainTexture, vUv5) * 0.0625;\n    c += texture(mainTexture, vUv6) * 0.125;\n    c += texture(mainTexture, vUv7) * 0.0625;\n    vec4 baseColor = texture(downsampleTexture, vUv);\n    return mix(baseColor, c, 0.85);\n}\nlayout(location = 0) out vec4 cc_FragColor;\nvoid main() { cc_FragColor = frag(); }"
+      },
+      "glsl1": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nattribute vec3 a_position;\nattribute vec3 a_normal;\nattribute vec2 a_texCoord;\nattribute vec4 a_tangent;\n#if CC_USE_SKINNING\n    attribute vec4 a_joints;\n  attribute vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    attribute highp vec4 a_jointAnimInfo;\n  #endif\n  attribute vec4 a_matWorld0;\n  attribute vec4 a_matWorld1;\n  attribute vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    attribute vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    attribute vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    attribute vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    attribute vec4 a_sh_linear_const_r;\n    attribute vec4 a_sh_linear_const_g;\n    attribute vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n    attribute float a_vertexId;\n#endif\n  uniform vec4 g_platform;\n  uniform mediump vec4 bloomParams;\nvarying vec2 vUv;\nvarying vec2 vUv0;\nvarying vec2 vUv1;\nvarying vec2 vUv2;\nvarying vec2 vUv3;\nvarying vec2 vUv4;\nvarying vec2 vUv5;\nvarying vec2 vUv6;\nvarying vec2 vUv7;\nvec4 vert() {\n    vUv = a_texCoord;\n    vUv0 = vUv + bloomParams.xy * vec2(-1.0, 1.0);\n    vUv1 = vUv + bloomParams.xy * vec2(0.0, 1.0);\n    vUv2 = vUv + bloomParams.xy * vec2(1.0, 1.0);\n    vUv3 = vUv + bloomParams.xy * vec2(-1.0, 0.0);\n    vUv4 = vUv + bloomParams.xy * vec2(1.0, 0.0);\n    vUv5 = vUv + bloomParams.xy * vec2(-1.0, - 1.0);\n    vUv6 = vUv + bloomParams.xy * vec2(0.0, - 1.0);\n    vUv7 = vUv + bloomParams.xy * vec2(1.0, - 1.0);\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\nvarying vec2 vUv;\nvarying vec2 vUv0;\nvarying vec2 vUv1;\nvarying vec2 vUv2;\nvarying vec2 vUv3;\nvarying vec2 vUv4;\nvarying vec2 vUv5;\nvarying vec2 vUv6;\nvarying vec2 vUv7;\nuniform lowp sampler2D mainTexture;\nuniform lowp sampler2D downsampleTexture;\nvec4 frag() {\n    vec4 c = vec4(0.0);\n    c += texture2D(mainTexture, vUv0) * 0.0625;\n    c += texture2D(mainTexture, vUv1) * 0.125;\n    c += texture2D(mainTexture, vUv2) * 0.0625;\n    c += texture2D(mainTexture, vUv3) * 0.125;\n    c += texture2D(mainTexture, vUv) * 0.25;\n    c += texture2D(mainTexture, vUv4) * 0.125;\n    c += texture2D(mainTexture, vUv5) * 0.0625;\n    c += texture2D(mainTexture, vUv6) * 0.125;\n    c += texture2D(mainTexture, vUv7) * 0.0625;\n    vec4 baseColor = texture2D(downsampleTexture, vUv);\n    return mix(baseColor, c, 0.85);\n}\nvoid main() { gl_FragColor = frag(); }"
+      },
+      "builtins": {
+        "globals": {
+          "blocks": [],
+          "samplerTextures": [],
+          "buffers": [],
+          "images": []
+        },
+        "locals": {
+          "blocks": [],
+          "samplerTextures": [],
+          "buffers": [],
+          "images": []
+        },
+        "statistics": {
+          "CC_EFFECT_USED_VERTEX_UNIFORM_VECTORS": 2,
+          "CC_EFFECT_USED_FRAGMENT_UNIFORM_VECTORS": 0
+        }
+      },
+      "defines": [
+        {
+          "name": "USE_INSTANCING",
+          "type": "boolean",
+          "defines": [],
+          "editor": {
+            "elevated": true
+          }
+        },
+        {
+          "name": "CC_USE_SKINNING",
+          "type": "boolean",
+          "defines": []
+        },
+        {
+          "name": "CC_USE_BAKED_ANIMATION",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_LIGHTMAP",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_REFLECTION_PROBE",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_RECEIVE_SHADOW",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_LIGHT_PROBE",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_MORPH",
+          "type": "boolean",
+          "defines": []
+        }
+      ],
+      "name": "pipeline/post-process/bloom-mipmap-blur|upsample-vs:vert|upsample-fs:frag"
+    },
+    {
+      "blocks": [],
+      "samplerTextures": [],
+      "samplers": [],
+      "textures": [],
+      "buffers": [],
+      "images": [],
+      "subpassInputs": [],
+      "attributes": [
+        {
+          "name": "a_position",
+          "defines": [],
+          "format": 32,
+          "location": 0
+        },
+        {
+          "name": "a_normal",
+          "defines": [],
+          "format": 32,
+          "location": 1
+        },
+        {
+          "name": "a_texCoord",
+          "defines": [],
+          "format": 21,
+          "location": 2
+        },
+        {
+          "name": "a_tangent",
+          "defines": [],
+          "format": 44,
+          "location": 3
+        },
+        {
+          "name": "a_joints",
+          "defines": [
+            "CC_USE_SKINNING"
+          ],
+          "location": 4
+        },
+        {
+          "name": "a_weights",
+          "defines": [
+            "CC_USE_SKINNING"
+          ],
+          "format": 44,
+          "location": 5
+        },
+        {
+          "name": "a_jointAnimInfo",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_BAKED_ANIMATION"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 6
+        },
+        {
+          "name": "a_matWorld0",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 7
+        },
+        {
+          "name": "a_matWorld1",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 8
+        },
+        {
+          "name": "a_matWorld2",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 9
+        },
+        {
+          "name": "a_lightingMapUVParam",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHTMAP"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 10
+        },
+        {
+          "name": "a_localShadowBiasAndProbeId",
+          "defines": [
+            "USE_INSTANCING"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 11
+        },
+        {
+          "name": "a_reflectionProbeData",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_REFLECTION_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 12
+        },
+        {
+          "name": "a_sh_linear_const_r",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 13
+        },
+        {
+          "name": "a_sh_linear_const_g",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 14
+        },
+        {
+          "name": "a_sh_linear_const_b",
+          "defines": [
+            "USE_INSTANCING",
+            "CC_USE_LIGHT_PROBE"
+          ],
+          "format": 44,
+          "isInstanced": true,
+          "location": 15
+        },
+        {
+          "name": "a_vertexId",
+          "defines": [
+            "CC_USE_MORPH"
+          ],
+          "format": 11,
+          "location": 16
+        }
+      ],
+      "varyings": [
+        {
+          "name": "vUv",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 17,
+          "location": 0
+        },
+        {
+          "name": "vUv00",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 1,
+          "location": 1
+        },
+        {
+          "name": "vUv01",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 1,
+          "location": 2
+        },
+        {
+          "name": "vUv02",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 1,
+          "location": 3
+        },
+        {
+          "name": "vUv03",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 1,
+          "location": 4
+        },
+        {
+          "name": "vUv04",
+          "type": 14,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 1,
+          "location": 5
+        }
+      ],
+      "fragColors": [
+        {
+          "name": "cc_FragColor",
+          "typename": "vec4",
+          "type": 16,
+          "count": 1,
+          "defines": [],
+          "stageFlags": 16,
+          "location": 0
+        }
+      ],
+      "descriptors": [
+        {
+          "rate": 0,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 1,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 2,
+          "blocks": [],
+          "samplerTextures": [],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        },
+        {
+          "rate": 3,
+          "blocks": [
+            {
+              "name": "Pipeline",
+              "members": [
+                {
+                  "name": "g_platform",
+                  "type": 16,
+                  "count": 1
+                }
+              ],
+              "defines": [],
+              "stageFlags": 1,
+              "binding": 0
+            },
+            {
+              "name": "BloomUBO",
+              "members": [
+                {
+                  "name": "bloomParams",
+                  "type": 16,
+                  "count": 1
+                }
+              ],
+              "defines": [],
+              "stageFlags": 16,
+              "binding": 1
+            }
+          ],
+          "samplerTextures": [
+            {
+              "name": "bloomTexture",
+              "type": 28,
+              "count": 1,
+              "defines": [],
+              "stageFlags": 16,
+              "sampleType": 0,
+              "binding": 2
+            }
+          ],
+          "samplers": [],
+          "textures": [],
+          "buffers": [],
+          "images": [],
+          "subpassInputs": []
+        }
+      ],
+      "hash": 1885313907,
+      "glsl4": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nlayout(location = 0) in vec3 a_position;\nlayout(location = 1) in vec3 a_normal;\nlayout(location = 2) in vec2 a_texCoord;\nlayout(location = 3) in vec4 a_tangent;\n#if CC_USE_SKINNING\n    layout(location = 4) in u32vec4 a_joints;\n  layout(location = 5) in vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    layout(location = 6) in highp vec4 a_jointAnimInfo;\n  #endif\n  layout(location = 7) in vec4 a_matWorld0;\n  layout(location = 8) in vec4 a_matWorld1;\n  layout(location = 9) in vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    layout(location = 10) in vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    layout(location = 11) in vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    layout(location = 12) in vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    layout(location = 13) in vec4 a_sh_linear_const_r;\n    layout(location = 14) in vec4 a_sh_linear_const_g;\n    layout(location = 15) in vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n#endif\nlayout(set = 1, binding = 0) uniform Pipeline {\n    vec4 g_platform;\n};\nlayout(location = 0) out vec2 vUv;\nlayout(location = 1) out vec2 vUv00;\nlayout(location = 2) out vec2 vUv01;\nlayout(location = 3) out vec2 vUv02;\nlayout(location = 4) out vec2 vUv03;\nlayout(location = 5) out vec2 vUv04;\nvec4 vert() {\n    vUv = a_texCoord;\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\nlayout(set = 1, binding = 1) uniform BloomUBO {\n  mediump vec4 bloomParams;\n};\nlayout(location = 0) in vec2 vUv;\nlayout(set = 1, binding = 2) uniform sampler2D bloomTexture;\nvec4 frag() {\n    vec4 bloomColor = texture(bloomTexture, vUv);\n    vec3 color = bloomColor.rgb * bloomParams.w;\n    return vec4(color, 1);\n}\nlayout(location = 0) out vec4 cc_FragColor;\nvoid main() { cc_FragColor = frag(); }"
+      },
+      "glsl3": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nin vec3 a_position;\nin vec3 a_normal;\nin vec2 a_texCoord;\nin vec4 a_tangent;\n#if CC_USE_SKINNING\n    in vec4 a_joints;\n  in vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    in highp vec4 a_jointAnimInfo;\n  #endif\n  in vec4 a_matWorld0;\n  in vec4 a_matWorld1;\n  in vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    in vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    in vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    in vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    in vec4 a_sh_linear_const_r;\n    in vec4 a_sh_linear_const_g;\n    in vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n    in float a_vertexId;\n#endif\nlayout(std140) uniform Pipeline {\n    vec4 g_platform;\n};\nout vec2 vUv;\nout vec2 vUv00;\nout vec2 vUv01;\nout vec2 vUv02;\nout vec2 vUv03;\nout vec2 vUv04;\nvec4 vert() {\n    vUv = a_texCoord;\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\nlayout(std140) uniform BloomUBO {\n  mediump vec4 bloomParams;\n};\nin vec2 vUv;\nuniform sampler2D bloomTexture;\nvec4 frag() {\n    vec4 bloomColor = texture(bloomTexture, vUv);\n    vec3 color = bloomColor.rgb * bloomParams.w;\n    return vec4(color, 1);\n}\nlayout(location = 0) out vec4 cc_FragColor;\nvoid main() { cc_FragColor = frag(); }"
+      },
+      "glsl1": {
+        "vert": "\nprecision mediump float;\n#define QUATER_PI         0.78539816340\n#define HALF_PI           1.57079632679\n#define PI                3.14159265359\n#define PI2               6.28318530718\n#define PI4               12.5663706144\n#define INV_QUATER_PI     1.27323954474\n#define INV_HALF_PI       0.63661977237\n#define INV_PI            0.31830988618\n#define INV_PI2           0.15915494309\n#define INV_PI4           0.07957747155\n#define EPSILON           1e-6\n#define EPSILON_LOWP      1e-4\n#define LOG2              1.442695\n#define EXP_VALUE         2.71828183\n#define FP_MAX            65504.0\n#define FP_SCALE          0.0009765625\n#define FP_SCALE_INV      1024.0\n#define GRAY_VECTOR       vec3(0.299, 0.587, 0.114)\n#define LIGHT_MAP_TYPE_DISABLED 0\n#define LIGHT_MAP_TYPE_ALL_IN_ONE 1\n#define LIGHT_MAP_TYPE_INDIRECT_OCCLUSION 2\n#define REFLECTION_PROBE_TYPE_NONE 0\n#define REFLECTION_PROBE_TYPE_CUBE 1\n#define REFLECTION_PROBE_TYPE_PLANAR 2\n#define REFLECTION_PROBE_TYPE_BLEND 3\n#define REFLECTION_PROBE_TYPE_BLEND_AND_SKYBOX 4\n#define LIGHT_TYPE_DIRECTIONAL 0.0\n#define LIGHT_TYPE_SPHERE 1.0\n#define LIGHT_TYPE_SPOT 2.0\n#define LIGHT_TYPE_POINT 3.0\n#define LIGHT_TYPE_RANGED_DIRECTIONAL 4.0\n#define IS_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_DIRECTIONAL)) < EPSILON_LOWP)\n#define IS_SPHERE_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPHERE)) < EPSILON_LOWP)\n#define IS_SPOT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_SPOT)) < EPSILON_LOWP)\n#define IS_POINT_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_POINT)) < EPSILON_LOWP)\n#define IS_RANGED_DIRECTIONAL_LIGHT(light_type) (abs(float(light_type) - float(LIGHT_TYPE_RANGED_DIRECTIONAL)) < EPSILON_LOWP)\n#ifndef TONE_MAPPING_ACES\n  #define TONE_MAPPING_ACES 0\n#endif\n#ifndef TONE_MAPPING_LINEAR\n  #define TONE_MAPPING_LINEAR 1\n#endif\n#define SURFACES_MAX_TRANSMIT_DEPTH_VALUE 999999.0\n#ifndef CC_SURFACES_DEBUG_VIEW_SINGLE\n  #define CC_SURFACES_DEBUG_VIEW_SINGLE 1\n#endif\n#ifndef CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC\n  #define CC_SURFACES_DEBUG_VIEW_COMPOSITE_AND_MISC 2\n#endif\nstruct StandardVertInput {\n  highp vec4 position;\n  vec3 normal;\n  vec4 tangent;\n};\nattribute vec3 a_position;\nattribute vec3 a_normal;\nattribute vec2 a_texCoord;\nattribute vec4 a_tangent;\n#if CC_USE_SKINNING\n    attribute vec4 a_joints;\n  attribute vec4 a_weights;\n#endif\n#if USE_INSTANCING\n  #if CC_USE_BAKED_ANIMATION\n    attribute highp vec4 a_jointAnimInfo;\n  #endif\n  attribute vec4 a_matWorld0;\n  attribute vec4 a_matWorld1;\n  attribute vec4 a_matWorld2;\n  #if CC_USE_LIGHTMAP\n    attribute vec4 a_lightingMapUVParam;\n  #endif\n  #if CC_USE_REFLECTION_PROBE || CC_RECEIVE_SHADOW\n    #if CC_RECEIVE_SHADOW\n    #endif\n    attribute vec4 a_localShadowBiasAndProbeId;\n  #endif\n  #if CC_USE_REFLECTION_PROBE\n    attribute vec4 a_reflectionProbeData;\n  #endif\n  #if CC_USE_LIGHT_PROBE\n    attribute vec4 a_sh_linear_const_r;\n    attribute vec4 a_sh_linear_const_g;\n    attribute vec4 a_sh_linear_const_b;\n  #endif\n#endif\n#if CC_USE_MORPH\n    attribute float a_vertexId;\n#endif\n  uniform vec4 g_platform;\nvarying vec2 vUv;\nvarying vec2 vUv00;\nvarying vec2 vUv01;\nvarying vec2 vUv02;\nvarying vec2 vUv03;\nvarying vec2 vUv04;\nvec4 vert() {\n    vUv = a_texCoord;\n    StandardVertInput In;\n      In.position = vec4(a_position, 1.0);\n      In.normal = a_normal;\n      In.tangent = a_tangent;\n    (In.position).y = g_platform.w == 0.0 ? -(In.position).y : (In.position).y;\n    return In.position;\n}\nvoid main() { gl_Position = vert(); }",
+        "frag": "\nprecision mediump float;\n  uniform mediump vec4 bloomParams;\nvarying vec2 vUv;\nuniform sampler2D bloomTexture;\nvec4 frag() {\n    vec4 bloomColor = texture2D(bloomTexture, vUv);\n    vec3 color = bloomColor.rgb * bloomParams.w;\n    return vec4(color, 1);\n}\nvoid main() { gl_FragColor = frag(); }"
+      },
+      "builtins": {
+        "globals": {
+          "blocks": [],
+          "samplerTextures": [],
+          "buffers": [],
+          "images": []
+        },
+        "locals": {
+          "blocks": [],
+          "samplerTextures": [],
+          "buffers": [],
+          "images": []
+        },
+        "statistics": {
+          "CC_EFFECT_USED_VERTEX_UNIFORM_VECTORS": 1,
+          "CC_EFFECT_USED_FRAGMENT_UNIFORM_VECTORS": 1
+        }
+      },
+      "defines": [
+        {
+          "name": "USE_INSTANCING",
+          "type": "boolean",
+          "defines": [],
+          "editor": {
+            "elevated": true
+          }
+        },
+        {
+          "name": "CC_USE_SKINNING",
+          "type": "boolean",
+          "defines": []
+        },
+        {
+          "name": "CC_USE_BAKED_ANIMATION",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_LIGHTMAP",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_REFLECTION_PROBE",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_RECEIVE_SHADOW",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_LIGHT_PROBE",
+          "type": "boolean",
+          "defines": [
+            "USE_INSTANCING"
+          ]
+        },
+        {
+          "name": "CC_USE_MORPH",
+          "type": "boolean",
+          "defines": []
+        }
+      ],
+      "name": "pipeline/post-process/bloom-mipmap-blur|base-vs:vert|combine-fs:frag"
+    }
+  ],
+  "combinations": [],
+  "hideInEditor": false
+}

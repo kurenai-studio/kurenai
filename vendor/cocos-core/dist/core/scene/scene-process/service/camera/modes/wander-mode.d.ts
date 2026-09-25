@@ -1,0 +1,33 @@
+import ModeBase3D from './mode-base-3d';
+import type { ISceneMouseEvent, ISceneKeyboardEvent } from '../../operation/types';
+import type { CameraController3D } from '../camera-controller-3d';
+declare class WanderMode extends ModeBase3D {
+    private _curMouseDX;
+    private _curMouseDY;
+    private _rotateSpeed;
+    private _movingSpeedShiftScale;
+    private _damping;
+    private _wanderSpeed;
+    private _flyAcceleration;
+    private _shiftKey;
+    private _velocity;
+    private _wanderKeyDown;
+    private _destPos;
+    private _destRot;
+    private _wanderSpeedTarget;
+    private _wanderAnim;
+    private _enableAcceleration;
+    constructor(cameraCtrl: CameraController3D);
+    get wanderSpeed(): number;
+    set wanderSpeed(value: number);
+    get enableAcceleration(): boolean;
+    set enableAcceleration(value: boolean);
+    enter(): Promise<void>;
+    exit(): Promise<void>;
+    onMouseMove(event: ISceneMouseEvent): boolean;
+    onMouseWheel(event: ISceneMouseEvent): void;
+    onKeyDown(event: ISceneKeyboardEvent): void;
+    onKeyUp(event: ISceneKeyboardEvent): void;
+    onUpdate(deltaTime: number): void;
+}
+export default WanderMode;

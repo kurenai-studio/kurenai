@@ -1,0 +1,5 @@
+import { warnID } from '@cocos/engine/cocos/core/platform/debug';
+
+class AudioBufferManager{_ccprivate$_audioBufferDataMap={};_ccprivate$addCache(url,audioBuffer){const audioBufferData=this._ccprivate$_audioBufferDataMap[url];if(audioBufferData){warnID(5204,url);return}this._ccprivate$_audioBufferDataMap[url]={_ccprivate$usedCount:1,_ccprivate$audioBuffer:audioBuffer};}_ccprivate$retainCache(url){const audioBufferData=this._ccprivate$_audioBufferDataMap[url];if(!audioBufferData){warnID(5203,url);return}audioBufferData._ccprivate$usedCount++;}_ccprivate$getCache(url){const audioBufferData=this._ccprivate$_audioBufferDataMap[url];return audioBufferData?._ccprivate$audioBuffer}_ccprivate$tryReleasingCache(url){const audioBufferData=this._ccprivate$_audioBufferDataMap[url];if(!audioBufferData){warnID(5203,url);return}if(--audioBufferData._ccprivate$usedCount<=0){delete this._ccprivate$_audioBufferDataMap[url];}}}const audioBufferManager=new AudioBufferManager;
+
+export { audioBufferManager };

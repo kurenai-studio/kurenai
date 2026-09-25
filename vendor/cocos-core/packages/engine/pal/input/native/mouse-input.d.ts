@@ -1,0 +1,31 @@
+import { EventMouse } from '@cocos/engine/cocos/input/types';
+import { InputEventType } from '@cocos/engine/cocos/input/types/event-enum';
+export type MouseCallback = (res: EventMouse) => void;
+export declare class MouseInputSource {
+    private _eventTarget;
+    private _preMousePos;
+    private _isPressed;
+    private _windowManager;
+    private _pointLocked;
+    private _cache;
+    private _handleMouseDown;
+    private _handleMouseMove;
+    private _handleMouseUp;
+    private _handleWindowLeave;
+    private _handleWindowEnter;
+    private _handleMouseWheel;
+    constructor();
+    dispatchMouseDownEvent(nativeMouseEvent: any): void;
+    dispatchMouseMoveEvent(nativeMouseEvent: any): void;
+    dispatchMouseUpEvent(nativeMouseEvent: any): void;
+    dispatchScrollEvent(nativeMouseEvent: any): void;
+    private _getLocation;
+    private _registerEvent;
+    private _createEventCacheCallback;
+    dispatchEventsInCache(): void;
+    private _dispatchEvent;
+    private _dispatchMouseWheel;
+    on(eventType: InputEventType, callback: MouseCallback, target?: any): void;
+    private _dispatchWindowLeave;
+    private _dispatchWindowEnter;
+}

@@ -59,7 +59,7 @@ describe("cocos packs", () => {
     });
 
     await expect(ensurePacks(["core", "platform:wechat"], { cocosCliRoot: root })).rejects.toThrow(
-      /Missing cocos packs: platform:wechat/,
+      /Missing kurenai packs: platform:wechat/,
     );
   });
 

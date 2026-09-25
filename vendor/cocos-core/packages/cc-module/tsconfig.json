@@ -1,0 +1,35 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "compilerOptions": {
+        "target": "es2022",
+        "module": "CommonJS",
+        "inlineSourceMap": true,
+        "inlineSources": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "experimentalDecorators": true,
+        "lib": [
+            "DOM",
+            "esnext"
+        ],
+        "rootDir": "./src",
+        "outDir": "./",
+        "declaration": true,
+        "typeRoots": [
+            "./",
+            "../../../node_modules/@types"
+        ],
+        "types": []
+    },
+    "include": [
+        "./src/**/*.ts",
+        "./xhr2.d.ts"
+    ],
+    "exclude": [
+        "./*.js",
+        "./editor/**/*",
+        "./overwrite/**/*",
+        "./polyfill/**/*"
+    ]
+}

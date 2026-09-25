@@ -1,0 +1,5 @@
+import { NATIVE, PREVIEW } from 'internal:constants';
+
+const ccwindow=typeof globalThis.jsb!=="undefined"?typeof jsb.window!=="undefined"?jsb.window:window:window;const ccdocument=ccwindow.document;function findCanvas(){const container=ccdocument.createElement("div");const frame=ccdocument.documentElement;const canvas=ccwindow.__canvas;return {frame,canvas,container}}function loadJsFile(path){if(NATIVE&&window.oh&&window.scriptEngineType==="napi"){window.oh.loadModule(path);return Promise.resolve()}else {if(PREVIEW){return new Promise((resolve,reject)=>{const sourceURL=window.location.href+path;const xhr=new XMLHttpRequest;xhr.onload=()=>{if(xhr.status!==200){reject(new Error(`load js file failed: ${sourceURL}, error status: ${xhr.status}`));return}window.eval(`${xhr.response}\n//# sourceURL=${sourceURL}`);resolve();};xhr.onerror=()=>{reject(new Error(`load js file failed: ${sourceURL}`));};xhr.open("GET",sourceURL,true);xhr.send(null);})}return require(`${path}`)}}
+
+export { findCanvas, loadJsFile };

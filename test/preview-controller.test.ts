@@ -124,6 +124,7 @@ describe("PreviewController", () => {
       {
         project: fixture.project,
         hostEntry: fixture.hostEntry,
+        cocosCliRoot: fixture.cliRoot,
         port: 7790,
         bridgePort: 17791,
         inspectorScriptPath: fixture.inspector,

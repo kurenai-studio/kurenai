@@ -1,0 +1,47 @@
+{
+  "id": "core",
+  "engineVersion": "4.0.0-alpha.33",
+  "cocosCliPackageVersion": "0.0.1-alpha.41",
+  "source": "/Users/shinjiyu/Library/Application Support/cocos-default/cocos-4.0.0-alpha.33",
+  "builtAt": "2026-09-25T06:53:58.952Z",
+  "shipsNodeModules": false,
+  "shipsPrebuiltNatives": [
+    "gl",
+    "sharp",
+    "@ffprobe-installer"
+  ],
+  "postInstall": "npm install --omit=dev",
+  "keepInMainPack": [
+    "dist/core/builder/platforms/web-common/**",
+    "dist/core/builder/platforms/web-desktop/**",
+    "dist/core/builder/platforms/web-mobile/**",
+    "static/build-templates/web-desktop/**",
+    "static/build-templates/web-mobile/**",
+    "static/web/**"
+  ],
+  "excludes": [
+    "node_modules",
+    "packages/engine/node_modules",
+    "packages/engine/bin/.cache/dev",
+    "packages/engine/bin/.cache/logs",
+    "packages/engine/bin/.cache/editor-cache",
+    "packages/engine/bin/temp",
+    "packages/engine/native",
+    "packages/engine/tests",
+    "packages/engine/docs",
+    "packages/platforms",
+    "static/tools/cmake",
+    "static/tools/quickgame-toolkit",
+    "static/tools/xiaomi-pack-tools",
+    "static/tools/huawei-rpk-tools",
+    "dist/core/builder/platforms/android",
+    "dist/core/builder/platforms/ios",
+    "dist/core/builder/platforms/mac",
+    "dist/core/builder/platforms/windows",
+    "dist/core/builder/platforms/ohos",
+    "dist/core/builder/platforms/google-play",
+    "dist/core/builder/platforms/harmonyos-next",
+    "dist/core/builder/platforms/huawei-agc",
+    "dist/core/builder/platforms/native-common"
+  ]
+}

@@ -1,0 +1,102 @@
+import { Camera, Color, Vec3, ISizeLike } from 'cc';
+import CameraControllerBase, { EditorCameraInfo } from './camera-controller-base';
+import type { ISceneMouseEvent, ISceneKeyboardEvent } from '../operation/types';
+export declare function smoothMouseWheelScale(delta: number): number;
+declare enum ModeCommand {
+    ToIdle = "toIdle",
+    ToPan = "toPan",
+    ToOrbit = "toOrbit",
+    ToWander = "toWander"
+}
+export declare class CameraController3D extends CameraControllerBase {
+    private v3a;
+    private v3b;
+    private v3c;
+    private v3d;
+    protected _wheelSpeed: number;
+    protected _near: number;
+    protected _far: number;
+    protected readonly _orthoScale = 0.1;
+    protected readonly _minScalar = 0.1;
+    private homePos;
+    private homeRot;
+    private _sceneViewCenter;
+    viewDist: number;
+    private forward;
+    private _curRot;
+    private _curEye;
+    private _lineColor;
+    lastMouseWheelDeltaY: number;
+    maxMouseWheelDeltaY: number;
+    private _modeFSM;
+    private _idleMode;
+    private _orbitMode;
+    private _panMode;
+    private _wanderMode;
+    view?: number;
+    private hTicks;
+    private vTicks;
+    shiftKey?: boolean;
+    altKey?: boolean;
+    mousePressing: boolean;
+    lastFocusNodeUUID: string[];
+    get lineColor(): Color;
+    set lineColor(value: Color);
+    get sceneViewCenter(): Vec3;
+    set sceneViewCenter(value: Vec3);
+    get wanderSpeed(): number;
+    set wanderSpeed(value: number);
+    get enableAcceleration(): boolean;
+    set enableAcceleration(value: boolean);
+    init(camera: Camera): void;
+    showGrid(visible: boolean): void;
+    private initOriginAxis;
+    private initOriginAxisFromConfig;
+    updateOriginAxisByConfig(config: {
+        x?: boolean;
+        y?: boolean;
+        z?: boolean;
+    }, update?: boolean): void;
+    private getOriginAxisData;
+    private updateOriginAxisVertical;
+    private updateOriginAxisHorizontal;
+    private updateOriginAxis;
+    private _initMode;
+    private _initLinearTick;
+    set active(value: boolean);
+    changeMode(modeCommand: ModeCommand): void;
+    reset(): void;
+    updateViewCenterByDist(viewDist: number): void;
+    scale(delta: number): void;
+    smoothScale(delta: number): number;
+    private focusByNode;
+    focus(nodeUuids?: string[] | null, editorCameraInfo?: EditorCameraInfo, immediate?: boolean): void;
+    focusByXY(hitPoint: Vec3, immediate?: boolean): void;
+    alignNodeToSceneView(nodeUuids: string[]): Promise<void>;
+    private alignCameraOrthoHeightToNode;
+    alignSceneViewToNode(nodeUuids: string[]): void;
+    isMoving(): boolean;
+    onMouseDBlDown(event: ISceneMouseEvent): boolean | undefined;
+    onMouseDown(event: ISceneMouseEvent): boolean | undefined;
+    onMouseMove(event: ISceneMouseEvent): boolean | undefined;
+    onMouseUp(event: ISceneMouseEvent): boolean | undefined;
+    onMouseWheel(event: ISceneMouseEvent): void;
+    onKeyDown(event: ISceneKeyboardEvent): void;
+    onKeyUp(event: ISceneKeyboardEvent): void;
+    onUpdate(deltaTime: number): void;
+    onResize(size?: ISizeLike): void;
+    private _updateGridData;
+    updateGrid(): void;
+    refresh(): void;
+    rotateCameraToDir(dir: Vec3, rotateByViewDist: boolean): void;
+    getDepthSize(): number;
+    calcCameraPosInOrtho(): Vec3;
+    isOrtho(): boolean;
+    setOrthoHeight(newOrthoHeight: number): void;
+    changeProjection(): void;
+    zoomUp(): void;
+    zoomDown(): void;
+    zoomReset(): void;
+    onDesignResolutionChange(): void;
+}
+export default CameraController3D;

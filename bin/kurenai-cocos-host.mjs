@@ -11,7 +11,7 @@
  *   PROJECT                  Cocos project root (required)
  *   PORT                     preview port (default 7460; cocos-cli may pick the next free one)
  *   LAUNCH_SCENE             db:// url or uuid (default: startScene in settings/v2/packages/project.json)
- *   KURENAI_COCOS_CLI_ROOT   cocos-cli install (default: PinK cocos-4.0.0-alpha.33)
+ *   KURENAI_COCOS_CLI_ROOT   override kurenai-managed cocos core (default: ~/Library/Application Support/kurenai/cocos-core/<ver>)
  *   WATCH=0                  disable the assets/ watcher
  *   WATCH_POLL=1             poll assets/ instead of fs.watch (Docker bind mounts)
  *   WATCH_POLL_MS            poll interval (default 1000)
@@ -30,7 +30,6 @@
  */
 import { createRequire } from 'node:module';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, watch, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 const DEBOUNCE_MS = 250;
@@ -48,10 +47,8 @@ const launchScene = process.env.LAUNCH_SCENE || projectStartScene();
 const watchEnabled = process.env.WATCH !== '0';
 const watchPoll = process.env.WATCH_POLL === '1';
 const pollIntervalMs = Number(process.env.WATCH_POLL_MS || 1000);
-const cliRoot = resolve(
-  process.env.KURENAI_COCOS_CLI_ROOT ||
-    join(homedir(), 'Library/Application Support/cocos-default/cocos-4.0.0-alpha.33'),
-);
+const { resolveCocosCliRoot } = await import('../lib/index.js');
+const cliRoot = resolveCocosCliRoot();
 
 if (!existsSync(join(project, 'package.json'))) fail(`not a Cocos project: ${project}`);
 if (!existsSync(join(cliRoot, 'dist/core/launcher.js'))) fail(`cocos-cli not found: ${cliRoot}`);

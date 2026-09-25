@@ -1,0 +1,2 @@
+System.register(["./_virtual_internal_constants-Cp3hOzxp.js"],(function(n){"use strict";return{setters:[null],execute:function(){var i="undefined"==typeof window?global:window,e=n("c",{_global:i}),o=n("l",e);e.internal={};var t=n("e","4.0.0");i.CocosEngine=o.ENGINE_VERSION=t,i.cc=o;var s=n("a",void 0!==globalThis.jsb&&void 0!==jsb.window?jsb.window:globalThis);i.ccwindow=s}}}));
+//# sourceMappingURL=global-exports-DCJYpMsf.js.map

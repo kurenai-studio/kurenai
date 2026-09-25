@@ -1,0 +1,8 @@
+import { EventTarget } from '@cocos/engine/cocos/core/event/event-target';
+import { EventHandheld } from '@cocos/engine/cocos/input/types';
+import { InputSourcePosition, InputSourceOrientation } from '../input-source.js';
+import { Quat, Vec3 } from '@cocos/engine/cocos/core/math';
+
+var Pose;(function(Pose){Pose[Pose["AR_MOBILE"]=0]="AR_MOBILE";})(Pose||(Pose={}));class HandheldInputDevice{get handheldPosition(){return this._ccprivate$_handheldPosition}get handheldOrientation(){return this._ccprivate$_handheldOrientation}_ccprivate$_eventTarget=new EventTarget;_ccprivate$_nativePoseState={[Pose.AR_MOBILE]:{position:Vec3.ZERO,orientation:Quat.IDENTITY}};constructor(){this._ccprivate$_initInputSource();this._ccprivate$_registerEvent();}_ccprivate$_registerEvent(){jsb.onHandheldPoseInput=infoList=>{for(let i=0;i<infoList.length;++i){const info=infoList[i];this._ccprivate$_updateNativePoseState(info);}this._ccprivate$_eventTarget.emit("handheld-pose-input",new EventHandheld("handheld-pose-input",this));};}_on(eventType,callback,target){this._ccprivate$_eventTarget.on(eventType,callback,target);}_ccprivate$_updateNativePoseState(info){switch(info.code){case 7:this._ccprivate$_nativePoseState[Pose.AR_MOBILE]={position:new Vec3(info.x,info.y,info.z),orientation:new Quat(info.quaternionX,info.quaternionY,info.quaternionZ,info.quaternionW)};break;}}_ccprivate$_initInputSource(){this._ccprivate$_handheldPosition=new InputSourcePosition;this._ccprivate$_handheldPosition.getValue=()=>this._ccprivate$_nativePoseState[Pose.AR_MOBILE].position;this._ccprivate$_handheldOrientation=new InputSourceOrientation;this._ccprivate$_handheldOrientation.getValue=()=>this._ccprivate$_nativePoseState[Pose.AR_MOBILE].orientation;}}
+
+export { HandheldInputDevice };

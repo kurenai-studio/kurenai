@@ -1,0 +1,39 @@
+System.register("q-bundled:///fs/pal/system-info/enum-type/platform.js", [], function (_export, _context) {
+  "use strict";
+
+  var Platform;
+  _export("Platform", void 0);
+  return {
+    setters: [],
+    execute: function () {
+      (function (Platform) {
+        Platform["UNKNOWN"] = "UNKNOWN";
+        Platform["EDITOR_PAGE"] = "EDITOR_PAGE";
+        Platform["EDITOR_CORE"] = "EDITOR_CORE";
+        Platform["NODEJS_PAGE"] = "NODEJS_PAGE";
+        Platform["MOBILE_BROWSER"] = "MOBILE_BROWSER";
+        Platform["DESKTOP_BROWSER"] = "DESKTOP_BROWSER";
+        Platform["WIN32"] = "WIN32";
+        Platform["ANDROID"] = "ANDROID";
+        Platform["IOS"] = "IOS";
+        Platform["MACOS"] = "MACOS";
+        Platform["OHOS"] = "OHOS";
+        Platform["OPENHARMONY"] = "OPENHARMONY";
+        Platform["WECHAT_GAME"] = "WECHAT_GAME";
+        Platform["WECHAT_MINI_PROGRAM"] = "WECHAT_MINI_PROGRAM";
+        Platform["XIAOMI_QUICK_GAME"] = "XIAOMI_QUICK_GAME";
+        Platform["ALIPAY_MINI_GAME"] = "ALIPAY_MINI_GAME";
+        Platform["TAOBAO_CREATIVE_APP"] = "TAOBAO_CREATIVE_APP";
+        Platform["TAOBAO_MINI_GAME"] = "TAOBAO_MINI_GAME";
+        Platform["BYTEDANCE_MINI_GAME"] = "BYTEDANCE_MINI_GAME";
+        Platform["OPPO_MINI_GAME"] = "OPPO_MINI_GAME";
+        Platform["VIVO_MINI_GAME"] = "VIVO_MINI_GAME";
+        Platform["HUAWEI_QUICK_GAME"] = "HUAWEI_QUICK_GAME";
+        Platform["MIGU_MINI_GAME"] = "MIGU_MINI_GAME";
+        Platform["HONOR_MINI_GAME"] = "HONOR_MINI_GAME";
+        Platform["SUD_MINI_GAME"] = "SUD_MINI_GAME";
+        Platform["SUDV2_MINI_GAME"] = "SUDV2_MINI_GAME";
+      })(Platform || _export("Platform", Platform = {}));
+    }
+  };
+});

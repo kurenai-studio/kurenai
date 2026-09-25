@@ -1,0 +1,5 @@
+import { assertIsTrue } from '@cocos/engine/cocos/core/data/utils/asserts';
+
+class Pacer{_ccprivate$_rafHandle=0;_ccprivate$_onTick=null;_ccprivate$_targetFrameRate=60;_ccprivate$_isPlaying=false;constructor(){this._ccprivate$_updateCallback=()=>{if(this._ccprivate$_isPlaying){this._ccprivate$_rafHandle=requestAnimationFrame(this._ccprivate$_updateCallback);}if(this._ccprivate$_onTick){this._ccprivate$_onTick();}};}get targetFrameRate(){return this._ccprivate$_targetFrameRate}set targetFrameRate(val){if(this._ccprivate$_targetFrameRate!==val){assertIsTrue(val>0);this._ccprivate$_targetFrameRate=val;jsb.setPreferredFramesPerSecond(this._ccprivate$_targetFrameRate);if(this._ccprivate$_isPlaying){this.stop();this.start();}}}set onTick(val){this._ccprivate$_onTick=val;}get onTick(){return this._ccprivate$_onTick}start(){if(this._ccprivate$_isPlaying)return;this._ccprivate$_rafHandle=requestAnimationFrame(this._ccprivate$_updateCallback);this._ccprivate$_isPlaying=true;}stop(){if(!this._ccprivate$_isPlaying)return;cancelAnimationFrame(this._ccprivate$_rafHandle);this._ccprivate$_rafHandle=0;this._ccprivate$_isPlaying=false;}}
+
+export { Pacer };

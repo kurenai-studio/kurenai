@@ -1,0 +1,12 @@
+import type { IEngineConfig, IEngineGraphicsConfig, IEngineGraphicsPipeline } from './@types/config';
+export declare const CUSTOM_PIPELINE_MODULE: IEngineGraphicsPipeline;
+export declare const LEGACY_PIPELINE_MODULE: IEngineGraphicsPipeline;
+export declare const CUSTOM_PIPELINE_POST_PROCESS_MODULE = "custom-pipeline-post-process";
+export declare const CUSTOM_PIPELINE_NAME_KEY = "CUSTOM_PIPELINE_NAME";
+export declare const DEFAULT_CUSTOM_PIPELINE_NAME = "Builtin";
+export declare function hasOwnConfigKey(object: object | undefined, key: string): boolean;
+export declare function ensureCustomPipelineMacroConfig(macroConfig: IEngineConfig['macroConfig']): NonNullable<IEngineConfig['macroConfig']>;
+export declare function deriveGraphicsConfigFromModules(includeModules?: string[]): IEngineGraphicsConfig;
+export declare function deriveGraphicsConfigFromCustomPipeline(customPipeline: boolean | undefined, includeModules?: string[]): IEngineGraphicsConfig;
+export declare function mergeGraphicsConfigWithModules(includeModules?: string[], graphics?: IEngineGraphicsConfig): IEngineGraphicsConfig;
+export declare function normalizeIncludeModulesWithGraphics(includeModules?: string[], graphics?: IEngineGraphicsConfig): string[];

@@ -1,0 +1,1 @@
+{"version":3,"file":"meshopt_decoder.wasm-Cvy1kpGq.js","sources":["../../../external:emscripten/meshopt/meshopt_decoder.wasm.wasm"],"sourcesContent":["export default import.meta.ROLLUP_FILE_URL_BGUiUzRx; /* asset-hash:bedd883e */"],"names":["exports"],"mappings":"uEAAAA,EAAA,UAAe"}

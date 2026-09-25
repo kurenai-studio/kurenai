@@ -1,0 +1,12 @@
+import type { AnimationClip } from 'cc';
+import type { IAnimationCurveChannelDump, IAnimationCurveDump, IAnimationCurveKeyData, IAnimationCurveKeyDump, IAnimationValue } from '../../../common';
+import type { AnyCurve, AnyTrack, IPropertyTrackDescriptor } from './property-curve-types';
+import { type IDumpRealKeyDataOptions } from './real-curve-key-data';
+export declare function dumpPropertyTrack(clip: AnimationClip, track: AnyTrack, descriptor: IPropertyTrackDescriptor, options?: IDumpRealKeyDataOptions): Omit<IAnimationCurveDump, 'nodePath' | 'key'> | null;
+export declare function restoreTrackKeyframes(clip: AnimationClip, track: AnyTrack, descriptor: IPropertyTrackDescriptor, keyframes: IAnimationCurveKeyDump[], channelDumps: IAnimationCurveChannelDump[]): boolean;
+export declare function setTrackKey(track: AnyTrack, descriptor: IPropertyTrackDescriptor, time: number, value: IAnimationValue, channel?: string, keyData?: IAnimationCurveKeyData): boolean;
+export declare function updateTrackKey(track: AnyTrack, descriptor: IPropertyTrackDescriptor, time: number, value: IAnimationValue, channel?: string, keyData?: IAnimationCurveKeyData): boolean;
+export declare function queryTargetCurves(track: AnyTrack, descriptor: IPropertyTrackDescriptor, channel?: string): AnyCurve[];
+export declare function removeCurveKeys(clip: AnimationClip, curve: AnyCurve, frames: number[]): boolean;
+export declare function moveCurveKeys(clip: AnimationClip, curve: AnyCurve, frames: number[], offset: number): boolean;
+export declare function copyCurveKeysTo(clip: AnimationClip, curve: AnyCurve, frames: number[], dstFrame: number): boolean;

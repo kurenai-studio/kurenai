@@ -1,0 +1,3 @@
+const minigame={};
+
+export { minigame };

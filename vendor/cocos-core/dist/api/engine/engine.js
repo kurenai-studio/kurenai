@@ -1,0 +1,7 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EngineApi = void 0;
+class EngineApi {
+}
+exports.EngineApi = EngineApi;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZW5naW5lLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwaS9lbmdpbmUvZW5naW5lLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztBQUFBLE1BQWEsU0FBUztDQUVyQjtBQUZELDhCQUVDIiwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGNsYXNzIEVuZ2luZUFwaSB7XG4gICAgLy8gVE9ETyDmlK/mjIHmn6Xor6IgZW5naW5lIOmFjee9riDnmoQgQVBJXG59XG4iXX0=

@@ -1,0 +1,10 @@
+import { InternalBuildResult, BuilderCache, IBuilder, IBuildStageTask } from '../../../@types/protected';
+import { IBuildResult } from './type';
+import { ITaskOption } from '../../native-common/type';
+export declare const throwError = true;
+export declare function onAfterInit(options: ITaskOption, result: InternalBuildResult, cache: BuilderCache): void;
+export declare function onAfterBundleInit(options: ITaskOption): void;
+export declare function onBeforeCompressSettings(options: ITaskOption, result: InternalBuildResult, cache: BuilderCache): Promise<void>;
+export declare function onBeforeCopyBuildTemplate(this: IBuilder, options: ITaskOption, result: IBuildResult): Promise<void>;
+export declare function onAfterBuild(this: IBuilder, options: ITaskOption, result: InternalBuildResult): Promise<void>;
+export declare function run(this: IBuildStageTask, root: string, options: ITaskOption): Promise<void>;

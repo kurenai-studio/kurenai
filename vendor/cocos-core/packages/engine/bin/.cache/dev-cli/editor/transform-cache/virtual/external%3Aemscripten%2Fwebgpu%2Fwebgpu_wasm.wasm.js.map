@@ -1,0 +1,1 @@
+{"version":3,"names":[],"sources":["virtual:///external:emscripten/webgpu/webgpu_wasm.wasm"],"sourcesContent":["export default 'external:emscripten/webgpu/webgpu_wasm.wasm';"],"mappings":";;;;;;yBAAe,6CAA6C;IAAA;EAAA;AAAA","ignoreList":[]}

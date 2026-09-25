@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.installSceneEditorShim = installSceneEditorShim;
+const editor_shim_1 = require("../../base/editor-shim");
+function installSceneEditorShim(projectPath) {
+    const editor = (0, editor_shim_1.ensureEditorProjectPath)(projectPath);
+    if (!editor.__cliExtensionHost) {
+        editor.__cliSceneProcess = true;
+    }
+    editor.I18n ??= {
+        t: (key) => key,
+    };
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZWRpdG9yLXNoaW0uanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi8uLi9zcmMvY29yZS9zY2VuZS9zY2VuZS1wcm9jZXNzL2VkaXRvci1zaGltLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O0FBRUEsd0RBVUM7QUFaRCx3REFBaUU7QUFFakUsU0FBZ0Isc0JBQXNCLENBQUMsV0FBbUI7SUFDdEQsTUFBTSxNQUFNLEdBQUcsSUFBQSxxQ0FBdUIsRUFBQyxXQUFXLENBQUMsQ0FBQztJQUVwRCxJQUFJLENBQUMsTUFBTSxDQUFDLGtCQUFrQixFQUFFLENBQUM7UUFDN0IsTUFBTSxDQUFDLGlCQUFpQixHQUFHLElBQUksQ0FBQztJQUNwQyxDQUFDO0lBRUQsTUFBTSxDQUFDLElBQUksS0FBSztRQUNaLENBQUMsRUFBRSxDQUFDLEdBQVcsRUFBRSxFQUFFLENBQUMsR0FBRztLQUMxQixDQUFDO0FBQ04sQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IGVuc3VyZUVkaXRvclByb2plY3RQYXRoIH0gZnJvbSAnLi4vLi4vYmFzZS9lZGl0b3Itc2hpbSc7XG5cbmV4cG9ydCBmdW5jdGlvbiBpbnN0YWxsU2NlbmVFZGl0b3JTaGltKHByb2plY3RQYXRoOiBzdHJpbmcpOiB2b2lkIHtcbiAgICBjb25zdCBlZGl0b3IgPSBlbnN1cmVFZGl0b3JQcm9qZWN0UGF0aChwcm9qZWN0UGF0aCk7XG5cbiAgICBpZiAoIWVkaXRvci5fX2NsaUV4dGVuc2lvbkhvc3QpIHtcbiAgICAgICAgZWRpdG9yLl9fY2xpU2NlbmVQcm9jZXNzID0gdHJ1ZTtcbiAgICB9XG5cbiAgICBlZGl0b3IuSTE4biA/Pz0ge1xuICAgICAgICB0OiAoa2V5OiBzdHJpbmcpID0+IGtleSxcbiAgICB9O1xufVxuIl19

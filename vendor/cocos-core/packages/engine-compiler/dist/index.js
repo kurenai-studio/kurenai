@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.compileEngine = compileEngine;
+const compiler_1 = require("./core/compiler");
+/**
+ * 根据路径编译引擎
+ * @param path
+ * @param outDirName
+ */
+async function compileEngine(enginePath, isWeb) {
+    const compiler = compiler_1.EngineCompiler.create(enginePath, isWeb);
+    await compiler.clear();
+    await compiler.compileEngine(enginePath, true);
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi9zcmMvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFPQSxzQ0FJQztBQVhELDhDQUFpRDtBQUVqRDs7OztHQUlHO0FBQ0ksS0FBSyxVQUFVLGFBQWEsQ0FBQyxVQUFrQixFQUFFLEtBQWU7SUFDbkUsTUFBTSxRQUFRLEdBQUcseUJBQWMsQ0FBQyxNQUFNLENBQUMsVUFBVSxFQUFFLEtBQUssQ0FBQyxDQUFDO0lBQzFELE1BQU0sUUFBUSxDQUFDLEtBQUssRUFBRSxDQUFDO0lBQ3ZCLE1BQU0sUUFBUSxDQUFDLGFBQWEsQ0FBQyxVQUFVLEVBQUUsSUFBSSxDQUFDLENBQUM7QUFDbkQsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IEVuZ2luZUNvbXBpbGVyIH0gZnJvbSAnLi9jb3JlL2NvbXBpbGVyJztcblxuLyoqXG4gKiDmoLnmja7ot6/lvoTnvJbor5HlvJXmk45cbiAqIEBwYXJhbSBwYXRoXG4gKiBAcGFyYW0gb3V0RGlyTmFtZVxuICovXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gY29tcGlsZUVuZ2luZShlbmdpbmVQYXRoOiBzdHJpbmcsIGlzV2ViPzogYm9vbGVhbikge1xuICAgIGNvbnN0IGNvbXBpbGVyID0gRW5naW5lQ29tcGlsZXIuY3JlYXRlKGVuZ2luZVBhdGgsIGlzV2ViKTtcbiAgICBhd2FpdCBjb21waWxlci5jbGVhcigpO1xuICAgIGF3YWl0IGNvbXBpbGVyLmNvbXBpbGVFbmdpbmUoZW5naW5lUGF0aCwgdHJ1ZSk7XG59XG4iXX0=

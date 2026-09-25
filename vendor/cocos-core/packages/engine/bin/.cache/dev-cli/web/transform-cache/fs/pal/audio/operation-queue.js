@@ -1,0 +1,75 @@
+System.register("q-bundled:///fs/pal/audio/operation-queue.js", [], function (_export, _context) {
+  "use strict";
+
+  var operationId;
+  function removeUnneededCalls(instance) {
+    const size = instance._ccprivate$_operationQueue.length;
+    const tmpQueue = instance._ccprivate$_operationQueue.slice();
+    const reserveOps = [];
+    let seekSearched = false;
+    for (let i = size - 1; i >= 0; i--) {
+      const opInfo = tmpQueue[i];
+      if (opInfo.op === "stop") {
+        reserveOps.push(opInfo);
+        break;
+      } else if (opInfo.op === "seek") {
+        if (!seekSearched) {
+          reserveOps.push(opInfo);
+          seekSearched = true;
+        }
+      } else if (seekSearched) {
+        reserveOps.push(opInfo);
+        break;
+      } else if (reserveOps.length === 0) {
+        reserveOps.push(opInfo);
+      }
+    }
+    instance._ccprivate$_operationQueue = reserveOps.reverse();
+  }
+  function _tryCallingRecursively(target, opInfo) {
+    if (opInfo.invoking) {
+      return;
+    }
+    opInfo.invoking = true;
+    opInfo.func.call(target, ...opInfo.args).then(() => {
+      opInfo.invoking = false;
+      target._ccprivate$_operationQueue.shift();
+      target._ccprivate$_eventTarget.emit(opInfo.id.toString());
+      target._ccprivate$_eventTarget.off(opInfo.id.toString());
+      removeUnneededCalls(target);
+      const nextOpInfo = target._ccprivate$_operationQueue[0];
+      if (nextOpInfo) {
+        _tryCallingRecursively(target, nextOpInfo);
+      }
+    }).catch(e => {});
+  }
+  function enqueueOperation(target, propertyKey, descriptor) {
+    const originalOperation = descriptor.value;
+    descriptor.value = function () {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+      return new Promise(resolve => {
+        const id = operationId++;
+        const instance = this;
+        instance._ccprivate$_operationQueue.push({
+          op: propertyKey,
+          id,
+          func: originalOperation,
+          args,
+          invoking: false
+        });
+        instance._ccprivate$_eventTarget.once(id.toString(), resolve);
+        const opInfo = instance._ccprivate$_operationQueue[0];
+        _tryCallingRecursively(instance, opInfo);
+      });
+    };
+  }
+  _export("enqueueOperation", enqueueOperation);
+  return {
+    setters: [],
+    execute: function () {
+      operationId = 0;
+    }
+  };
+});

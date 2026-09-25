@@ -1,0 +1,14 @@
+import type { IAssetFileSystemProvider, IAssetRenameOptions, IAssetWriteFileOptions } from '@cocos/asset-db';
+import type { IMoveOptions } from '../@types/private';
+import type { DeleteAssetOptions } from '../@types/public';
+export declare function getFileSystemProvider(): IAssetFileSystemProvider;
+export declare function setFileSystemProvider(nextProvider: IAssetFileSystemProvider): void;
+export declare function resetFileSystemProvider(): void;
+export declare function readPath(path: string, encoding?: BufferEncoding): Promise<Buffer | string>;
+export declare function writePath(path: string, content: Buffer | string | Uint8Array, options?: IAssetWriteFileOptions): Promise<void>;
+export declare function createDirectoryPath(path: string): Promise<void>;
+export declare function deletePath(path: string, options?: DeleteAssetOptions): Promise<void>;
+export declare function renamePath(oldPath: string, newPath: string, options?: IAssetRenameOptions): Promise<void>;
+export declare function copyPath(sourcePath: string, destinationPath: string, options?: IAssetRenameOptions): Promise<void>;
+export declare function removeAssetSource(file: string, options?: DeleteAssetOptions): Promise<boolean>;
+export declare function moveAssetSource(source: string, target: string, options?: IMoveOptions): Promise<void>;

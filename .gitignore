@@ -4,3 +4,11 @@ coverage/
 *.log
 .kurenai/
 kurenai.demo.patch.yml
+# Runtime deps for vendored cocos — install via postinstall
+vendor/cocos-core/node_modules/
+vendor/cocos-core/packages/**/node_modules/
+vendor/kurenai-cocos-core-*.tgz
+vendor/.extract-tmp/
+vendor/.extract-tmp-*/
+
+vendor/cocos-core/**/node_modules/

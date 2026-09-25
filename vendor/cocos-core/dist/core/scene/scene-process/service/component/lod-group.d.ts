@@ -1,0 +1,11 @@
+import { Component, LODGroup } from 'cc';
+import { LODGroupEditorUtility } from 'cc/editor/lod-group-utils';
+import type { ILODGroupBoundsResult, ILODGroupLevelsResult } from '../../../common';
+export declare function requireLODGroup(component: Component | null, path: string): LODGroup;
+export declare function validateLODInsert(lodGroup: LODGroup, index: number, screenUsagePercentage?: number): void;
+export declare function validateLODErase(lodGroup: LODGroup, index: number): void;
+export declare function serializeLODGroupLevels(lodGroup: LODGroup): ILODGroupLevelsResult;
+export declare function serializeLODGroupBounds(lodGroup: LODGroup): ILODGroupBoundsResult;
+type LODRenderCamera = Parameters<typeof LODGroupEditorUtility.getRelativeHeight>[1];
+export declare function queryLODGroupRelativeHeight(lodGroup: LODGroup, camera: LODRenderCamera): number;
+export {};

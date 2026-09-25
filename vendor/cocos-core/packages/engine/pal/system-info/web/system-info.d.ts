@@ -1,0 +1,36 @@
+import { EventTarget } from '@cocos/engine/cocos/core/event';
+import { BrowserType, NetworkType, OS, Platform, Language, Feature } from '../enum-type';
+declare class SystemInfo extends EventTarget {
+    readonly networkType: NetworkType;
+    readonly isNative: boolean;
+    readonly isBrowser: boolean;
+    readonly isMobile: boolean;
+    readonly isLittleEndian: boolean;
+    readonly platform: Platform;
+    readonly language: Language;
+    readonly nativeLanguage: string;
+    readonly os: OS;
+    readonly osVersion: string;
+    readonly osMainVersion: number;
+    readonly browserType: BrowserType;
+    readonly browserVersion: string;
+    readonly isXR: boolean;
+    private _battery;
+    private _featureMap;
+    private _initPromise;
+    constructor();
+    private _supportsImageBitmapPromise;
+    private _registerEvent;
+    private _setFeature;
+    init(): Promise<void[]>;
+    hasFeature(feature: Feature): boolean;
+    getBatteryLevel(): number;
+    triggerGC(): void;
+    openURL(url: string): void;
+    now(): number;
+    restartJSVM(): void;
+    exit(): void;
+    close(): void;
+}
+export declare const systemInfo: SystemInfo;
+export {};

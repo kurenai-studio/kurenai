@@ -1,0 +1,2 @@
+System.register(["./_virtual_internal_constants-Cp3hOzxp.js"],(function(t,n){"use strict";return{setters:[function(t){t.E,t.P}],execute:function(){function e(t){return new Promise((function(e,r){try{t=new URL(t,n.meta.url).href,fetch(t).then((function(t){return t.arrayBuffer().then(e)})).catch((function(){}))}catch(t){r(t)}}))}t({e:function(){return Promise.resolve()},f:e,i:function(t,n){return e(t).then((function(t){return WebAssembly.instantiate(t,n)}))}})}}}));
+//# sourceMappingURL=wasm-web-Bu02G0rC.js.map

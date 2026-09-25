@@ -1,23 +1,28 @@
 import { ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 //#region src/cocos/paths.d.ts
-/** Historical PinK full install (transitional fallback only). */
-declare const LEGACY_PINK_COCOS_CLI_ROOT: string;
-/** Default engine version for the trimmed kurenai-managed core pack. */
+/** Default engine version for the bundled cocos runtime. */
 declare const KURENAI_COCOS_CORE_VERSION = "4.0.0-alpha.33";
-/** Kurenai-owned trimmed core install root (preferred). */
-declare function managedCocosCoreRoot(version?: string): string;
 /**
- * @deprecated Use resolveCocosCliRoot(); kept as the legacy PinK path name for
- * older call sites / docs that still mention DEFAULT_COCOS_CLI_ROOT.
+ * @deprecated PinK path — maintainer pack source only. Runtime never resolves here.
  */
+declare const LEGACY_PINK_COCOS_CLI_ROOT: string;
+/** Absolute path to the kurenai package root (repo or installed package). */
+declare function packageRoot(): string;
+/** Trimmed cocos runtime source tree shipped inside the kurenai package. */
+declare function bundledCocosCoreRoot(): string;
+/**
+ * @deprecated Application Support cache — no longer the default.
+ */
+declare function managedCocosCoreRoot(version?: string): string;
+/** Default runtime = vendor/cocos-core source tree. */
 declare const DEFAULT_COCOS_CLI_ROOT: string;
 /**
- * Resolve the cocos runtime root used by host / publish.
+ * Resolve the cocos runtime root used by project / assets / preview / build.
  *
  * Order:
- * 1. explicit `configured` or `KURENAI_COCOS_CLI_ROOT`
- * 2. kurenai-managed trimmed core (`…/kurenai/cocos-core/<version>`)
- * 3. legacy PinK full install (temporary bridge)
+ * 1. explicit `configured`
+ * 2. `KURENAI_COCOS_CLI_ROOT` (tests / override)
+ * 3. bundled `vendor/cocos-core` inside the kurenai package
  */
 declare function resolveCocosCliRoot(configured?: string): string;
 //#endregion
@@ -53,15 +58,14 @@ declare function inspectPack(id: PackId, configuredRoot?: string): PackPresence;
 declare function packsStatus(configuredRoot?: string): PacksStatus;
 type EnsurePacksOptions = {
   cocosCliRoot?: string;
-  /** Attempt HTTP install when packs are missing (needs KURENAI_COCOS_PACK_BASE_URL). */
+  /** Attempt remote install for optional platform/native packs. Default true when base URL set. */
   fetch?: boolean;
   baseUrl?: string;
   version?: string;
 };
 /**
- * Make sure the given packs exist under the cocos-cli root.
- * Missing packs are downloaded when `fetch` is true and a base URL is configured;
- * otherwise throws with an actionable error.
+ * Ensure required packs under the kurenai runtime root (`vendor/cocos-core`).
+ * Core is the in-tree source; optional platform packs may still fetch from a CDN.
  */
 declare function ensurePacks(packIds: PackId[], options?: EnsurePacksOptions): Promise<EnsurePacksResult>;
 /** Convenience for preview / web publish. */
@@ -257,5 +261,5 @@ type HostToInspectorMessage = {
 declare function isInspectorMessage(value: unknown): value is InspectorToHostMessage;
 declare function formatSelectionContext(node: SelectedNodeSummary): string;
 //#endregion
-export { type CocosProject, type CommandResult, DEFAULT_COCOS_CLI_ROOT, type EnsurePacksOptions, type EnsurePacksResult, HostToInspectorMessage, InspectorToHostMessage, KURENAI_COCOS_CORE_VERSION, KURENAI_PROTOCOL_VERSION, LEGACY_PINK_COCOS_CLI_ROOT, type PackId, type PackPresence, type PacksStatus, PreviewBridge, type PreviewBridgeConfig, type PreviewConfig, PreviewController, type PreviewControllerOptions, type PreviewPhase, type PreviewState, ProjectControl, type ProjectControlConfig, type ProjectTemplateId, type PublishPlatform, SceneNodeSummary, SelectedNodeSummary, type SelectionContext, ensureCorePack, ensurePacks, formatSelectionContext, injectInspector, inspectPack, isInspectorMessage, listKnownPackIds, managedCocosCoreRoot, packsForPlatform, packsStatus, resolveCocosCliRoot };
+export { type CocosProject, type CommandResult, DEFAULT_COCOS_CLI_ROOT, type EnsurePacksOptions, type EnsurePacksResult, HostToInspectorMessage, InspectorToHostMessage, KURENAI_COCOS_CORE_VERSION, KURENAI_PROTOCOL_VERSION, LEGACY_PINK_COCOS_CLI_ROOT, type PackId, type PackPresence, type PacksStatus, PreviewBridge, type PreviewBridgeConfig, type PreviewConfig, PreviewController, type PreviewControllerOptions, type PreviewPhase, type PreviewState, ProjectControl, type ProjectControlConfig, type ProjectTemplateId, type PublishPlatform, SceneNodeSummary, SelectedNodeSummary, type SelectionContext, bundledCocosCoreRoot, ensureCorePack, ensurePacks, formatSelectionContext, injectInspector, inspectPack, isInspectorMessage, listKnownPackIds, managedCocosCoreRoot, packageRoot, packsForPlatform, packsStatus, resolveCocosCliRoot };
 //# sourceMappingURL=index.d.ts.map

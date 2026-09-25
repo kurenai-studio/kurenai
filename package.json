@@ -1,7 +1,7 @@
 {
   "name": "@kurenai-studio/kurenai",
   "version": "0.1.0",
-  "description": "Cocos vibe coding studio on cocos-cli: per-project preview host, runtime inspector and project control",
+  "description": "Kurenai Studio — PinK successor: project, assets, preview, and web build in one package",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -24,6 +24,8 @@
     "lib/**/*",
     "bin/**/*",
     "templates/**/*",
+    "vendor/cocos-core/**/*",
+    "scripts/install-vendored-cocos.mjs",
     "docs/cocos-cli-split.manifest.json",
     "docs/cocos-cli-split.md",
     "README.md",
@@ -32,11 +34,13 @@
   "scripts": {
     "build": "tsdown",
     "test": "vitest run",
-    "check": "tsc --noEmit && npm run build && npm run test"
+    "check": "tsc --noEmit && npm run build && npm run test",
+    "postinstall": "node scripts/install-vendored-cocos.mjs",
+    "vendor:cocos": "node scripts/vendor-cocos-core.mjs"
   },
   "keywords": [
     "cocos",
-    "cocos-cli",
+    "kurenai",
     "vibe-coding",
     "preview",
     "inspector"

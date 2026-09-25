@@ -1,0 +1,71 @@
+import type { IUndoCheckpoint, IUndoCommand, IUndoGroupOptions, IUndoOperationOptions, IUndoPushWithPreviousOptions, IUndoRedoResult, IUndoScope } from '../../../common';
+import { SceneUndoCommandID } from './undo-command';
+import { ISnapshotAdapter } from './commands/snapshot-command';
+interface ISceneUndoOption {
+    label?: string;
+    tag?: string;
+    auto?: boolean;
+    scope?: IUndoScope;
+    customCommand?: IUndoCommand;
+}
+interface ISceneUndoManagerOptions {
+    maxStackSize?: number;
+    snapshotAdapter?: ISnapshotAdapter;
+}
+declare class SceneUndoManager {
+    private _commandArray;
+    private _index;
+    private _lastSavedCommandId;
+    private _checkpointGeneration;
+    private _autoCommands;
+    private _manualCommands;
+    private _snapshotRecordings;
+    private _activeRecordingUuidCounts;
+    private _activeGroup;
+    private _queue;
+    private _isApplying;
+    private readonly _maxStackSize;
+    private readonly _snapshotAdapter?;
+    constructor(options?: ISceneUndoManagerOptions);
+    push(command: IUndoCommand): void;
+    pushWithPrevious(command: IUndoCommand, options: IUndoPushWithPreviousOptions): void;
+    undo(options?: IUndoOperationOptions): Promise<IUndoRedoResult>;
+    redo(options?: IUndoOperationOptions): Promise<IUndoRedoResult>;
+    reset(): void;
+    clearHistory(): void;
+    markSaved(): void;
+    isDirty(): boolean;
+    createCheckpoint(): IUndoCheckpoint;
+    hasScopedDifference(checkpoint: IUndoCheckpoint, scope: Partial<IUndoScope>): boolean;
+    hasScopedDifferenceAfterCheckpoint(checkpoint: IUndoCheckpoint, scope: Partial<IUndoScope>): boolean;
+    discardScopedChangesAfterCheckpoint(checkpoint: IUndoCheckpoint, scope: Partial<IUndoScope>): Promise<IUndoRedoResult>;
+    hasDifferenceOutsideScope(checkpoint: IUndoCheckpoint, scope: Partial<IUndoScope>): boolean;
+    canUndo(options?: IUndoOperationOptions): boolean;
+    canRedo(options?: IUndoOperationOptions): boolean;
+    isApplying(): boolean;
+    beginGroup(options?: IUndoGroupOptions): string;
+    endGroup(groupId: string): IUndoRedoResult;
+    cancelGroup(groupId: string): IUndoRedoResult;
+    isGroupActive(): boolean;
+    getHistoryForTesting(): IUndoCommand[];
+    private _commandMatchesAt;
+    hasActiveRecording(uuid?: string): boolean;
+    beginRecording(uuids: string | string[], option?: ISceneUndoOption): SceneUndoCommandID;
+    endRecording(id: SceneUndoCommandID): Promise<boolean>;
+    cancelRecording(id: SceneUndoCommandID): boolean;
+    private _pushToStack;
+    private _trimToMaxStackSize;
+    private _applyCommand;
+    private _enqueue;
+    private _currentCommandId;
+    private _hasDifferenceSince;
+    private _resolveCheckpointIndex;
+    private _createCommand;
+    private _createId;
+    private _setUndo;
+    private _setRedo;
+    private _addActiveRecordingUuids;
+    private _removeActiveRecordingUuids;
+    private _removeCommand;
+}
+export { SceneUndoManager, ISceneUndoOption };

@@ -1,0 +1,337 @@
+{
+  "builder": {
+    "common": {
+      "title": "构建通用配置"
+    },
+    "useCache": {
+      "title": "缓存配置",
+      "serializeData": {
+        "title": "序列化数据缓存"
+      },
+      "engine": {
+        "title": "引擎缓存"
+      },
+      "textureCompress": {
+        "title": "纹理压缩缓存"
+      },
+      "autoAtlas": {
+        "title": "自动合图缓存"
+      }
+    },
+    "textureCompressConfig": {
+      "title": "纹理压缩配置",
+      "description": "纹理压缩预设和自定义配置"
+    },
+    "bundleConfig": {
+      "title": "Bundle 配置",
+      "description": "自定义 Bundle 构建配置"
+    },
+    "platform": {
+      "configSuffix": "平台配置",
+      "outputName": {
+        "title": "输出名称",
+        "description": "构建的输出目录名，将会作为后续构建任务上的名称"
+      },
+      "packageOptions": {
+        "title": "构建参数"
+      }
+    }
+  },
+  "import": {
+    "title": "资源导入",
+    "globList": {
+      "title": "Glob 列表",
+      "description": "资源导入 glob 匹配规则",
+      "itemTitle": "Glob 规则"
+    },
+    "restoreAssetDBFromCache": {
+      "title": "从缓存恢复资源库"
+    },
+    "createTemplateRoot": {
+      "title": "模板根目录"
+    },
+    "userDataTemplate": {
+      "title": "资源 UserData 模板",
+      "description": "资源 userData 的默认值"
+    },
+    "fbx": {
+      "title": "FBX 导入配置",
+      "legacyFbxImporter": {
+        "title": "旧版 FBX 导入器",
+        "visible": {
+          "title": "显示旧版 FBX 导入器开关"
+        }
+      },
+      "material": {
+        "title": "材质配置",
+        "smart": {
+          "title": "智能材质转换"
+        }
+      }
+    }
+  },
+  "scene": {
+    "tick": {
+      "title": "启用 Tick",
+      "description": "保持场景主循环运行"
+    }
+  },
+  "script": {
+    "title": "脚本",
+    "useDefineForClassFields": {
+      "title": "使用 defineProperty 定义类字段"
+    },
+    "allowDeclareFields": {
+      "title": "允许声明字段"
+    },
+    "loose": {
+      "title": "宽松模式"
+    },
+    "guessCommonJsExports": {
+      "title": "推测 CommonJS 导出",
+      "description": "是否自动推测 CommonJS 模块的导出"
+    },
+    "exportsConditions": {
+      "title": "导出条件"
+    },
+    "sortingPlugin": {
+      "title": "插件脚本排序配置",
+      "description": "插件脚本加载顺序配置，使用资源选择器选择插件脚本，配置文件中保存插件脚本 UUID。",
+      "itemTitle": "插件脚本"
+    },
+    "preserveSymlinks": {
+      "title": "保留符号链接"
+    },
+    "importMap": {
+      "title": "Import Map"
+    },
+    "previewBrowserslistConfigFile": {
+      "title": "预览 Browserslist 配置文件"
+    },
+    "updateAutoUpdateImportConfig": {
+      "title": "自动更新 Import 配置"
+    }
+  },
+  "engine": {
+    "dynamic": {
+      "includeModules": {
+        "title": "包含模块",
+        "description": "引擎包含的功能模块列表",
+        "itemTitle": "模块"
+      },
+      "flags": {
+        "title": "特性标志",
+        "description": "引擎特性开关"
+      }
+    },
+    "physicsConfig": {
+      "title": "物理配置",
+      "gravity": {
+        "title": "重力",
+        "description": "物理世界重力向量"
+      },
+      "allowSleep": {
+        "title": "允许休眠",
+        "description": "是否允许刚体休眠"
+      },
+      "sleepThreshold": {
+        "title": "休眠阈值",
+        "description": "刚体进入休眠的速度阈值"
+      },
+      "autoSimulation": {
+        "title": "自动模拟",
+        "description": "是否自动进行物理模拟"
+      },
+      "fixedTimeStep": {
+        "title": "固定时间步长",
+        "description": "物理模拟固定时间步长 (秒)"
+      },
+      "maxSubSteps": {
+        "title": "最大子步数",
+        "description": "每帧最大物理子步数"
+      },
+      "useNodeChains": {
+        "title": "使用节点链"
+      },
+      "physicsEngine": {
+        "title": "物理引擎",
+        "description": "使用的物理引擎后端"
+      },
+      "collisionMatrix": {
+        "title": "碰撞矩阵",
+        "description": "碰撞分组矩阵"
+      },
+      "defaultMaterial": {
+        "title": "默认物理材质",
+        "description": "默认物理材质 UUID"
+      },
+      "physX": {
+        "title": "PhysX 配置",
+        "description": "PhysX 引擎配置"
+      }
+    },
+    "designResolution": {
+      "title": "设计分辨率",
+      "width": {
+        "title": "宽度"
+      },
+      "height": {
+        "title": "高度"
+      },
+      "fitWidth": {
+        "title": "适配宽度"
+      },
+      "fitHeight": {
+        "title": "适配高度"
+      }
+    },
+    "splashScreen": {
+      "title": "启动画面",
+      "displayRatio": {
+        "title": "显示比例"
+      },
+      "totalTime": {
+        "title": "显示时长 (ms)"
+      },
+      "watermarkLocation": {
+        "title": "水印位置",
+        "options": {
+          "default": "默认",
+          "topLeft": "左上角",
+          "topRight": "右上角",
+          "topCenter": "顶部居中",
+          "bottomLeft": "左下角",
+          "bottomCenter": "底部居中",
+          "bottomRight": "右下角"
+        }
+      },
+      "autoFit": {
+        "title": "自动适配"
+      },
+      "logo": {
+        "title": "Logo 配置"
+      },
+      "background": {
+        "title": "背景配置"
+      }
+    },
+    "moduleConfig": {
+      "title": "模块配置",
+      "noDeprecatedFeatures": {
+        "title": "禁用废弃特性",
+        "description": "是否禁用废弃特性"
+      }
+    },
+    "graphics": {
+      "title": "图形",
+      "pipeline": {
+        "title": "渲染管线",
+        "options": {
+          "custom": "Render Pipeline (New)",
+          "legacy": "Render Pipeline (Legacy)"
+        }
+      },
+      "pipelineName": {
+        "title": "Pipeline Name",
+        "description": "自定义渲染管线名称，对应 engine.macroConfig.CUSTOM_PIPELINE_NAME。"
+      },
+      "customPipelinePostProcess": {
+        "title": "Post Process Module",
+        "description": "是否启用自定义管线后处理模块。"
+      }
+    },
+    "rendering": {
+      "title": "渲染",
+      "renderPipeline": {
+        "title": "渲染管线",
+        "description": "渲染管线 UUID"
+      },
+      "customPipeline": {
+        "title": "自定义管线",
+        "description": "是否使用自定义渲染管线"
+      },
+      "highQuality": {
+        "title": "高画质"
+      },
+      "downloadMaxConcurrency": {
+        "title": "最大下载并发数"
+      },
+      "customJointTextureLayouts": {
+        "title": "自定义骨骼贴图布局",
+        "description": "自定义骨骼动画贴图布局"
+      }
+    },
+    "jointTextureLayout": {
+      "title": "动画 / 骨骼贴图布局",
+      "customJointTextureLayouts": {
+        "title": "自定义骨骼贴图布局",
+        "description": "按骨骼和动画剪辑组织骨骼贴图布局。构建和预览时会自动计算贴图尺寸，并把资源 UUID 转换为运行时 hash。",
+        "itemTitle": "骨骼贴图布局",
+        "textureLength": {
+          "title": "贴图边长",
+          "description": "由骨骼数量、动画帧数和默认姿势自动计算；小于 1024 通常适用于所有设备，小于 2048 可能影响不支持浮点贴图的设备，2048 及以上可能影响较多移动设备。"
+        },
+        "contents": {
+          "title": "布局内容",
+          "description": "每项包含一个骨骼资源和一组动画剪辑资源。",
+          "itemTitle": "骨骼内容",
+          "skeleton": {
+            "title": "骨骼 UUID",
+            "description": "cc.Skeleton 资源 UUID。"
+          },
+          "clips": {
+            "title": "动画剪辑 UUID",
+            "description": "cc.AnimationClip 资源 UUID 列表。",
+            "itemTitle": "动画剪辑 UUID"
+          }
+        }
+      }
+    },
+    "macroConfig": {
+      "title": "宏配置",
+      "macroCustom": {
+        "title": "自定义宏",
+        "description": "自定义宏列表",
+        "itemTitle": "自定义宏项",
+        "key": {
+          "title": "宏名称"
+        },
+        "value": {
+          "title": "宏值"
+        }
+      }
+    },
+    "layers": {
+      "title": "图层配置",
+      "customLayers": {
+        "title": "自定义图层",
+        "description": "Layers 能让相机渲染部分场景，让灯光照亮部分场景。\n 可自定义 0 到 19 个 Layers， 而后 12 个 Layers 是引擎内置的。"
+      },
+      "sortingLayers": {
+        "title": "排序图层",
+        "description": "排序图层列表，通过拖动可进行排序"
+      }
+    },
+    "projectConfig": {
+      "title": "项目配置",
+      "globalConfigKey": {
+        "title": "全局配置键"
+      },
+      "configs": {
+        "title": "引擎模块配置集合"
+      },
+      "configItem": {
+        "title": "引擎模块配置"
+      },
+      "noDeprecatedFeatureConfig": {
+        "title": "废弃特性配置",
+        "value": {
+          "title": "启用状态"
+        },
+        "version": {
+          "title": "版本"
+        }
+      }
+    }
+  }
+}
