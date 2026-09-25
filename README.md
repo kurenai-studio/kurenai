@@ -9,6 +9,16 @@ coding agents.
 > use the `kurenai` CLI; there is no MCP server.
 > See [`docs/cocos-cli-migration.md`](docs/cocos-cli-migration.md).
 
+## One-liner (for agents)
+
+Paste this into a coding agent so it can install and use Kurenai on its own:
+
+```text
+自学并只用最新 kurenai CLI（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`，确认本机有 PinK 的 cocos-cli 或设 `KURENAI_COCOS_CLI_ROOT` → `kurenai init` → `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `asset info` / `logs` / `context` 闭环，禁止手写 .meta、prefab 不挂脚本）开发 Cocos 游戏；交付时再 `kurenai publish --platform web-desktop`。
+```
+
+中文安装与用法入口：[docs/安装方法.md](docs/安装方法.md) · [docs/简单使用方法.md](docs/简单使用方法.md)
+
 ## Product loop
 
 ```text
