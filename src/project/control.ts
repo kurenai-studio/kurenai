@@ -18,7 +18,9 @@ import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { spawn } from "node:child_process";
+import { ensurePacks, packsForPlatform } from "../cocos/packs.js";
 import { packageFile, resolveCocosCliRoot } from "../cocos/paths.js";
+
 import {
   PreviewController,
   type PreviewConfig,
@@ -225,9 +227,10 @@ export class ProjectControl {
     const project = await this.inspect(absolutePath);
     if (!project) throw new Error("The directory is not a Cocos Creator project");
     const cocosCliRoot = resolveCocosCliRoot(this.config.cocosCliRoot);
+    const platform = options.platform ?? "web-desktop";
+    await ensurePacks(packsForPlatform(platform), { cocosCliRoot });
     const cli = join(cocosCliRoot, "dist", "cli.js");
     if (!existsSync(cli)) throw new Error(`cocos-cli not found: ${cli}`);
-    const platform = options.platform ?? "web-desktop";
     const args = [cli, "build", "--project", absolutePath, "--platform", platform];
 
     let configDir: string | undefined;

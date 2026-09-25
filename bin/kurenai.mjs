@@ -9,6 +9,7 @@
  *   kurenai logs [--since <seq>] [--errors] [--project <dir>]
  *   kurenai context [--project <dir>]
  *   kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--verbose] [--project <dir>]
+ *   kurenai packs status|ensure [packId...] [--fetch]
  *
  * The project defaults to the nearest directory above the file (or cwd) that
  * contains assets/ and package.json. Output is JSON on stdout.
@@ -30,7 +31,8 @@ const USAGE = `usage:
   kurenai asset info <file> [--project <dir>]
   kurenai logs [--since <seq>] [--errors] [--project <dir>]
   kurenai context [--project <dir>]
-  kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--verbose] [--project <dir>]`;
+  kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--verbose] [--project <dir>]
+  kurenai packs status|ensure [packId...] [--fetch]`;
 
 async function projectControl() {
   const { ProjectControl } = await import('../lib/index.js');
@@ -94,6 +96,9 @@ function logTail(logFile, lines = 20) {
 async function ensureHost(project) {
   const running = readHostFile(project);
   if (running && (await hostStatus(running))?.ready) return running;
+
+  const { ensureCorePack } = await import('../lib/index.js');
+  await ensureCorePack({});
 
   const logFile = join(project, 'temp', 'kurenai-host.log');
   if (!running) {
@@ -180,6 +185,24 @@ async function main() {
     });
     print({ ok: true, ...result });
     return;
+  }
+
+  if (group === 'packs') {
+    const { packsStatus, ensurePacks, listKnownPackIds } = await import('../lib/index.js');
+    if (command === 'status') {
+      print({ ok: true, ...packsStatus() });
+      return;
+    }
+    if (command === 'ensure') {
+      const ids = positional.slice(2);
+      const required = ids.length ? ids : ['core'];
+      const unknown = required.filter((id) => !listKnownPackIds().includes(id));
+      if (unknown.length) exitWith(`unknown pack id(s): ${unknown.join(', ')}`);
+      const result = await ensurePacks(required, { fetch: Boolean(options.fetch) });
+      print({ ok: true, ...result });
+      return;
+    }
+    printUsage(2);
   }
 
   if (group === 'host') {

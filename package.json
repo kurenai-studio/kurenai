@@ -24,6 +24,8 @@
     "lib/**/*",
     "bin/**/*",
     "templates/**/*",
+    "docs/cocos-cli-split.manifest.json",
+    "docs/cocos-cli-split.md",
     "README.md",
     "LICENSE"
   ],

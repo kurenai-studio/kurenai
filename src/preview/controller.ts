@@ -2,7 +2,9 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { ensureCorePack } from "../cocos/packs.js";
 import { packageFile, resolveCocosCliRoot } from "../cocos/paths.js";
+
 import { PreviewBridge } from "./bridge.js";
 
 export interface PreviewConfig {
@@ -105,6 +107,7 @@ export class PreviewController {
       throw new Error(`Kurenai cocos host entry does not exist: ${entry}`);
     }
     const cocosCliRoot = resolveCocosCliRoot(merged.cocosCliRoot);
+    await ensureCorePack({ cocosCliRoot });
 
     const port = merged.port ?? DEFAULT_PORT;
     const bridgePort = merged.bridgePort ?? port + 1;

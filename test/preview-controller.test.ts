@@ -190,6 +190,8 @@ async function createFixture(): Promise<{
   const hostEntry = join(root, "host.mjs");
   const inspector = join(root, "inspector.js");
   await mkdir(project);
+  await mkdir(join(root, "cocos-cli", "dist"), { recursive: true });
+  await writeFile(join(root, "cocos-cli", "dist", "cli.js"), "");
   await writeFile(hostEntry, "");
   await writeFile(inspector, "");
   return { project, hostEntry, cliRoot: join(root, "cocos-cli"), inspector };

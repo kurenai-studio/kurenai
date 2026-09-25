@@ -1,0 +1,128 @@
+{
+  "$schema_comment": "Machine inventory for splitting cocos-cli into on-demand packs. Sizes measured on a local PinK install; re-run scripts/measure-cocos-split.mjs to refresh.",
+  "measuredAgainst": {
+    "cocosCliRootExample": "~/Library/Application Support/cocos-default/cocos-4.0.0-alpha.33",
+    "cocosCliPackageVersion": "0.0.1-alpha.41",
+    "engineVersion": "4.0.0-alpha.33",
+    "fullInstallBytes": 5753489841,
+    "proposedCoreBytes": 1792730355,
+    "measuredMB": { "full": 5486.7, "core": 1709.9, "savings": 3776.8 },
+    "note": "Refresh with: node scripts/measure-cocos-split.mjs"
+  },
+  "goals": {
+    "primary": "webgame preview + web-desktop/web-mobile publish without downloading native or mini-game platforms",
+    "outputNote": "Final webgame *build artifact* stays small; this inventory only splits the *toolchain* download.",
+    "phase1Target": "core ≈ 1.7 GB (from ≈ 5.4 GB full)",
+    "phase2Target": "further trim core node_modules / engine bin temp toward < 1 GB if possible"
+  },
+  "packs": {
+    "core": {
+      "id": "core",
+      "required": true,
+      "supports": ["preview", "asset-db", "web-desktop", "web-mobile"],
+      "include": [
+        "dist/**",
+        "package.json",
+        "package-lock.json",
+        "workflow/**",
+        "node_modules/**",
+        "packages/cc-module/**",
+        "packages/cocos-cli-types/**",
+        "packages/engine-compiler/**",
+        "packages/engine/**",
+        "packages/engine/native/external/emscripten/**",
+        "static/web/**",
+        "static/build-templates/**",
+        "static/i18n/**",
+        "static/assets/**",
+        "static/scripting/**",
+        "static/logo/**",
+        "static/image.png",
+        "static/tools/astc-encoder/**",
+        "static/tools/PVRTexTool_darwin/**",
+        "static/tools/libwebp_darwin/**",
+        "static/tools/mali_darwin/**",
+        "static/tools/cmft/**",
+        "static/tools/lightmap-tools/**",
+        "static/tools/LightFX/**",
+        "static/tools/process-info/**",
+        "static/tools/keystore/**"
+      ],
+      "exclude": [
+        "packages/engine/native/**",
+        "packages/engine/tests/**",
+        "packages/engine/docs/**",
+        "packages/platforms/**",
+        "static/tools/cmake/**",
+        "static/tools/quickgame-toolkit/**",
+        "static/tools/xiaomi-pack-tools/**",
+        "static/tools/huawei-rpk-tools/**"
+      ],
+      "excludeExcept": [
+        "packages/engine/native/external/emscripten/**"
+      ],
+      "trimCandidates": [
+        "packages/engine/bin/temp",
+        "packages/engine/templates",
+        "packages/engine/node_modules",
+        "node_modules"
+      ]
+    },
+    "platform": {
+      "idPrefix": "platform:",
+      "required": false,
+      "installWhen": "kurenai publish / cocos build -p <id>",
+      "discovery": "packages/platforms/<dir>/package.json (contributes.builder.register)",
+      "packs": [
+        { "id": "platform:wechat", "dir": "packages/platforms/wechat", "builderIdHint": "wechatgame" },
+        { "id": "platform:wechat-playable", "dir": "packages/platforms/wechat-playable" },
+        { "id": "platform:bytedance", "dir": "packages/platforms/bytedance", "builderIdHint": "bytedance-mini-game" },
+        { "id": "platform:alipay", "dir": "packages/platforms/alipay", "builderIdHint": "alipay-mini-game" },
+        { "id": "platform:taobao", "dir": "packages/platforms/taobao" },
+        { "id": "platform:oppo", "dir": "packages/platforms/oppo" },
+        { "id": "platform:vivo", "dir": "packages/platforms/vivo" },
+        { "id": "platform:huawei", "dir": "packages/platforms/huawei" },
+        { "id": "platform:honor", "dir": "packages/platforms/honor" },
+        { "id": "platform:sud", "dir": "packages/platforms/sud" },
+        { "id": "platform:sudv2", "dir": "packages/platforms/sudv2" },
+        { "id": "platform:meta", "dir": "packages/platforms/meta", "builderIdHint": "fb-instant-games" }
+      ]
+    },
+    "native": {
+      "idPrefix": "native:",
+      "required": false,
+      "installWhen": "build android|ios|windows|mac|ohos|harmonyos-next|google-play|huawei-agc",
+      "shared": [
+        { "id": "native:engine-src", "paths": ["packages/engine/native/cocos", "packages/engine/native/tools", "packages/engine/native/external/sources"] },
+        { "id": "native:tool-cmake", "paths": ["static/tools/cmake"] }
+      ],
+      "targets": [
+        { "id": "native:android", "paths": ["packages/engine/native/external/android"] },
+        { "id": "native:ios", "paths": ["packages/engine/native/external/ios", "packages/engine/native/external/ios-xcframework", "packages/engine/native/external/ios-m1-simulator"] },
+        { "id": "native:mac", "paths": ["packages/engine/native/external/mac"] },
+        { "id": "native:win64", "paths": ["packages/engine/native/external/win64"] },
+        { "id": "native:linux", "paths": ["packages/engine/native/external/linux"] },
+        { "id": "native:ohos", "paths": ["packages/engine/native/external/ohos", "packages/engine/native/external/openharmony"] },
+        { "id": "native:emscripten", "paths": ["packages/engine/native/external/emscripten"] }
+      ]
+    },
+    "platformTools": {
+      "idPrefix": "platform-tool:",
+      "required": false,
+      "packs": [
+        { "id": "platform-tool:quickgame", "paths": ["static/tools/quickgame-toolkit"] },
+        { "id": "platform-tool:xiaomi", "paths": ["static/tools/xiaomi-pack-tools"] },
+        { "id": "platform-tool:huawei-rpk", "paths": ["static/tools/huawei-rpk-tools"] }
+      ]
+    }
+  },
+  "kurenaiHooks": {
+    "resolveRoot": "KURENAI_COCOS_CLI_ROOT → ~/Library/Application Support/kurenai/cocos-core/<ver> → legacy PinK",
+    "ensurePack": "kurenai host start / publish call ensurePacks; pack with scripts/pack-cocos-core.mjs",
+    "packScript": "scripts/pack-cocos-core.mjs",
+    "webDefault": ["core"],
+    "publishWeb": ["core"],
+    "publishWechat": ["core", "platform:wechat"],
+    "publishAndroid": ["core", "native:engine-src", "native:tool-cmake", "native:android"]
+  }
+}

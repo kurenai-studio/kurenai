@@ -53,6 +53,17 @@ describe("CLI parseArgs", () => {
     expect(options.platform).toBe("web-mobile");
     expect(options.verbose).toBe(true);
   });
+
+  it("parses --fetch on packs ensure", () => {
+    const { positional, options } = parseArgs([
+      "packs",
+      "ensure",
+      "platform:wechat",
+      "--fetch",
+    ]);
+    expect(positional).toEqual(["packs", "ensure", "platform:wechat"]);
+    expect(options.fetch).toBe(true);
+  });
 });
 
 describe("CLI project discovery", () => {
