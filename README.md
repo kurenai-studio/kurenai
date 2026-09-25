@@ -14,12 +14,22 @@ coding agents.
 Paste this into a coding agent so it can install and use Kurenai on its own:
 
 ```text
-自学并只用最新 kurenai CLI（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`，确认本机有 PinK 的 cocos-cli 或设 `KURENAI_COCOS_CLI_ROOT` → `kurenai init` → `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `asset info` / `logs` / `context` 闭环，禁止手写 .meta、prefab 不挂脚本）开发 Cocos 游戏；交付时再 `kurenai publish --platform web-desktop`。
+自学并只用最新 kurenai（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`；预览/构建所需的精简 cocos 运行时由 kurenai 按需拉取，不要单独安装完整 cocos-cli / PinK）开发 Cocos 游戏：`kurenai init` → `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `asset info` / `logs` / `context` 闭环，禁止手写 .meta、prefab 不挂脚本；交付时再 `kurenai publish --platform web-desktop`。
 ```
 
 中文安装与用法入口：[docs/安装方法.md](docs/安装方法.md) · [docs/简单使用方法.md](docs/简单使用方法.md)
 
-## Product loop
+> **Direction:** Kurenai must not require a separate full cocos-cli install. Ship a trimmed, on-demand cocos runtime (web `core` first; platform/native packs later). Today’s PinK/`KURENAI_COCOS_CLI_ROOT` path is a temporary bridge, not the product.
+
+## Product goal (runtime)
+
+```text
+kurenai (≈1MB CLI)
+  └─ on demand: trimmed cocos "core" (~web preview + asset-db + web publish)
+       └─ on demand: platform:* / native:* packs
+```
+
+Agents and humans install **only kurenai**. They do **not** install full cocos-cli / PinK as a prerequisite. The split inventory lives in [`docs/cocos-cli-split.md`](docs/cocos-cli-split.md).
 
 ```text
 Agent writes files under assets/ (prefabs, materials, TypeScript views)
@@ -56,10 +66,9 @@ new project.
 ## Requirements
 
 - Node.js 22+
-- A cocos-cli install. Defaults to
-  `~/Library/Application Support/cocos-default/cocos-4.0.0-alpha.33` (installed
-  by PinK); override with `KURENAI_COCOS_CLI_ROOT` or the `cocosCliRoot` option.
-  The host uses cocos-cli internals (`dist/core/*`), so keep the version pinned.
+- Network access to fetch the trimmed cocos **core** pack on first `host start` / `publish` (once the pack CDN is live)
+
+Transitional only: if a local cocos tree already exists, `KURENAI_COCOS_CLI_ROOT` can still point at it. That is not the intended end state.
 
 ## Install
 
