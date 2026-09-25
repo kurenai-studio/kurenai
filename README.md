@@ -2,8 +2,8 @@
 
 PinK 的升级版：项目管理、资源编译、预览、构建在同一产品里。
 
-> Agents install **only kurenai** — no PinK / separate cocos-cli.
-> The trimmed cocos runtime is the `vendor/cocos-core` source tree in this package.
+> Agents install **only kurenai** — no PinK / separate cocos-cli.  
+> The trimmed cocos runtime lives in this repo as `vendor/cocos-core`.
 
 ## One-liner (for agents)
 
@@ -27,8 +27,8 @@ kurenai
 
 ```text
 Agent writes files under assets/ (prefabs, materials, TypeScript views)
-  → cocos host watcher → asset-db refresh (.meta, import, compile)
-  → cocos-cli live reload refreshes the preview
+  → host watcher → asset-db refresh (.meta, import, compile)
+  → live reload refreshes the preview
   → agent reads uuids and errors through `kurenai asset info` / `kurenai logs`
 ```
 
@@ -41,17 +41,19 @@ new project.
 ## Pieces
 
 - `bin/kurenai.mjs` — the CLI (see below).
-- `bin/kurenai-cocos-host.mjs` — one long-lived process per project. Loads
-  cocos-cli, starts its game preview, watches `assets/` (or polls with
-  `WATCH_POLL=1`) and exposes `/__kurenai/status`, `/__kurenai/refresh`,
-  `/__kurenai/asset` and `/__kurenai/logs`. Advertises itself in
-  `<project>/temp/kurenai-host.json`.
+- `bin/kurenai-cocos-host.mjs` — one long-lived process per project. Loads the
+  bundled `vendor/cocos-core` runtime, starts game preview, watches `assets/`
+  (or polls with `WATCH_POLL=1`) and exposes `/__kurenai/status`,
+  `/__kurenai/refresh`, `/__kurenai/asset` and `/__kurenai/logs`. Advertises
+  itself in `<project>/temp/kurenai-host.json`.
+- `vendor/cocos-core/` — trimmed runtime (asset-db, preview, web builders).
+  `npm install` / `postinstall` installs its JS deps and restores prebuilt natives.
 - `src/preview/controller.ts` — starts the host (or attaches to one the CLI
   started) and puts `PreviewBridge` in front of it.
 - `src/preview/bridge.ts` — reverse proxy that injects the inspector and keeps
   every preview request on the bridge origin.
 - `src/project/control.ts` — project detection, template initialization,
-  selection context and publish through `cocos build`.
+  selection context and publish (`web-desktop` / `web-mobile`).
 - `src/inspector-runtime/` — browser runtime for scene tree, selection and 2D
   hit testing.
 - `templates/` — `base-ai` (2D) and `base-ai-3d` project templates plus the
@@ -60,9 +62,9 @@ new project.
 ## Requirements
 
 - Node.js 22+
-- Network access to fetch the trimmed cocos **core** pack on first `host start` / `publish` (once the pack CDN is live)
+- That’s it for the default path — no PinK / full cocos-cli install
 
-Transitional only: if a local cocos tree already exists, `KURENAI_COCOS_CLI_ROOT` can still point at it. That is not the intended end state.
+Optional override for tests only: `KURENAI_COCOS_CLI_ROOT` pointing at a custom tree.
 
 ## Install
 
@@ -71,11 +73,12 @@ Not published to npm; install from GitHub:
 ```sh
 git clone https://github.com/kurenai-studio/kurenai.git
 cd kurenai
-npm install
-npm link   # optional: puts `kurenai` on PATH
+npm install          # also prepares vendor/cocos-core deps
+npm link             # optional: puts `kurenai` on PATH
 ```
 
-`lib/` is committed, so no build step is needed to use the CLI.
+`lib/` is committed, so no build step is needed to use the CLI. First
+`npm install` may take a few minutes (runtime dependencies).
 
 ## CLI
 
@@ -106,16 +109,14 @@ line shows **Complete!**
 
 Options: `--dir <path>` for a fixed project directory, `--no-host` to skip the
 host, `--cleanup` to remove the temp project (and stop the host) when finished.
-Related scaffold: issue #8 (`run-puzzle.mjs` entrypoint).
 
 ### Host benchmark (RSS / ready time)
 
 `node scripts/bench-host.mjs` initializes a temp project (default
 `base-ai-3d`), runs `kurenai host start`, prints JSON with wall time to
-ready and host process RSS (via `ps`), then stops the host. Requires a local
-cocos-cli install; if cocos-cli is missing the script exits with a JSON error
-and does not write log files. Pass `--concurrent` to start two hosts on ports
-7460/7461 (useful but can be flaky under load); `--cleanup` removes temp dirs.
+ready and host process RSS (via `ps`), then stops the host. Uses the bundled
+`vendor/cocos-core` runtime. Pass `--concurrent` to start two hosts on ports
+7460/7461; `--cleanup` removes temp dirs.
 
 ## Library
 
@@ -138,6 +139,12 @@ npm install
 npm run check
 ```
 
+Maintainer refresh of the bundled runtime (from a full install source):
+
+```sh
+npm run vendor:cocos
+```
+
 CI runs `npm run check` on pull requests to `main` (see `.github/workflows/check.yml`).
 
 ## Agent swarm
@@ -147,18 +154,17 @@ manager review rules live in [`docs/SWARM.md`](docs/SWARM.md).
 
 ## Limitations
 
-- In Docker (bind-mounted project dirs), set `WATCH_POLL=1` on the cocos host;
+- In Docker (bind-mounted project dirs), set `WATCH_POLL=1` on the host;
   see [`docs/docker-watch-poll.md`](docs/docker-watch-poll.md).
 - Canvas picking targets 2D `UITransform` bounds; 3D raycasting is not
   implemented.
 - Materials created from code can only use `builtin-unlit`; write `.mtl` files
   for lit materials.
 - Publishing supports `web-desktop` and `web-mobile`.
-- Each preview host is a full cocos-cli process (~ hundreds of MB RSS); use
+- Each preview host is a full runtime process (~ hundreds of MB RSS); use
   `node scripts/bench-host.mjs` on your machine for repeatable numbers.
 
 ## License
 
-Kurenai source code is MIT licensed. cocos-cli, the Cocos engine and other
-vendor assets are not part of this repository and remain under their
-respective licenses.
+Kurenai Studio source is MIT licensed. The bundled `vendor/cocos-core` tree
+(Cocos / cocos-cli derived runtime) remains under its upstream licenses.
