@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { createWriteStream, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { cpSync, createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -289,7 +289,7 @@ function runNpmInstall(dir: string): Promise<void> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(
       "npm",
-      ["install", "--omit=dev", "--no-audit", "--no-fund", "--foreground-scripts"],
+      ["install", "--omit=dev", "--no-audit", "--no-fund", "--ignore-scripts"],
       {
         cwd: dir,
         stdio: ["ignore", "ignore", "pipe"],
@@ -308,8 +308,23 @@ function runNpmInstall(dir: string): Promise<void> {
   });
 }
 
+function restoreBundledPrebuilts(root: string): void {
+  const prebuiltDir = join(root, ".kurenai-prebuilts");
+  if (!existsSync(prebuiltDir)) return;
+  for (const name of readdirSync(prebuiltDir)) {
+    const from = join(prebuiltDir, name);
+    const to = join(root, "node_modules", name);
+    rmSync(to, { recursive: true, force: true });
+    mkdirSync(dirname(to), { recursive: true });
+    cpSync(from, to, { recursive: true });
+  }
+}
+
 function coreDepsInstalled(root: string): boolean {
-  return existsSync(join(root, "node_modules/@babel/core"));
+  return (
+    existsSync(join(root, "node_modules/@babel/core")) &&
+    existsSync(join(root, "node_modules/gl/build/Release/webgl.node"))
+  );
 }
 
 /** vendor/cocos-core ships without full node_modules; install on first use. */
@@ -320,6 +335,7 @@ async function ensureCoreDependencies(root: string): Promise<void> {
   if (existsSync(join(root, "packages/engine/package.json"))) {
     await runNpmInstall(join(root, "packages/engine"));
   }
+  restoreBundledPrebuilts(root);
 }
 
 export type EnsurePacksOptions = {

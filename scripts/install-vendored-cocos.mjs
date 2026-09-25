@@ -2,6 +2,10 @@
 /**
  * Ensure vendor/cocos-core dependencies are installed (postinstall).
  * The trimmed runtime source lives in vendor/cocos-core — not a sidecar tarball.
+ *
+ * Native addons (gl / sharp / @ffprobe-installer) are restored from
+ * vendor/cocos-core/.kurenai-prebuilts after `npm install --ignore-scripts`
+ * so fresh machines never need a working node-gyp toolchain for those packages.
  */
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
@@ -14,10 +18,16 @@ const coreDir = join(repoRoot, 'vendor', 'cocos-core');
 const prebuiltDir = join(coreDir, '.kurenai-prebuilts');
 
 function npmInstall(dir) {
-  console.log(`[kurenai] npm install --omit=dev in ${dir}`);
+  console.log(`[kurenai] npm install --omit=dev --ignore-scripts in ${dir}`);
   const result = spawnSync(
     'npm',
-    ['install', '--omit=dev', '--no-audit', '--no-fund', '--foreground-scripts'],
+    [
+      'install',
+      '--omit=dev',
+      '--no-audit',
+      '--no-fund',
+      '--ignore-scripts',
+    ],
     {
       cwd: dir,
       stdio: 'inherit',
@@ -32,7 +42,11 @@ function depsReady(dir) {
 }
 
 function restorePrebuiltNatives() {
-  if (!existsSync(prebuiltDir)) return;
+  if (!existsSync(prebuiltDir)) {
+    throw new Error(
+      `missing ${prebuiltDir} — vendor/cocos-core must ship .kurenai-prebuilts/{gl,sharp,@ffprobe-installer}`,
+    );
+  }
   for (const name of readdirSync(prebuiltDir)) {
     const from = join(prebuiltDir, name);
     const to = join(coreDir, 'node_modules', name);
@@ -40,6 +54,9 @@ function restorePrebuiltNatives() {
     mkdirSync(dirname(to), { recursive: true });
     cpSync(from, to, { recursive: true });
     console.log(`[kurenai] restored prebuilt node_modules/${name}`);
+  }
+  if (!existsSync(join(coreDir, 'node_modules/gl/build/Release/webgl.node'))) {
+    throw new Error('prebuilt gl missing webgl.node after restore');
   }
 }
 
@@ -54,8 +71,8 @@ function main() {
     npmInstall(coreDir);
     const engine = join(coreDir, 'packages/engine');
     if (existsSync(join(engine, 'package.json'))) npmInstall(engine);
-    restorePrebuiltNatives();
   }
+  restorePrebuiltNatives();
   console.log(JSON.stringify({ ok: true, core: coreDir }));
 }
 
