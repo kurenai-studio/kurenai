@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { cpSync, createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { cpSync, createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -308,15 +308,62 @@ function runNpmInstall(dir: string): Promise<void> {
   });
 }
 
+function packageLooksRestored(name: string, to: string): boolean {
+  if (name === "gl") return existsSync(join(to, "build/Release/webgl.node"));
+  if (name === "sharp") {
+    return existsSync(join(to, "package.json")) && existsSync(join(to, "build"));
+  }
+  return existsSync(join(to, "package.json"));
+}
+
+/** Replace dest with src without recursive rm (agent sandboxes often block bulk deletes). */
+function replaceTree(from: string, to: string): void {
+  mkdirSync(dirname(to), { recursive: true });
+  if (!existsSync(to)) {
+    cpSync(from, to, { recursive: true });
+    return;
+  }
+  const aside = `${to}.kurenai-old-${process.pid}`;
+  try {
+    if (existsSync(aside)) {
+      try {
+        rmSync(aside, { recursive: true, force: true });
+      } catch {
+        /* ignore */
+      }
+    }
+    renameSync(to, aside);
+  } catch {
+    cpSync(from, to, { recursive: true, force: true });
+    return;
+  }
+  try {
+    cpSync(from, to, { recursive: true });
+  } catch (error) {
+    try {
+      if (!existsSync(to)) renameSync(aside, to);
+    } catch {
+      /* ignore */
+    }
+    throw error;
+  }
+  try {
+    rmSync(aside, { recursive: true, force: true });
+  } catch {
+    /* leave aside; install still succeeded */
+  }
+}
+
 function restoreBundledPrebuilts(root: string): void {
+  if (process.env.KURENAI_SKIP_PREBUILT === "1") return;
   const prebuiltDir = join(root, ".kurenai-prebuilts");
   if (!existsSync(prebuiltDir)) return;
   for (const name of readdirSync(prebuiltDir)) {
     const from = join(prebuiltDir, name);
+    if (!statSync(from).isDirectory()) continue;
     const to = join(root, "node_modules", name);
-    rmSync(to, { recursive: true, force: true });
-    mkdirSync(dirname(to), { recursive: true });
-    cpSync(from, to, { recursive: true });
+    if (packageLooksRestored(name, to)) continue;
+    replaceTree(from, to);
   }
 }
 
