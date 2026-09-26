@@ -146,7 +146,18 @@ function restorePrebuiltNatives() {
   }
 }
 
+function assertSupportedPlatform() {
+  const key = `${process.platform}-${process.arch}`;
+  if (key === 'darwin-arm64') return;
+  console.warn(
+    `[kurenai] prebuilt natives currently support darwin-arm64 only (this machine: ${key}). ` +
+      'Other platforms coming later; install may fail without matching .kurenai-prebuilts.',
+  );
+}
+
 function main() {
+  assertSupportedPlatform();
+
   if (!existsSync(join(coreDir, 'dist/cli.js'))) {
     console.warn(
       '[kurenai] vendor/cocos-core missing — skip deps. Maintainer: npm run vendor:cocos',

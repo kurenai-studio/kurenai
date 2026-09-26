@@ -62,7 +62,8 @@ new project.
 ## Requirements
 
 - Node.js 22+
-- That’s it for the default path — no PinK / full cocos-cli install
+- **当前预编译 native（`gl` / `sharp` / ffprobe）仅支持 macOS arm64（Apple Silicon）。** Windows / Linux / Intel Mac 稍后按平台补预编译。
+- 默认路径不需要 PinK / 完整 cocos-cli
 
 Optional override for tests only: `KURENAI_COCOS_CLI_ROOT` pointing at a custom tree.
 
