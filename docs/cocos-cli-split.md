@@ -44,11 +44,11 @@ native:<target>（按需）
 
 策略（已落地）：
 
-- **主包不含完整 `node_modules`**：解压后 `npm install --omit=dev`（仅附带预编译 `gl` / `sharp` / `@ffprobe-installer`，避免带空格路径下 node-gyp 失败）
+- **主包不含完整 `node_modules`**：解压后 `npm install --omit=dev`（图片走纯 JS `portable-sharp`；仅附带预编译 `@ffprobe-installer`，避免带空格路径下 node-gyp 失败）
 - **主包含 webgame 打包模块**：`dist/.../web-desktop|web-mobile|web-common`；其余平台 builder 不进主包
 - **其它平台打包模块不进主包**（android/ios/微信等）
 - **预览必需**：`engine/bin/.cache/dev-cli` + emscripten wasm
-- **少量预编译原生模块**（`gl` / `sharp` / `@ffprobe-installer`）打进 tarball（路径含空格时 node-gyp 编不过）
+- **少量预编译原生模块**（仅 `@ffprobe-installer`）打进 tarball；`gl` 已移除，`sharp` 由 `packages/portable-sharp` 替代
 
 ```bash
 node scripts/pack-cocos-core.mjs --source "$HOME/Library/Application Support/cocos-default/cocos-4.0.0-alpha.33" --tgz --npm-install
@@ -123,7 +123,8 @@ tarball 解压到 `KURENAI_COCOS_CLI_ROOT` 根目录（内含 `packages/platform
 node scripts/measure-cocos-split.mjs
 ```
 
-尚待：真正发布 core/platform/native 的拆包产物到 CDN；以及 phase 2 瘦 core 的 `node_modules`。
+尚待：真正发布 core/platform/native 的拆包产物到 CDN；以及 phase 2 瘦 core 的 `node_modules`。  
+~~TODO：去掉 effect `finalTypeCheck` 对 `gl` 的依赖~~ — 已完成（见 migration 待办）。
 
 ## 6. 非目标
 

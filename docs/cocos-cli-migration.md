@@ -247,8 +247,11 @@ Docker bind mount 下 `fs.watch` 不可靠，所以 host 支持 `WATCH_POLL=1`�
 
 ### 待办
 
+- ~~**去掉 effect 的 headless WebGL 校验（`gl`）**~~：**已做** — `shdc-lib.js` 的 `finalTypeCheck` 为空操作；`gl` 已从依赖与预编译中移除。
+- ~~**换移植性更好的图片库**~~：**已做** — `vendor/cocos-core/packages/portable-sharp`（jimp 纯 JS）通过 `file:` 依赖顶替原生 `sharp`；调用点仍 `require('sharp')`。
 - **Docker 里实测轮询监听**：目前只在 macOS 本机验证过。
 - **精简 prefab 的边界**：目前只测了 `MeshRenderer`。其他组件（灯光、粒子、`Sprite`、`Label`）省略字段后的默认值是否可用，要逐个测。
 - **UI 与场景的组织方式**：待讨论。
 - **`kurenai_logs`**：数据源已有，就是 host 转发的 `[Browser ERROR] … at MainView.bind (…)` 和编译日志。需要在 host 里做一个环形缓冲区，再暴露成路由；导入失败也应该进这个日志。
 - **`run-puzzle` 改写**：拼图块写成 prefab，行为写成 View，作为 M2 的验收用例。
+- **portable-sharp 回归**：对 trim / atlas pack / texture compress / cubemap 做一批图片 fixture 对比；必要时补齐 API。

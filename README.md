@@ -62,7 +62,7 @@ new project.
 ## Requirements
 
 - Node.js 22+
-- **当前预编译 native（`gl` / `sharp` / ffprobe）仅支持 macOS arm64（Apple Silicon）。** Windows / Linux / Intel Mac 稍后按平台补预编译。
+- **预编译 native 目前仅剩 ffprobe（`.kurenai-prebuilts`），主要支持 macOS arm64。** 图片处理已改为纯 JS 的 `portable-sharp`（jimp），不再依赖 `gl` / `sharp` 原生模块。
 - 默认路径不需要 PinK / 完整 cocos-cli
 
 Optional override for tests only: `KURENAI_COCOS_CLI_ROOT` pointing at a custom tree.

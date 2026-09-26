@@ -1157,69 +1157,9 @@ const miscChecks = (() => {
         }
     };
 })();
-const finalTypeCheck = (() => {
-    let gl = require('gl')(300, 150, { preserveDrawingBuffer: true });
-    const supportedExtensions = gl.getSupportedExtensions();
-    for (let i = 0; i !== supportedExtensions.length; ++i) {
-        gl.getExtension(supportedExtensions[i]);
-    }
-    const getDefineString = (defines) => defines.reduce((acc, cur) => {
-        let value = 1; // enable all boolean swithces
-        switch (cur.type) {
-            case 'string':
-                value = cur.options[0];
-                break;
-            case 'number':
-                value = cur.range[0];
-                break;
-            case 'constant':
-                value = cur.default;
-                break;
-            case 'boolean':
-                value = cur.default === undefined ? 1 : cur.default;
-                break;
-        }
-        return `${acc}#define ${cur.name} ${value}\n`;
-    }, '');
-    const compile = (source, type) => {
-        let shader = gl.createShader(type);
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            let lineNumber = 1;
-            const dump = source.replace(/^|\n/g, () => `\n${lineNumber++} `);
-            const err = gl.getShaderInfoLog(shader);
-            gl.deleteShader(shader);
-            shader = null;
-            error(`EFX2406: compilation failed: ↓↓↓↓↓ EXPAND THIS MESSAGE FOR MORE INFO ↓↓↓↓↓\n${err}\n${dump}`);
-        }
-        return shader;
-    };
-    const link = (...args) => {
-        let prog = gl.createProgram();
-        args.forEach((s) => gl.attachShader(prog, s));
-        gl.linkProgram(prog);
-        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-            const err = gl.getProgramInfoLog(prog);
-            gl.deleteProgram(prog);
-            prog = null;
-            error(`EFX2407: link failed: ${err}`);
-        }
-        return prog;
-    };
-    return (vert, frag, defines, vertName, fragName) => {
-        const prefix = '#version 100\n' + getDefineString(defines);
-        shaderName = vertName;
-        const vs = compile(prefix + vert, gl.VERTEX_SHADER);
-        shaderName = fragName;
-        const fs = compile(prefix + frag, gl.FRAGMENT_SHADER);
-        shaderName = 'linking';
-        const prog = link(vs, fs);
-        gl.deleteProgram(prog);
-        gl.deleteShader(fs);
-        gl.deleteShader(vs);
-    };
-})();
+// kurenai: skip headless WebGL finalTypeCheck (formerly used the native gl package).
+// Shader errors surface in browser preview; dropping that native dep.
+const finalTypeCheck = () => { };
 const stripToSpecificVersion = (() => {
     const globalSearch = /#(if|elif|else|endif)(.*)?/g;
     const legalExpr = /^[\d<=>!|&^\s]*(__VERSION__)?[\d<=>!|&^\s]*$/; // all compile-time constant branches

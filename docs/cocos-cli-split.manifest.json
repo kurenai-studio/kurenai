@@ -12,7 +12,7 @@
   "goals": {
     "primary": "webgame preview + web-desktop/web-mobile publish without downloading native or mini-game platforms",
     "outputNote": "Final webgame *build artifact* stays small; this inventory only splits the *toolchain* download.",
-    "phase1Target": "core without full node_modules in the tarball; npm install on first use; ship only prebuilt gl/sharp/@ffprobe-installer",
+    "phase1Target": "core without full node_modules in the tarball; npm install on first use; portable-sharp (jimp) + prebuilt @ffprobe-installer only",
     "phase2Target": "optional platform/native packs; no non-web builder platforms in core",
     "mainPackPolicy": "Ship webgame builder (web-desktop/web-mobile/web-common) in core. Other build/platform packs stay out of the main pack."
   },

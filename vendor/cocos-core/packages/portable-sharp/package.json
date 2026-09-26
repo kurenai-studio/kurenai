@@ -1,0 +1,13 @@
+{
+  "name": "sharp",
+  "version": "0.32.6-kurenai.portable",
+  "description": "Pure-JS sharp-compatible subset for kurenai (jimp). Drop-in for cocos-cli image paths without native addons.",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "jimp": "0.22.12"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

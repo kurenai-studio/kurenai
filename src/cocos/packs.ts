@@ -309,10 +309,6 @@ function runNpmInstall(dir: string): Promise<void> {
 }
 
 function packageLooksRestored(name: string, to: string): boolean {
-  if (name === "gl") return existsSync(join(to, "build/Release/webgl.node"));
-  if (name === "sharp") {
-    return existsSync(join(to, "package.json")) && existsSync(join(to, "build"));
-  }
   return existsSync(join(to, "package.json"));
 }
 
@@ -359,6 +355,8 @@ function restoreBundledPrebuilts(root: string): void {
   const prebuiltDir = join(root, ".kurenai-prebuilts");
   if (!existsSync(prebuiltDir)) return;
   for (const name of readdirSync(prebuiltDir)) {
+    // Legacy: gl / sharp prebuilts no longer used (portable-sharp + no GPU typecheck).
+    if (name === "gl" || name === "sharp" || name.startsWith("gl.") || name.startsWith("sharp.")) continue;
     const from = join(prebuiltDir, name);
     if (!statSync(from).isDirectory()) continue;
     const to = join(root, "node_modules", name);
@@ -370,7 +368,8 @@ function restoreBundledPrebuilts(root: string): void {
 function coreDepsInstalled(root: string): boolean {
   return (
     existsSync(join(root, "node_modules/@babel/core")) &&
-    existsSync(join(root, "node_modules/gl/build/Release/webgl.node"))
+    existsSync(join(root, "node_modules/sharp/package.json")) &&
+    existsSync(join(root, "node_modules/jimp/package.json"))
   );
 }
 

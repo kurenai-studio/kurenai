@@ -138,8 +138,7 @@ function npmInstall(dir) {
 /** Copy prebuilt native addons from a known-good install (paths with spaces break node-gyp). */
 function copyPrebuiltNatives(sourceRoot, destRoot) {
   const natives = [
-    { from: 'node_modules/gl', stash: '.kurenai-prebuilts/gl' },
-    { from: 'node_modules/sharp', stash: '.kurenai-prebuilts/sharp' },
+    // ffprobe only — gl removed; sharp replaced by packages/portable-sharp (jimp).
     { from: 'node_modules/@ffprobe-installer', stash: '.kurenai-prebuilts/@ffprobe-installer' },
   ];
   for (const { from, stash } of natives) {
@@ -196,7 +195,7 @@ function main() {
         source,
         out,
         version,
-        policy: 'no full node_modules in tarball (prebuilt gl/sharp only); web builders in main pack',
+        policy: 'no full node_modules; portable-sharp (jimp) + prebuilt ffprobe only; web builders in main pack',
       },
       null,
       2,
@@ -255,7 +254,9 @@ function main() {
     source,
     builtAt: new Date().toISOString(),
     shipsNodeModules: false,
-    shipsPrebuiltNatives: ['gl', 'sharp', '@ffprobe-installer'],
+    shipsPrebuiltNatives: ['@ffprobe-installer'],
+    imageBackend: 'packages/portable-sharp (jimp)',
+    effectGpuTypecheck: false,
     postInstall: manifest.packs.core.postInstall || 'npm install --omit=dev',
     keepInMainPack: manifest.packs.core.keepInMainPack,
     excludes,
@@ -302,7 +303,7 @@ function main() {
     tgzMB: tgzPath ? mb(duBytes(tgzPath)) : undefined,
     tgz: tgzPath,
     marker: join(out, '.kurenai-pack.json'),
-    note: 'tarball: no full node_modules (prebuilt gl/sharp only); npm install --omit=dev after extract; web builders in main pack',
+    note: 'tarball: no full node_modules; portable-sharp/jimp; prebuilt ffprobe only; npm install --omit=dev after extract; web builders in main pack',
   };
   console.log(JSON.stringify(summary, null, 2));
 }

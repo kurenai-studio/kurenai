@@ -3,16 +3,17 @@
  * Ensure vendor/cocos-core dependencies are installed (postinstall).
  * The trimmed runtime source lives in vendor/cocos-core — not a sidecar tarball.
  *
- * Native addons (gl / sharp / @ffprobe-installer) are restored from
- * vendor/cocos-core/.kurenai-prebuilts after `npm install --ignore-scripts`
- * so fresh machines never need a working node-gyp toolchain for those packages.
+ * Remaining native stash: @ffprobe-installer binaries, restored from
+ * vendor/cocos-core/.kurenai-prebuilts after `npm install --ignore-scripts`.
+ * Image ops use packages/portable-sharp (jimp, pure JS). Effect GPU typecheck
+ * (former `gl`) is disabled in shdc-lib.
  *
  * Restore avoids recursive `rmSync` of large trees (some agent sandboxes block
  * bulk deletes). Prefer skip-if-present, then rename-aside + copy, then
  * best-effort cleanup of the aside dir.
  *
  * Env:
- *   KURENAI_SKIP_PREBUILT=1  — skip restore (only if webgl.node already present)
+ *   KURENAI_SKIP_PREBUILT=1  — skip restore
  */
 import { spawnSync } from 'node:child_process';
 import {
@@ -47,18 +48,14 @@ function npmInstall(dir) {
 }
 
 function depsReady(dir) {
-  return existsSync(join(dir, 'node_modules/@babel/core'));
-}
-
-function glReady(root = coreDir) {
-  return existsSync(join(root, 'node_modules/gl/build/Release/webgl.node'));
+  return (
+    existsSync(join(dir, 'node_modules/@babel/core')) &&
+    existsSync(join(dir, 'node_modules/sharp/package.json')) &&
+    existsSync(join(dir, 'node_modules/jimp/package.json'))
+  );
 }
 
 function packageLooksRestored(name, to) {
-  if (name === 'gl') return existsSync(join(to, 'build/Release/webgl.node'));
-  if (name === 'sharp') {
-    return existsSync(join(to, 'package.json')) && existsSync(join(to, 'build'));
-  }
   if (name === '@ffprobe-installer' || name.startsWith('@')) {
     return existsSync(join(to, 'package.json'));
   }
@@ -72,7 +69,6 @@ function replaceTree(from, to) {
     cpSync(from, to, { recursive: true });
     return;
   }
-  // Single rename is one op; avoids bulk-delete guards on 100+ files.
   const aside = `${to}.kurenai-old-${process.pid}`;
   try {
     if (existsSync(aside)) {
@@ -80,7 +76,6 @@ function replaceTree(from, to) {
     }
     renameSync(to, aside);
   } catch (error) {
-    // If rename fails (cross-device, etc.), overwrite in place.
     console.warn(
       `[kurenai] rename-aside failed for ${to}, overwriting: ${error instanceof Error ? error.message : error}`,
     );
@@ -90,7 +85,6 @@ function replaceTree(from, to) {
   try {
     cpSync(from, to, { recursive: true });
   } catch (error) {
-    // Roll back aside if copy failed.
     try {
       if (!existsSync(to)) renameSync(aside, to);
     } catch {
@@ -105,7 +99,6 @@ function tryBestEffortRemove(path) {
   try {
     rmSync(path, { recursive: true, force: true, maxRetries: 2 });
   } catch (error) {
-    // Leave aside behind; does not block install. Some sandboxes reject bulk delete.
     console.warn(
       `[kurenai] left aside (cleanup blocked): ${path} (${error instanceof Error ? error.message : error})`,
     );
@@ -114,22 +107,23 @@ function tryBestEffortRemove(path) {
 
 function restorePrebuiltNatives() {
   if (process.env.KURENAI_SKIP_PREBUILT === '1') {
-    if (!glReady()) {
-      throw new Error(
-        'KURENAI_SKIP_PREBUILT=1 but node_modules/gl/build/Release/webgl.node is missing',
-      );
-    }
     console.log('[kurenai] KURENAI_SKIP_PREBUILT=1 — skipped prebuilt restore');
     return;
   }
 
   if (!existsSync(prebuiltDir)) {
-    throw new Error(
-      `missing ${prebuiltDir} — vendor/cocos-core must ship .kurenai-prebuilts/{gl,sharp,@ffprobe-installer}`,
+    console.warn(
+      `[kurenai] no ${prebuiltDir} — skipping prebuilt restore (ffprobe may be missing)`,
     );
+    return;
   }
 
   for (const name of readdirSync(prebuiltDir)) {
+    // Legacy stashes; image/GPU natives are no longer required.
+    if (name === 'gl' || name === 'sharp' || name.startsWith('gl.') || name.startsWith('sharp.')) {
+      console.log(`[kurenai] ignore legacy prebuilt ${name}`);
+      continue;
+    }
     const from = join(prebuiltDir, name);
     if (!statSync(from).isDirectory()) continue;
     const to = join(coreDir, 'node_modules', name);
@@ -140,24 +134,9 @@ function restorePrebuiltNatives() {
     replaceTree(from, to);
     console.log(`[kurenai] restored prebuilt node_modules/${name}`);
   }
-
-  if (!glReady()) {
-    throw new Error('prebuilt gl missing webgl.node after restore');
-  }
-}
-
-function assertSupportedPlatform() {
-  const key = `${process.platform}-${process.arch}`;
-  if (key === 'darwin-arm64') return;
-  console.warn(
-    `[kurenai] prebuilt natives currently support darwin-arm64 only (this machine: ${key}). ` +
-      'Other platforms coming later; install may fail without matching .kurenai-prebuilts.',
-  );
 }
 
 function main() {
-  assertSupportedPlatform();
-
   if (!existsSync(join(coreDir, 'dist/cli.js'))) {
     console.warn(
       '[kurenai] vendor/cocos-core missing — skip deps. Maintainer: npm run vendor:cocos',
@@ -170,7 +149,7 @@ function main() {
     if (existsSync(join(engine, 'package.json'))) npmInstall(engine);
   }
   restorePrebuiltNatives();
-  console.log(JSON.stringify({ ok: true, core: coreDir }));
+  console.log(JSON.stringify({ ok: true, core: coreDir, image: 'portable-sharp/jimp' }));
 }
 
 try {
