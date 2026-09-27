@@ -105,6 +105,11 @@ interface PreviewConfig {
   watchPoll?: boolean;
   autoStart?: boolean;
   readinessTimeoutMs?: number;
+  /**
+   * When readiness wait expires, kill the host (legacy). Default false: leave it
+   * running so slow first-time engine imports can finish; use host status to poll.
+   */
+  killOnReadyTimeout?: boolean;
 }
 type PreviewPhase = "idle" | "starting" | "ready" | "failed" | "stopped";
 interface PreviewState {
@@ -144,6 +149,18 @@ declare class PreviewController {
   private adoptHostUrl;
   private waitUntilReady;
 }
+//#endregion
+//#region src/preview/timeout.d.ts
+/** Default wait for first cocos host readiness (engine internal imports can be slow). */
+declare const DEFAULT_HOST_READY_TIMEOUT_MS = 600000;
+/**
+ * Resolve host readiness timeout.
+ * Priority: explicit ms → `--timeout` seconds → `KURENAI_HOST_READY_TIMEOUT_MS` → default 10m.
+ */
+declare function resolveHostReadyTimeoutMs(options?: {
+  timeout?: string | true;
+  readinessTimeoutMs?: number;
+}, env?: NodeJS.ProcessEnv): number;
 //#endregion
 //#region src/project/control.d.ts
 type ProjectTemplateId = "base-ai" | "base-ai-3d";
@@ -261,5 +278,5 @@ type HostToInspectorMessage = {
 declare function isInspectorMessage(value: unknown): value is InspectorToHostMessage;
 declare function formatSelectionContext(node: SelectedNodeSummary): string;
 //#endregion
-export { type CocosProject, type CommandResult, DEFAULT_COCOS_CLI_ROOT, type EnsurePacksOptions, type EnsurePacksResult, HostToInspectorMessage, InspectorToHostMessage, KURENAI_COCOS_CORE_VERSION, KURENAI_PROTOCOL_VERSION, LEGACY_PINK_COCOS_CLI_ROOT, type PackId, type PackPresence, type PacksStatus, PreviewBridge, type PreviewBridgeConfig, type PreviewConfig, PreviewController, type PreviewControllerOptions, type PreviewPhase, type PreviewState, ProjectControl, type ProjectControlConfig, type ProjectTemplateId, type PublishPlatform, SceneNodeSummary, SelectedNodeSummary, type SelectionContext, bundledCocosCoreRoot, ensureCorePack, ensurePacks, formatSelectionContext, injectInspector, inspectPack, isInspectorMessage, listKnownPackIds, managedCocosCoreRoot, packageRoot, packsForPlatform, packsStatus, resolveCocosCliRoot };
+export { type CocosProject, type CommandResult, DEFAULT_COCOS_CLI_ROOT, DEFAULT_HOST_READY_TIMEOUT_MS, type EnsurePacksOptions, type EnsurePacksResult, HostToInspectorMessage, InspectorToHostMessage, KURENAI_COCOS_CORE_VERSION, KURENAI_PROTOCOL_VERSION, LEGACY_PINK_COCOS_CLI_ROOT, type PackId, type PackPresence, type PacksStatus, PreviewBridge, type PreviewBridgeConfig, type PreviewConfig, PreviewController, type PreviewControllerOptions, type PreviewPhase, type PreviewState, ProjectControl, type ProjectControlConfig, type ProjectTemplateId, type PublishPlatform, SceneNodeSummary, SelectedNodeSummary, type SelectionContext, bundledCocosCoreRoot, ensureCorePack, ensurePacks, formatSelectionContext, injectInspector, inspectPack, isInspectorMessage, listKnownPackIds, managedCocosCoreRoot, packageRoot, packsForPlatform, packsStatus, resolveCocosCliRoot, resolveHostReadyTimeoutMs };
 //# sourceMappingURL=index.d.ts.map

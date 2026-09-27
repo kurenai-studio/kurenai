@@ -83,6 +83,18 @@ Write `.mtl` files that point at a builtin effect. Lit material example
   `bind(root)` with `root.getChildByPath('Child/Path')`.
 - Do not use `@property` fields that expect editor-assigned references.
 - `@ccclass` names must be unique across the project.
+- Layout: `view.getVisibleSize()` is the **live viewport**, not design
+  resolution. Use `getDesignSize()` from helpers when laying out UI for the
+  project design size.
+- Desktop pointer: `TOUCH_MOVE` only fires while a button is held. Use
+  `onPointerMove(node, handler)` from helpers (binds touch + mouse move).
+- Labels: `addLabel` attaches `UIOpacity` for you. Default fonts may not include
+  emoji / special symbols — prefer ASCII for HUD text.
+- GLB / glTF: the imported main asset is often a plain `cc.Asset`. Meshes /
+  materials / a prefab live under `subAssets` from `kurenai asset info`. Prefer
+  writing a thin wrapper prefab under `assets/resources/prefabs/` that references
+  the mesh/material uuids (same pattern as builtin mesh prefabs), then
+  `loadPrefab(...)`.
 
 ## Feedback loop
 

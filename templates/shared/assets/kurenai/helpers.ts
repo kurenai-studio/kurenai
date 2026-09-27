@@ -2,15 +2,19 @@ import {
     Camera,
     Canvas,
     Color,
+    EventMouse,
+    EventTouch,
     instantiate,
     Label,
     Layers,
     Node,
     Prefab,
+    ResolutionPolicy,
     resources,
+    UIOpacity,
     UITransform,
-    Widget,
     view,
+    Widget,
 } from 'cc';
 
 /** Loads `assets/resources/<path>.prefab` and returns a new instance. */
@@ -18,6 +22,22 @@ export function loadPrefab(path: string): Promise<Node> {
     return new Promise((resolve, reject) => {
         resources.load(path, Prefab, (err, prefab) => (err ? reject(err) : resolve(instantiate(prefab))));
     });
+}
+
+/** Design resolution from project view settings (not the live viewport). */
+export function getDesignSize(): { width: number; height: number } {
+    const size = view.getDesignResolutionSize();
+    return { width: size.width, height: size.height };
+}
+
+/**
+ * Visible size of the current viewport. Prefer `getDesignSize()` for layout that
+ * should match the project's design resolution; `view.getVisibleSize()` follows
+ * the actual window / device aspect (e.g. 960×432).
+ */
+export function getVisibleSize(): { width: number; height: number } {
+    const size = view.getVisibleSize();
+    return { width: size.width, height: size.height };
 }
 
 /**
@@ -60,10 +80,41 @@ export function addLabel(
     node.layer = parent.layer;
     parent.addChild(node);
     node.setPosition(options.x ?? 0, options.y ?? 0, 0);
+    // Runtime-created labels need UIOpacity; setting opacity without it throws.
+    if (!node.getComponent(UIOpacity)) node.addComponent(UIOpacity);
     const label = node.addComponent(Label);
     label.string = text;
     label.fontSize = options.fontSize ?? 24;
     label.lineHeight = label.fontSize + 4;
     label.color = options.color ?? Color.WHITE;
     return label;
+}
+
+export type PointerMoveHandler = (uiX: number, uiY: number, event: EventTouch | EventMouse) => void;
+
+/**
+ * Listen for pointer move on desktop and touch. Desktop hover does not emit
+ * `TOUCH_MOVE` unless a button is held — also bind `MOUSE_MOVE`.
+ */
+export function onPointerMove(node: Node, handler: PointerMoveHandler): void {
+    const fromTouch = (event: EventTouch) => {
+        const loc = event.getUILocation();
+        handler(loc.x, loc.y, event);
+    };
+    const fromMouse = (event: EventMouse) => {
+        const loc = event.getUILocation();
+        handler(loc.x, loc.y, event);
+    };
+    node.on(Node.EventType.TOUCH_MOVE, fromTouch);
+    node.on(Node.EventType.MOUSE_MOVE, fromMouse);
+}
+
+/** Apply design resolution with SHOW_ALL (letterbox). Optional helper for layouts. */
+export function useDesignResolution(width?: number, height?: number): void {
+    const design = getDesignSize();
+    view.setDesignResolutionSize(
+        width ?? design.width,
+        height ?? design.height,
+        ResolutionPolicy.SHOW_ALL,
+    );
 }

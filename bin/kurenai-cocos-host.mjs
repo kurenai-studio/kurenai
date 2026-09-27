@@ -306,6 +306,41 @@ function startPoller() {
   return { close: () => clearInterval(timer) };
 }
 
+/**
+ * After a SIGKILL / crash, packer-driver may leave proper-lockfile `*.lock` under
+ * temp/programming. A new host then fails with "Lock is not acquired/owned by you".
+ * Clear them when starting — this process is the only owner for this project.
+ */
+function clearStaleProgrammingLocks() {
+  const root = join(project, 'temp', 'programming');
+  if (!existsSync(root)) return;
+  let removed = 0;
+  const walk = (dir) => {
+    let entries;
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(path);
+        continue;
+      }
+      if (!entry.name.endsWith('.lock')) continue;
+      try {
+        rmSync(path, { force: true });
+        removed += 1;
+      } catch {
+        // best-effort
+      }
+    }
+  };
+  walk(root);
+  if (removed) log(`cleared ${removed} stale lock file(s) under temp/programming`);
+}
+
 function registerRoutes() {
   const { middlewareService } = load('server/middleware');
   middlewareService.register('KurenaiHost', {
@@ -398,6 +433,7 @@ function registerRoutes() {
 async function main() {
   log(`project ${project}`);
   log(`cocos-cli ${cliRoot}`);
+  clearStaleProgrammingLocks();
   registerRoutes();
 
   const { default: Launcher } = load('core/launcher');

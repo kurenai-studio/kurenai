@@ -18,7 +18,8 @@
             width: 100%;
             height: 100%;
         }
-        #GameCanvas {
+        /* GameCanvas focus: keyboard input binds on window; keep canvas focusable too. */
+#GameCanvas {
             width: 100%;
             height: 100%;
         }
@@ -73,7 +74,7 @@
 <body>
     <div id="GameDiv">
         <div id="Cocos3dGameContainer">
-            <canvas id="GameCanvas" tabindex="-1"></canvas>
+            <canvas id="GameCanvas" tabindex="0"></canvas>
         </div>
     </div>
 

@@ -31,6 +31,10 @@ export type {
   PreviewPhase,
   PreviewState,
 } from "./preview/controller.js";
+export {
+  DEFAULT_HOST_READY_TIMEOUT_MS,
+  resolveHostReadyTimeoutMs,
+} from "./preview/timeout.js";
 export { ProjectControl } from "./project/control.js";
 export type {
   CocosProject,

@@ -328,7 +328,13 @@ class BundleManager extends task_base_1.BuildTaskBase {
                 this.addBundle(config);
             });
         }
-        const otherBundleOutput = options.bundleConfigs.length ? false : (this._task ? true : false);
+        // Formal builds: when bundleConfigs is set, unlisted project bundles stay output=false
+        // (exclusive include list). Preview must always expose project bundles — especially
+        // `resources` — in settings.assets.projectBundles / preloadBundles, otherwise
+        // `resources.load(...)` fails and 3D templates boot to a black screen.
+        const otherBundleOutput = this.options.preview
+            ? true
+            : (options.bundleConfigs.length ? false : (this._task ? true : false));
         if (!options.buildBundleOnly) {
             // 非只 Bundle 构建模式下，需要补全其他项目内存在的 bundle 信息
             bundleAssets.forEach((assetInfo) => {
@@ -347,6 +353,9 @@ class BundleManager extends task_base_1.BuildTaskBase {
         if (!options.buildBundleOnly || Object.keys(internalBundleConfigMap).length) {
             // 检查填充编辑器内置 Bundle
             this.initInternalBundleConfigs(internalBundleConfigMap);
+        }
+        if (this.options.preview && this.bundleMap[RESOURCES]) {
+            this.bundleMap[RESOURCES].output = true;
         }
         this.bundles = Object.values(this.bundleMap).sort((bundleA, bundleB) => {
             return (bundleB.priority - bundleA.priority) || (0, utils_3.compareUUID)(bundleA.name, bundleB.name);

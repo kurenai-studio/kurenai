@@ -134,6 +134,22 @@ function restorePrebuiltNatives() {
     replaceTree(from, to);
     console.log(`[kurenai] restored prebuilt node_modules/${name}`);
   }
+
+  // Aside dirs from rename-aside when rmSync is blocked by the sandbox.
+  try {
+    const nm = join(coreDir, 'node_modules');
+    if (existsSync(nm)) {
+      const leftovers = readdirSync(nm).filter((name) => name.includes('.kurenai-old-'));
+      if (leftovers.length) {
+        console.warn(
+          `[kurenai] ${leftovers.length} aside dir(s) under node_modules (*.kurenai-old-*). ` +
+            'Safe to delete manually if disk is tight; left behind when bulk delete was blocked.',
+        );
+      }
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 function main() {

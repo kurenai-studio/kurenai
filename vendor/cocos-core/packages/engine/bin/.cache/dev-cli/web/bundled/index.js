@@ -254832,9 +254832,21 @@ System.register("q-bundled:///fs/pal/input/web/keyboard-input.js", ["../../../co
           this._ccprivate$_eventTarget.on(eventType, callback, target);
         }
         _ccprivate$_registerEvent() {
+          // kurenai: bind window — GameCanvas may be missing / unfocused (tabindex=-1).
+          const down = event => {
+            const t = event.target;
+            if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+            this._ccprivate$_handleKeyboardDown(event);
+          };
+          const up = event => {
+            const t = event.target;
+            if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+            this._ccprivate$_handleKeyboardUp(event);
+          };
+          window.addEventListener("keydown", down);
+          window.addEventListener("keyup", up);
           const canvas = document.getElementById("GameCanvas");
-          canvas == null || canvas.addEventListener("keydown", this._ccprivate$_handleKeyboardDown.bind(this));
-          canvas == null || canvas.addEventListener("keyup", this._ccprivate$_handleKeyboardUp.bind(this));
+          if (canvas && canvas.tabIndex < 0) canvas.tabIndex = 0;
         }
         _ccprivate$_getInputEvent(event, eventType) {
           const keyCode = getKeyCode(event.code);

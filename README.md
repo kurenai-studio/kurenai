@@ -61,11 +61,18 @@ new project.
 
 ## Requirements
 
-- Node.js 22+
-- **预编译 native 目前仅剩 ffprobe（`.kurenai-prebuilts`），主要支持 macOS arm64。** 图片处理已改为纯 JS 的 `portable-sharp`（jimp），不再依赖 `gl` / `sharp` 原生模块。
+- **Node.js 22+** (22 / 24 both fine for the current portable stack: image ops are pure JS `portable-sharp` / jimp; no Node-ABI `gl` / `sharp` addons)
+- Remaining prebuilt binary is **ffprobe** only (`.kurenai-prebuilts`, mainly darwin-arm64). Not tied to Node `MODULE_VERSION`.
 - 默认路径不需要 PinK / 完整 cocos-cli
 
 Optional override for tests only: `KURENAI_COCOS_CLI_ROOT` pointing at a custom tree.
+
+### Install notes
+
+- If `vendor/cocos-core/node_modules/*.kurenai-old-*` appears after `npm install`, a sandbox blocked bulk delete during prebuilt restore. Safe to delete those aside dirs manually.
+- `kurenai host start` waits up to **600s** by default for first-time engine import. Use `--timeout <seconds>` or `KURENAI_HOST_READY_TIMEOUT_MS`. On timeout the host is **left running** — poll with `kurenai host status`.
+- If a killed host left locks, restart clears `temp/programming/**/*.lock`. Manual recovery: stop host, delete `temp/` (and if needed `library/`), then `host start` again.
+- `kurenai publish` may print an optional TypeScript check warning when `tsc` is missing; that is non-fatal.
 
 ## Install
 
@@ -87,6 +94,8 @@ npm link             # optional: puts `kurenai` on PATH
 kurenai init ./my-game --template base-ai-3d
 cd my-game
 kurenai host start                 # background preview host; prints the preview URL
+# kurenai host start --timeout 1200   # wait up to 20 minutes for first import
+kurenai host status                # poll readiness if start wait expired
 kurenai asset info assets/resources/materials/red.mtl   # engine-assigned uuid, sub-assets
 kurenai logs --errors              # compile errors and browser console
 kurenai context                    # project state + AGENTS.md
@@ -95,6 +104,7 @@ kurenai host stop
 ```
 
 Commands that need the host start it when it is not running. Output is JSON.
+`publish` may warn if `tsc` is not on PATH; the web build can still succeed.
 
 ### Puzzle demo (M2 acceptance)
 

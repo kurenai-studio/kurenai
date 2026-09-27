@@ -5,6 +5,11 @@ System.register("q-bundled:///fs/pal/input/web/keyboard-input.js", ["../../../co
   function getKeyCode(code) {
     return code2KeyCode[code] || 0;
   }
+  function isEditableTarget(target) {
+    if (!target || typeof target !== "object") return false;
+    const tag = target.tagName;
+    return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
+  }
   return {
     setters: [function (_cocosInputTypesIndexJs) {
       EventKeyboard = _cocosInputTypesIndexJs.EventKeyboard;
@@ -29,9 +34,18 @@ System.register("q-bundled:///fs/pal/input/web/keyboard-input.js", ["../../../co
           this._ccprivate$_eventTarget.on(eventType, callback, target);
         }
         _ccprivate$_registerEvent() {
+          const down = event => {
+            if (isEditableTarget(event.target)) return;
+            this._ccprivate$_handleKeyboardDown(event);
+          };
+          const up = event => {
+            if (isEditableTarget(event.target)) return;
+            this._ccprivate$_handleKeyboardUp(event);
+          };
+          window.addEventListener("keydown", down);
+          window.addEventListener("keyup", up);
           const canvas = document.getElementById("GameCanvas");
-          canvas == null || canvas.addEventListener("keydown", this._ccprivate$_handleKeyboardDown.bind(this));
-          canvas == null || canvas.addEventListener("keyup", this._ccprivate$_handleKeyboardUp.bind(this));
+          if (canvas && canvas.tabIndex < 0) canvas.tabIndex = 0;
         }
         _ccprivate$_getInputEvent(event, eventType) {
           const keyCode = getKeyCode(event.code);

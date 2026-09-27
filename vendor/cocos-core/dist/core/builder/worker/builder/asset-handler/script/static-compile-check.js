@@ -162,7 +162,14 @@ async function runStaticCompileCheck(projectPath, showOutput = true, tsconfigPat
         if (!fullOutput) {
             // 没有输出，说明可能是其他错误（比如 tsc 命令不存在）
             if (showOutput) {
-                console.log(chalk_1.default.green('✓ No assets-related TypeScript errors found!'));
+                console.warn(chalk_1.default.yellow('⚠ Optional TypeScript check skipped (tsc not available). Publish can continue.'));
+            }
+            return { passed: true };
+        }
+        if (/command not found|not recognized as an internal or external command|ENOENT/i.test(fullOutput)) {
+            if (showOutput) {
+                console.warn(chalk_1.default.yellow('⚠ Optional TypeScript check skipped (tsc not on PATH). Publish can continue.'));
+                console.warn(chalk_1.default.gray(fullOutput.split('\n').slice(0, 3).join('\n')));
             }
             return { passed: true };
         }

@@ -167,7 +167,7 @@ Docker bind mount 下 `fs.watch` 不可靠，所以 host 支持 `WATCH_POLL=1`�
 
 - 删除 `src/dsh.ts`、`src/client/*`、`cordis.patch.yml`，以及 `package.json` 里的 `dsh` 字段和 `@deepseek-ai/*`、react 依赖。`KurenaiWorkspace.tsx` 在 M3 从提交 `074e80d` 取回改造。
 - `src/index.ts` 只做库导出；DSH tools 和 systemPrompt 在 M2 以 MCP 形式恢复。
-- `PreviewController` 改为启动 `bin/kurenai-cocos-host.mjs`，就绪以 `/__kurenai/status` 的 `ready` 为准，默认超时 180 秒；cocos-cli 换端口时从 host 日志采纳新地址。
+- `PreviewController` 改为启动 `bin/kurenai-cocos-host.mjs`，就绪以 `/__kurenai/status` 的 `ready` 为准，默认超时 600 秒（可配置，超时默认不杀进程）；cocos-cli 换端口时从 host 日志采纳新地址。
 - `ProjectControl`：
   - 选中节点和 HTTP API 按 `projectPath` 区分，不再使用 `sessionId`。
   - 模板来自仓内 `templates/`，初始化时重写 `name` 和 `uuid`。
@@ -243,12 +243,21 @@ Docker bind mount 下 `fs.watch` 不可靠，所以 host 支持 `WATCH_POLL=1`�
 - **inspector 加载时序**：`cc` 模块由约 13MB 的 `engine-dist/bundled/index.js` 注册。inspector 在它注册前 `System.import('cc')`，SystemJS 会缓存失败结果，页面报 "Error loading q-bundled:///virtual/cc.js"，这个问题是偶发的。现在 inspector 等全局 `cc.director.getScene()` 可用后才 import。
 - **全局 `cc` 和 `System.import('cc')` 不是同一个对象**：两者共享 `director`，但全局那个缺少 `MeshRenderer` 等类。运行时代码和 inspector 都应使用 `import`。
 - **代码里直接创建 standard 材质不可行**：`initialize({effectName:'builtin-standard'})` 会失败，因为没有资源引用它时预览不会加载这个 effect。改成材质文件后问题消失，这也是材质走文件的原因之一。
-- **`cocos build` 会打印 `tsc: command not found`**：这是一个可选的类型检查步骤，不影响产物。
+- **`cocos build` 可选 tsc 检查**：缺 `tsc` 时已降为 WARN，不影响产物。
 
 ### 待办
 
 - ~~**去掉 effect 的 headless WebGL 校验（`gl`）**~~：**已做** — `shdc-lib.js` 的 `finalTypeCheck` 为空操作；`gl` 已从依赖与预编译中移除。
 - ~~**换移植性更好的图片库**~~：**已做** — `vendor/cocos-core/packages/portable-sharp`（jimp 纯 JS）通过 `file:` 依赖顶替原生 `sharp`；调用点仍 `require('sharp')`。
+- ~~**Host 就绪超时 / 超时杀进程**~~：**已做** — 默认等待 600s；`--timeout` / `KURENAI_HOST_READY_TIMEOUT_MS`；CLI 与 PreviewController 超时默认**不杀** Host。
+- ~~**陈旧 packer-driver 锁**~~：**已做** — host 启动清理 `temp/programming/**/*.lock`。
+- ~~**Sentry 可选**~~：**已做** — `@sentry/node` 软加载，损坏时 publish 不崩。
+- ~~**tsc 缺失误报 ERROR**~~：**已做** — 静态检查缺 `tsc` 时降为 WARN。
+- ~~**3D 预览丢 resources bundle**~~：**已做** — preview 时 project bundles（含 resources）强制 `output=true`。
+- ~~**预览键盘无响应**~~：**已做** — `KeyboardInputSource` 绑 `window`；`GameCanvas` tabindex=0。
+- ~~**helpers addLabel / 桌面指针 / 设计分辨率文档**~~：**已做** — UIOpacity、`onPointerMove`、`getDesignSize`、AGENTS 补充。
+- **场景相机旋转不更新（worldRotation 恒 0）**：仍建议运行时自建 GameCamera；根因待查。
+- **GLB 自动包装 prefab**：文档已写；导入时自动生成仍待做。
 - **Docker 里实测轮询监听**：目前只在 macOS 本机验证过。
 - **精简 prefab 的边界**：目前只测了 `MeshRenderer`。其他组件（灯光、粒子、`Sprite`、`Label`）省略字段后的默认值是否可用，要逐个测。
 - **UI 与场景的组织方式**：待讨论。

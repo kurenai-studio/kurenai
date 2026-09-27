@@ -4,15 +4,15 @@
  * (bin/kurenai-cocos-host.mjs), starting it in the background when needed.
  *
  *   kurenai init <dir> --template base-ai|base-ai-3d
- *   kurenai host start|status|stop [--project <dir>]
+ *   kurenai host start|status|stop [--project <dir>] [--timeout <seconds>]
  *   kurenai asset info <file> [--project <dir>]
  *   kurenai logs [--since <seq>] [--errors] [--project <dir>]
  *   kurenai context [--project <dir>]
  *   kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--verbose] [--project <dir>]
  *   kurenai packs status|ensure [packId...] [--fetch]
  *
- * The project defaults to the nearest directory above the file (or cwd) that
- * contains assets/ and package.json. Output is JSON on stdout.
+ * Host readiness wait defaults to 600s (override --timeout / KURENAI_HOST_READY_TIMEOUT_MS).
+ * On wait expiry the detached host is left running so slow first imports can finish.
  */
 import { spawn } from 'node:child_process';
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync } from 'node:fs';
@@ -21,18 +21,21 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs, resolveProjectDir, wantsHelp } from '../lib/cli/parse.js';
 
 const HOST_ENTRY = join(dirname(fileURLToPath(import.meta.url)), 'kurenai-cocos-host.mjs');
-const READY_TIMEOUT_MS = 180_000;
 const STOP_TIMEOUT_MS = 8_000;
 const POLL_MS = 500;
 
 const USAGE = `usage:
   kurenai init <dir> --template base-ai|base-ai-3d
-  kurenai host start|status|stop [--project <dir>]
+  kurenai host start|status|stop [--project <dir>] [--timeout <seconds>]
   kurenai asset info <file> [--project <dir>]
   kurenai logs [--since <seq>] [--errors] [--project <dir>]
   kurenai context [--project <dir>]
   kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--verbose] [--project <dir>]
-  kurenai packs status|ensure [packId...] [--fetch]`;
+  kurenai packs status|ensure [packId...] [--fetch]
+
+host start waits for readiness (default 600s). Override with --timeout <seconds>
+or env KURENAI_HOST_READY_TIMEOUT_MS. On wait expiry the host is left running
+(first import can be slow); use \`kurenai host status\` to poll.`;
 
 async function projectControl() {
   const { ProjectControl } = await import('../lib/index.js');
@@ -93,7 +96,10 @@ function logTail(logFile, lines = 20) {
   }
 }
 
-async function ensureHost(project) {
+async function ensureHost(project, options = {}) {
+  const { resolveHostReadyTimeoutMs } = await import('../lib/index.js');
+  const readyTimeoutMs = resolveHostReadyTimeoutMs(options);
+
   const running = readHostFile(project);
   if (running && (await hostStatus(running))?.ready) return running;
 
@@ -120,7 +126,7 @@ async function ensureHost(project) {
     closeSync(out);
   }
 
-  const deadline = Date.now() + READY_TIMEOUT_MS;
+  const deadline = Date.now() + readyTimeoutMs;
   while (Date.now() < deadline) {
     await sleep(POLL_MS);
     const host = readHostFile(project);
@@ -130,7 +136,14 @@ async function ensureHost(project) {
       exitWith(`host failed to start:\n${logTail(logFile).join('\n')}`);
     }
   }
-  exitWith(`host not ready after ${READY_TIMEOUT_MS / 1000}s; see ${logFile}`);
+
+  const still = readHostFile(project);
+  if (still) {
+    exitWith(
+      `host still starting after ${Math.round(readyTimeoutMs / 1000)}s (pid ${still.pid}); left running — poll with \`kurenai host status\` or see ${logFile}. Raise wait via --timeout <seconds> or KURENAI_HOST_READY_TIMEOUT_MS.`,
+    );
+  }
+  exitWith(`host not ready after ${Math.round(readyTimeoutMs / 1000)}s; see ${logFile}`);
 }
 
 async function stopHost(project) {
@@ -214,7 +227,7 @@ async function main() {
   if (group === 'host') {
     const project = resolveProject(options);
     if (command === 'start') {
-      const host = await ensureHost(project);
+      const host = await ensureHost(project, options);
       print({ ok: true, project, pid: host.pid, previewUrl: host.previewUrl });
       return;
     }
@@ -233,7 +246,7 @@ async function main() {
   if (group === 'asset' && command === 'info' && target) {
     const file = resolve(target);
     const project = resolveProject(options, file);
-    const host = await ensureHost(project);
+    const host = await ensureHost(project, options);
     const response = await fetch(`${host.serverUrl}/__kurenai/asset?path=${encodeURIComponent(file)}`);
     const body = await response.json();
     print(body);

@@ -6,6 +6,7 @@ import { ensureCorePack } from "../cocos/packs.js";
 import { packageFile, resolveCocosCliRoot } from "../cocos/paths.js";
 
 import { PreviewBridge } from "./bridge.js";
+import { resolveHostReadyTimeoutMs } from "./timeout.js";
 
 export interface PreviewConfig {
   project?: string;
@@ -21,6 +22,11 @@ export interface PreviewConfig {
   watchPoll?: boolean;
   autoStart?: boolean;
   readinessTimeoutMs?: number;
+  /**
+   * When readiness wait expires, kill the host (legacy). Default false: leave it
+   * running so slow first-time engine imports can finish; use host status to poll.
+   */
+  killOnReadyTimeout?: boolean;
 }
 
 export type PreviewPhase = "idle" | "starting" | "ready" | "failed" | "stopped";
@@ -50,7 +56,6 @@ interface HostStatus {
 }
 
 const DEFAULT_PORT = 7460;
-const DEFAULT_READINESS_TIMEOUT_MS = 180_000;
 const DEFAULT_MAX_OLD_SPACE_SIZE_MB = 8192;
 const MAX_LOG_LINES = 80;
 const HOST_READY_LINE = /\[kurenai-host\] ready (http\S+)/u;
@@ -171,12 +176,24 @@ export class PreviewController {
       }
     });
 
+    const readinessTimeoutMs = resolveHostReadyTimeoutMs({
+      readinessTimeoutMs: merged.readinessTimeoutMs,
+    });
     try {
-      await this.waitUntilReady(merged.readinessTimeoutMs ?? DEFAULT_READINESS_TIMEOUT_MS);
+      await this.waitUntilReady(readinessTimeoutMs);
       await this.startBridge(merged, bridgePort);
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.state.lastError = message;
+      const stillRunning = Boolean(this.child && this.child.exitCode === null);
+      const shouldKill = merged.killOnReadyTimeout === true;
+      if (stillRunning && !shouldKill) {
+        // First engine import often exceeds the wait; leave host alive for `host status`.
+        this.state.phase = "starting";
+        this.state.lastError = `${message} (host left running; use kurenai host status, or raise readinessTimeoutMs / KURENAI_HOST_READY_TIMEOUT_MS)`;
+        throw new Error(this.state.lastError);
+      }
       this.state.phase = "failed";
-      this.state.lastError = error instanceof Error ? error.message : String(error);
       await this.stop();
       this.state.phase = "failed";
       throw error;
