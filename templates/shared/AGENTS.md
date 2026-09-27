@@ -90,11 +90,20 @@ Write `.mtl` files that point at a builtin effect. Lit material example
   `onPointerMove(node, handler)` from helpers (binds touch + mouse move).
 - Labels: `addLabel` attaches `UIOpacity` for you. Default fonts may not include
   emoji / special symbols — prefer ASCII for HUD text.
-- GLB / glTF: the imported main asset is often a plain `cc.Asset`. Meshes /
-  materials / a prefab live under `subAssets` from `kurenai asset info`. Prefer
-  writing a thin wrapper prefab under `assets/resources/prefabs/` that references
-  the mesh/material uuids (same pattern as builtin mesh prefabs), then
-  `loadPrefab(...)`.
+- GLB / glTF / FBX: put the file under `assets/resources/` and call
+  `loadModel('models/tower')` (for `assets/resources/models/tower.glb`). The
+  main asset is a plain `cc.Asset` and cannot be instantiated; the import
+  already generates a complete prefab (all meshes, materials, hierarchy) at
+  `models/tower/tower`. Do not hand-write wrapper prefabs that reference a
+  single mesh — multi-mesh models lose their other parts.
+- Cameras: `lookAt()` from straight above/below the target used to silently
+  reset rotation to identity; kurenai's engine now picks another up axis. On
+  older engines pass an explicit `up` (e.g. `Vec3.FORWARD`) for top-down views.
+- One `@ccclass` Component per file. A second Component class in the same
+  file aborts preview boot with `Cannot set properties of null (setting
+  '_sealed')`.
+- Scripts are transpiled without type checking: a missing import compiles and
+  only fails at runtime (`ReferenceError`). Check `kurenai logs --errors`.
 
 ## Feedback loop
 

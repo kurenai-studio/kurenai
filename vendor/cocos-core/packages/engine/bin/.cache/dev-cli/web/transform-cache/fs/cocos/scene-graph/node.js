@@ -2128,6 +2128,11 @@ System.register("q-bundled:///fs/cocos/scene-graph/node.js", ["../core/data/deco
           this.getWorldPosition(v3_a);
           Vec3.subtract(v3_a, v3_a, pos);
           Vec3.normalize(v3_a, v3_a);
+          // fromViewUp yields identity when view ∥ up (e.g. a camera straight above its target).
+          Vec3.cross(v3_b, up != null ? up : Vec3.UNIT_Y, v3_a);
+          if (Vec3.lengthSqr(v3_b) < 1e-10) {
+            up = Math.abs(v3_a.y) < 0.9 ? Vec3.UNIT_Y : Vec3.FORWARD;
+          }
           Quat.fromViewUp(q_a, v3_a, up);
           this.setWorldRotation(q_a);
         }

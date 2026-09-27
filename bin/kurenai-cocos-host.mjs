@@ -11,7 +11,7 @@
  *   PROJECT                  Cocos project root (required)
  *   PORT                     preview port (default 7460; cocos-cli may pick the next free one)
  *   LAUNCH_SCENE             db:// url or uuid (default: startScene in settings/v2/packages/project.json)
- *   KURENAI_COCOS_CLI_ROOT   override kurenai-managed cocos core (default: ~/Library/Application Support/kurenai/cocos-core/<ver>)
+ *   KURENAI_COCOS_CLI_ROOT   override cocos core root (default: vendor/cocos-core inside the kurenai package)
  *   WATCH=0                  disable the assets/ watcher
  *   WATCH_POLL=1             poll assets/ instead of fs.watch (Docker bind mounts)
  *   WATCH_POLL_MS            poll interval (default 1000)

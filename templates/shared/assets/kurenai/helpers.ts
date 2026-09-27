@@ -20,8 +20,32 @@ import {
 /** Loads `assets/resources/<path>.prefab` and returns a new instance. */
 export function loadPrefab(path: string): Promise<Node> {
     return new Promise((resolve, reject) => {
-        resources.load(path, Prefab, (err, prefab) => (err ? reject(err) : resolve(instantiate(prefab))));
+        resources.load(path, Prefab, (err, prefab) => {
+            if (!err) return resolve(instantiate(prefab));
+            if (resources.getDirWithPath(path, Prefab).length) {
+                err.message += ` — "${path}" is a model; use loadModel("${path}")`;
+            }
+            reject(err);
+        });
     });
+}
+
+/**
+ * Instantiates the prefab generated for an imported .glb / .gltf / .fbx, e.g.
+ * `loadModel('models/tower')` for `assets/resources/models/tower.glb`.
+ * The model's main asset is not instantiable; its prefab lives at
+ * `<path>/<file name>` with every mesh and material already wired.
+ */
+export function loadModel(path: string): Promise<Node> {
+    const base = path.replace(/\.(glb|gltf|fbx)$/i, '');
+    const own = `${base}/${base.split('/').pop()}`;
+    const prefabPath = resources.getInfoWithPath(own, Prefab)
+        ? own
+        : resources.getDirWithPath(base, Prefab)[0]?.path;
+    if (!prefabPath) {
+        return Promise.reject(new Error(`No model prefab at resources/${base} — is the file under assets/resources/?`));
+    }
+    return loadPrefab(prefabPath);
 }
 
 /** Design resolution from project view settings (not the live viewport). */

@@ -257,7 +257,8 @@ Docker bind mount 下 `fs.watch` 不可靠，所以 host 支持 `WATCH_POLL=1`�
 - ~~**预览键盘无响应**~~：**已做** — `KeyboardInputSource` 绑 `window`；`GameCanvas` tabindex=0。
 - ~~**helpers addLabel / 桌面指针 / 设计分辨率文档**~~：**已做** — UIOpacity、`onPointerMove`、`getDesignSize`、AGENTS 补充。
 - **场景相机旋转不更新（worldRotation 恒 0）**：仍建议运行时自建 GameCamera；根因待查。
-- **GLB 自动包装 prefab**：文档已写；导入时自动生成仍待做。
+- **GLB 加载**：不再需要包装 prefab。glTF 导入自带完整 prefab 子资源（`<路径>/<文件名>`），helpers `loadModel()` 直接加载。
+- **`Node.lookAt` 退化**：视线与 up 平行时引擎原本静默返回单位旋转；vendor 引擎已改为自动换 up 轴（源码 + web/editor bundled + transform-cache 同步修改）。
 - **Docker 里实测轮询监听**：目前只在 macOS 本机验证过。
 - **精简 prefab 的边界**：目前只测了 `MeshRenderer`。其他组件（灯光、粒子、`Sprite`、`Label`）省略字段后的默认值是否可用，要逐个测。
 - **UI 与场景的组织方式**：待讨论。
