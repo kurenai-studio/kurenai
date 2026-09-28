@@ -36,6 +36,8 @@ export {
   resolveHostReadyTimeoutMs,
 } from "./preview/timeout.js";
 export { ProjectControl } from "./project/control.js";
+export { addKit } from "./project/kit.js";
+export type { KitAddResult } from "./project/kit.js";
 export type {
   CocosProject,
   CommandResult,

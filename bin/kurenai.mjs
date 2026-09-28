@@ -6,9 +6,13 @@
  *   kurenai init <dir> --template base-ai|base-ai-3d
  *   kurenai host start|status|stop [--project <dir>] [--timeout <seconds>]
  *   kurenai asset info <file> [--project <dir>]
- *   kurenai logs [--since <seq>] [--errors] [--project <dir>]
+ *   kurenai logs [--since <seq>] [--errors [--all]] [--project <dir>]
  *   kurenai context [--project <dir>]
- *   kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--verbose] [--project <dir>]
+  kurenai check [--project <dir>]
+  kurenai kit add <folder|zip|kura-pack-id> [--name <kit>] [--project <dir>]
+ *   kurenai check [--project <dir>]
+ *   kurenai kit add <folder|zip|kura-pack-id> [--name <kit>] [--project <dir>]
+ *   kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--release] [--verbose] [--project <dir>]
  *   kurenai packs status|ensure [packId...] [--fetch]
  *
  * Host readiness wait defaults to 600s (override --timeout / KURENAI_HOST_READY_TIMEOUT_MS).
@@ -28,9 +32,9 @@ const USAGE = `usage:
   kurenai init <dir> --template base-ai|base-ai-3d
   kurenai host start|status|stop [--project <dir>] [--timeout <seconds>]
   kurenai asset info <file> [--project <dir>]
-  kurenai logs [--since <seq>] [--errors] [--project <dir>]
+  kurenai logs [--since <seq>] [--errors [--all]] [--project <dir>]
   kurenai context [--project <dir>]
-  kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--verbose] [--project <dir>]
+  kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--release] [--verbose] [--project <dir>]
   kurenai packs status|ensure [packId...] [--fetch]
 
 host start waits for readiness (default 600s). Override with --timeout <seconds>
@@ -189,8 +193,27 @@ async function main() {
     const project = resolveProject(options);
     const host = readHostFile(project);
     if (!host) exitWith('host is not running; start it with `kurenai host start`');
-    const query = new URLSearchParams({ since: String(options.since ?? 0), ...(options.errors ? { errors: '1' } : {}) });
+    const query = new URLSearchParams({
+      since: String(options.since ?? 0),
+      ...(options.errors ? { errors: '1' } : {}),
+      ...(options.all ? { all: '1' } : {}),
+    });
     print(await (await fetch(`${host.serverUrl}/__kurenai/logs?${query}`)).json());
+    return;
+  }
+
+  if (group === 'kit' && command === 'add' && target) {
+    const project = resolveProject(options);
+    const { addKit } = await import('../lib/index.js');
+    print(await addKit(project, target, typeof options.name === 'string' ? options.name : undefined));
+    return;
+  }
+
+  if (group === 'check') {
+    const project = resolveProject(options);
+    const result = await (await projectControl()).typecheck(project);
+    print(result);
+    if (!result.ok) process.exitCode = 1;
     return;
   }
 
@@ -200,9 +223,11 @@ async function main() {
     const result = await control.publish(project, {
       platform: options.platform ?? 'web-desktop',
       ...(options.out ? { outDir: resolve(options.out) } : {}),
+      ...(options.release ? { release: true } : {}),
       ...(options.verbose ? { verbose: true } : {}),
     });
     print({ ok: true, ...result });
+    if (result.ok === false) process.exitCode = 1;
     return;
   }
 

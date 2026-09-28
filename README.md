@@ -10,7 +10,7 @@ PinK 的升级版：项目管理、资源编译、预览、构建在同一产品
 Paste this into a coding agent so it can install and use Kurenai on its own:
 
 ```text
-自学并只用最新 kurenai（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`；不要单独安装完整 cocos-cli / PinK）开发 Cocos 游戏：`kurenai init` → `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `asset info` / `logs` / `context` 闭环，禁止手写 .meta、prefab 不挂脚本；交付时再 `kurenai publish --platform web-desktop`。
+自学并只用最新 kurenai（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`；不要单独安装完整 cocos-cli / PinK）开发 Cocos 游戏：`kurenai init` → `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `asset info` / `logs` / `context` 闭环，`.meta` 由引擎生成、不要手写；`.prefab` / `.mtl` 可以直接手写，但 prefab 里不挂脚本组件，行为写在 TS 里用 `addComponent` 挂上；交付时再 `kurenai publish --platform web-desktop`。
 ```
 
 中文安装与用法入口：[docs/安装方法.md](docs/安装方法.md) · [docs/简单使用方法.md](docs/简单使用方法.md)
@@ -72,7 +72,7 @@ Optional override for tests only: `KURENAI_COCOS_CLI_ROOT` pointing at a custom 
 - If `vendor/cocos-core/node_modules/*.kurenai-old-*` appears after `npm install`, a sandbox blocked bulk delete during prebuilt restore. Safe to delete those aside dirs manually.
 - `kurenai host start` waits up to **600s** by default for first-time engine import. Use `--timeout <seconds>` or `KURENAI_HOST_READY_TIMEOUT_MS`. On timeout the host is **left running** — poll with `kurenai host status`.
 - If a killed host left locks, restart clears `temp/programming/**/*.lock`. Manual recovery: stop host, delete `temp/` (and if needed `library/`), then `host start` again.
-- `kurenai publish` may print an optional TypeScript check warning when `tsc` is missing; that is non-fatal.
+- `kurenai publish` type-checks `assets/` with the vendored TypeScript and fails on type errors; `kurenai check` runs the same check in about a second.
 
 ## Install
 
@@ -97,9 +97,11 @@ kurenai host start                 # background preview host; prints the preview
 # kurenai host start --timeout 1200   # wait up to 20 minutes for first import
 kurenai host status                # poll readiness if start wait expired
 kurenai asset info assets/resources/materials/red.mtl   # engine-assigned uuid, sub-assets
-kurenai logs --errors              # compile errors and browser console
+kurenai kit add ks-survivor-kit    # kit folder, zip or Kura pack id -> assets/resources/kits/<kit>/
+kurenai check                      # type-check assets/ (preview does not)
+kurenai logs --errors              # errors since the last good preview boot (--all: older too)
 kurenai context                    # project state + AGENTS.md
-kurenai publish --platform web-desktop --out ./dist
+kurenai publish --platform web-desktop --release --out ./dist
 kurenai host stop
 ```
 

@@ -20,8 +20,10 @@
  *   GET  /__kurenai/status   host + preview readiness
  *   GET  /__hmr/status       200 when ready, 503 otherwise (PreviewController contract)
  *   POST /__kurenai/refresh?path=<abs or relative to project>
- *   GET  /__kurenai/logs?since=<seq>&errors=1
- *        recent host output, including compile errors and forwarded browser logs
+ *   GET  /__kurenai/logs?since=<seq>&errors=1[&all=1]
+ *        recent host output, including compile errors and forwarded browser logs;
+ *        stack lines fold into their entry. errors=1 skips errors logged before the
+ *        last successful preview boot (reported as `superseded`) unless all=1.
  *   GET  /__kurenai/asset?path=<abs or relative to project>
  *        refreshes the file, then returns asset-db's uuid / type / sub-assets
  *
@@ -72,10 +74,24 @@ const state = {
 };
 
 const LOG_CAPACITY = 500;
+const DETAIL_LINES = 12;
 const logBuffer = [];
 let logSeq = 0;
+// Seq of the last successful preview boot; errors logged before it were fixed by a later edit.
+let bootSeq = 0;
 
-/** Keeps the last LOG_CAPACITY output lines (host, compiler and forwarded browser logs). */
+// Stack frames and Babel code frames belong to the entry above them.
+const CONTINUATION = /^\s+at\s|^\s*>?\s*\d+\s*\||^\s+\|/;
+const WARN_LINE = /^\s*WARN\b|\[Browser WARN\]|DeprecationWarning|\[DEP\d+\]|^\(Use `node --trace/;
+const ERROR_LINE = /^\s*ERROR\b|\[Browser ERROR\]|asset-error|refresh failed|\b\w*Error:|\bfail(ed|s)?\b/i;
+const BOOT_LINE = /\[Browser LOG\] Cocos game preview started/;
+
+function levelOf(line) {
+  if (WARN_LINE.test(line)) return 'warn';
+  return ERROR_LINE.test(line) ? 'error' : 'info';
+}
+
+/** Keeps the last LOG_CAPACITY entries (host, compiler and forwarded browser logs). */
 function captureOutput(stream) {
   const write = stream.write.bind(stream);
   let partial = '';
@@ -85,8 +101,16 @@ function captureOutput(stream) {
     partial = lines.pop() ?? '';
     for (const line of lines) {
       if (!line.trim()) continue;
+      const last = logBuffer[logBuffer.length - 1];
+      if (last && CONTINUATION.test(line)) {
+        last.detail ??= [];
+        if (last.detail.length < DETAIL_LINES) last.detail.push(line.trimEnd());
+        else last.omitted = (last.omitted ?? 0) + 1;
+        continue;
+      }
       logSeq += 1;
-      logBuffer.push({ seq: logSeq, at: new Date().toISOString(), line });
+      if (BOOT_LINE.test(line)) bootSeq = logSeq;
+      logBuffer.push({ seq: logSeq, at: new Date().toISOString(), level: levelOf(line), line: line.trim() });
       if (logBuffer.length > LOG_CAPACITY) logBuffer.shift();
     }
     return write(chunk, ...rest);
@@ -363,10 +387,26 @@ function registerRoutes() {
         async handler(req, res) {
           const since = Number(req.query.since || 0);
           const errorsOnly = req.query.errors === '1';
-          const entries = logBuffer.filter(
-            (entry) => entry.seq > since && (!errorsOnly || /error|fail/i.test(entry.line)),
-          );
-          res.json({ ok: true, lastSeq: logSeq, entries });
+          const includeSuperseded = req.query.all === '1';
+          let superseded = 0;
+          const entries = logBuffer.filter((entry) => {
+            if (entry.seq <= since) return false;
+            if (!errorsOnly) return true;
+            if (entry.level !== 'error') return false;
+            // Asset import errors are not fixed by a script edit, so they never go stale.
+            if (entry.seq < bootSeq && !entry.line.includes('asset-error') && !includeSuperseded) {
+              superseded += 1;
+              return false;
+            }
+            return true;
+          });
+          res.json({
+            ok: true,
+            lastSeq: logSeq,
+            ...(bootSeq ? { lastBootSeq: bootSeq } : {}),
+            ...(superseded ? { superseded } : {}),
+            entries,
+          });
         },
       },
       {

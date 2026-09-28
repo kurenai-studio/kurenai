@@ -7,10 +7,13 @@ import {
     instantiate,
     Label,
     Layers,
+    Material,
+    MeshRenderer,
     Node,
     Prefab,
     ResolutionPolicy,
     resources,
+    toDegree,
     UIOpacity,
     UITransform,
     view,
@@ -30,6 +33,18 @@ export function loadPrefab(path: string): Promise<Node> {
     });
 }
 
+function modelPrefabPath(path: string): string {
+    const base = path.replace(/\.(glb|gltf|fbx)$/i, '');
+    const own = `${base}/${base.split('/').pop()}`;
+    const prefabPath = resources.getInfoWithPath(own, Prefab)
+        ? own
+        : resources.getDirWithPath(base, Prefab)[0]?.path;
+    if (!prefabPath) {
+        throw new Error(`No model prefab at resources/${base} — is the file under assets/resources/?`);
+    }
+    return prefabPath;
+}
+
 /**
  * Instantiates the prefab generated for an imported .glb / .gltf / .fbx, e.g.
  * `loadModel('models/tower')` for `assets/resources/models/tower.glb`.
@@ -37,15 +52,62 @@ export function loadPrefab(path: string): Promise<Node> {
  * `<path>/<file name>` with every mesh and material already wired.
  */
 export function loadModel(path: string): Promise<Node> {
-    const base = path.replace(/\.(glb|gltf|fbx)$/i, '');
-    const own = `${base}/${base.split('/').pop()}`;
-    const prefabPath = resources.getInfoWithPath(own, Prefab)
-        ? own
-        : resources.getDirWithPath(base, Prefab)[0]?.path;
-    if (!prefabPath) {
-        return Promise.reject(new Error(`No model prefab at resources/${base} — is the file under assets/resources/?`));
+    try {
+        return loadPrefab(modelPrefabPath(path));
+    } catch (err) {
+        return Promise.reject(err);
     }
-    return loadPrefab(prefabPath);
+}
+
+const modelPrefabs = new Map<string, Promise<Prefab>>();
+
+/**
+ * Loads a model's prefab once. Keep the result and call `instantiate(prefab)` for
+ * every copy (enemies, props) instead of awaiting `loadModel` each time.
+ */
+export function preloadModel(path: string): Promise<Prefab> {
+    let pending = modelPrefabs.get(path);
+    if (!pending) {
+        pending = new Promise<Prefab>((resolve, reject) => {
+            let prefabPath: string;
+            try {
+                prefabPath = modelPrefabPath(path);
+            } catch (err) {
+                return reject(err);
+            }
+            resources.load(prefabPath, Prefab, (err, prefab) => (err ? reject(err) : resolve(prefab)));
+        });
+        pending.catch(() => modelPrefabs.delete(path));
+        modelPrefabs.set(path, pending);
+    }
+    return pending;
+}
+
+/**
+ * Swaps materials under `root` by the name the model file gave them, e.g.
+ * `replaceMaterials(node, { M_Knight: knightMat })`. Returns how many slots changed.
+ */
+export function replaceMaterials(root: Node, byName: Record<string, Material>): number {
+    let changed = 0;
+    for (const renderer of root.getComponentsInChildren(MeshRenderer)) {
+        renderer.sharedMaterials.forEach((mat, index) => {
+            const next = mat && byName[mat.name];
+            if (next) {
+                renderer.setSharedMaterial(next, index);
+                changed += 1;
+            }
+        });
+    }
+    return changed;
+}
+
+/**
+ * Y rotation in degrees that turns a glTF model (front +Z) toward direction (dx, dz):
+ * `node.setRotationFromEuler(0, yawToward(dx, dz), 0)`.
+ * Cocos' own forward (`Node.forward`, cameras, lookAt) is -Z instead.
+ */
+export function yawToward(dx: number, dz: number): number {
+    return toDegree(Math.atan2(dx, dz));
 }
 
 /** Design resolution from project view settings (not the live viewport). */

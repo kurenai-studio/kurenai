@@ -13,3 +13,6 @@ vendor/.extract-tmp/
 vendor/.extract-tmp-*/
 
 vendor/cocos-core/**/node_modules/
+
+# engine build output written by publish
+vendor/cocos-core/packages/engine/bin/temp/

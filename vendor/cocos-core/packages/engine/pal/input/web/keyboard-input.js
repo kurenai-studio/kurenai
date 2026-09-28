@@ -45,8 +45,16 @@ class KeyboardInputSource {
             if (isEditableTarget(event.target)) return;
             this._ccprivate$_handleKeyboardUp(event);
         };
-        window.addEventListener('keydown', down);
-        window.addEventListener('keyup', up);
+        // Keys still held when focus leaves never get keyup (and macOS drops keyup while Cmd is held).
+        const held = new Set();
+        const releaseAll = () => {
+          for (const code of held) this._ccprivate$_eventTarget.emit('keyup', this._ccprivate$_getInputEvent({ code }, 'keyup'));
+          held.clear();
+        };
+        window.addEventListener('keydown', (event) => { held.add(event.code); down(event); });
+        window.addEventListener('keyup', (event) => { held.delete(event.code); up(event); if (event.key === 'Meta') releaseAll(); });
+        window.addEventListener('blur', releaseAll);
+        document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
 
         // Keep canvas focusable when it appears so other code that still targets canvas works.
         const ensureCanvasFocusable = () => {
@@ -71,7 +79,7 @@ class KeyboardInputSource {
 
     _ccprivate$_handleKeyboardDown(event) {
         event.stopPropagation();
-        event.preventDefault();
+        if (!event.metaKey && !event.ctrlKey) event.preventDefault();
         if (!event.repeat) {
             this._ccprivate$_eventTarget.emit('keydown', this._ccprivate$_getInputEvent(event, 'keydown'));
         } else {
@@ -81,7 +89,7 @@ class KeyboardInputSource {
 
     _ccprivate$_handleKeyboardUp(event) {
         event.stopPropagation();
-        event.preventDefault();
+        if (!event.metaKey && !event.ctrlKey) event.preventDefault();
         this._ccprivate$_eventTarget.emit('keyup', this._ccprivate$_getInputEvent(event, 'keyup'));
     }
 }

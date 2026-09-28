@@ -16,10 +16,11 @@ import {
 } from "node:http";
 import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, delimiter, dirname, join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { ensurePacks, packsForPlatform } from "../cocos/packs.js";
 import { packageFile, resolveCocosCliRoot } from "../cocos/paths.js";
+import { findMissingEngineModules } from "./engine-modules.js";
 
 import {
   PreviewController,
@@ -56,6 +57,7 @@ export interface ProjectControlConfig extends PreviewConfig {
     command: string,
     args: string[],
     cwd: string,
+    env?: NodeJS.ProcessEnv,
   ) => Promise<CommandResult>;
 }
 
@@ -220,6 +222,7 @@ export class ProjectControl {
     options: {
       platform?: PublishPlatform;
       outDir?: string;
+      release?: boolean;
       verbose?: boolean;
     } = {},
   ): Promise<Record<string, unknown>> {
@@ -228,28 +231,53 @@ export class ProjectControl {
     if (!project) throw new Error("The directory is not a Cocos Creator project");
     const cocosCliRoot = resolveCocosCliRoot(this.config.cocosCliRoot);
     const platform = options.platform ?? "web-desktop";
+    const { file: engineConfig, missing } = await findMissingEngineModules(absolutePath);
+    if (missing.length) {
+      return {
+        ok: false,
+        platform,
+        error:
+          "Scripts use engine modules this project does not build (preview has them all, the published game would not). " +
+          `Add them to "includeModules" in ${engineConfig}: ` +
+          missing.map((m) => `${m.module} (${m.match} in ${m.file})`).join("; "),
+        missingModules: missing,
+      };
+    }
     await ensurePacks(packsForPlatform(platform), { cocosCliRoot });
     const cli = join(cocosCliRoot, "dist", "cli.js");
     if (!existsSync(cli)) throw new Error(`cocos-cli not found: ${cli}`);
     const args = [cli, "build", "--project", absolutePath, "--platform", platform];
 
-    let configDir: string | undefined;
+    const buildConfig: Record<string, unknown> = {};
     if (options.outDir) {
       const outDir = resolve(absolutePath, options.outDir);
+      buildConfig.buildPath = dirname(outDir);
+      buildConfig.outputName = basename(outDir);
+    }
+    // cocos-cli defaults to debug: an unminified engine with asserts and source maps.
+    if (options.release) {
+      buildConfig.debug = false;
+      buildConfig.sourceMaps = false;
+    }
+    let configDir: string | undefined;
+    if (Object.keys(buildConfig).length) {
       configDir = await mkdtemp(join(tmpdir(), "kurenai-build-"));
       const configPath = join(configDir, "build-config.json");
-      await writeFile(
-        configPath,
-        JSON.stringify({ buildPath: dirname(outDir), outputName: basename(outDir) }),
-      );
+      await writeFile(configPath, JSON.stringify(buildConfig));
       args.push("--build-config", configPath);
     }
 
     try {
+      // cocos-cli type-checks assets/ with `tsc` from PATH and skips the check without it.
+      // The vendored TypeScript 5 understands the generated temp/tsconfig.cocos.json.
+      const tscBin = join(cocosCliRoot, "node_modules", ".bin");
       const { stdout, stderr, code } = await this.runCommand(
         process.execPath,
         args,
         absolutePath,
+        existsSync(join(tscBin, "tsc"))
+          ? { ...process.env, PATH: `${tscBin}${delimiter}${process.env.PATH ?? ""}` }
+          : undefined,
       );
       const combined = `${stdout}\n${stderr}`.trim();
       const dest = /Build Dest: (.+)$/mu.exec(combined)?.[1]?.trim();
@@ -269,11 +297,36 @@ export class ProjectControl {
         ok: true,
         outDir,
         platform,
+        mode: options.release ? "release" : "debug",
         ...(logTail !== undefined ? { logTail } : {}),
       };
     } finally {
       if (configDir) await rm(configDir, { recursive: true, force: true });
     }
+  }
+
+  /** Type-checks assets/ with the vendored TypeScript; preview itself only strips types. */
+  async typecheck(projectPath: string): Promise<Record<string, unknown>> {
+    const absolutePath = resolve(projectPath);
+    const tsconfig = join(absolutePath, "temp", "tsconfig.cocos.json");
+    if (!existsSync(tsconfig)) {
+      return { ok: false, error: "temp/tsconfig.cocos.json is missing; run `kurenai host start` once first" };
+    }
+    const cocosCliRoot = resolveCocosCliRoot(this.config.cocosCliRoot);
+    const tsc = join(cocosCliRoot, "node_modules", "typescript", "bin", "tsc");
+    if (!existsSync(tsc)) return { ok: false, error: `TypeScript not found: ${tsc}` };
+    const { stdout, stderr } = await this.runCommand(
+      process.execPath,
+      [tsc, "--noEmit", "--pretty", "false", "--skipLibCheck", "--project", tsconfig],
+      absolutePath,
+    );
+    // Game files, plus file-less config errors (e.g. unresolved `types`) that would
+    // otherwise make every check pass silently.
+    const errors = `${stdout}\n${stderr}`
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => /^assets\/.+\(\d+,\d+\): error TS\d+|^error TS\d+/.test(line));
+    return { ok: errors.length === 0, errors };
   }
 
   setSelection(
@@ -417,6 +470,7 @@ export class ProjectControl {
               ...(typeof body.outDir === "string"
                 ? { outDir: body.outDir }
                 : {}),
+              ...(body.release ? { release: true } : {}),
               ...(body.verbose ? { verbose: true } : {}),
             })),
           });
@@ -642,10 +696,12 @@ async function runCommandCapture(
   command: string,
   args: string[],
   cwd: string,
+  env?: NodeJS.ProcessEnv,
 ): Promise<CommandResult> {
   return await new Promise((resolvePromise, reject) => {
     const child = spawn(command, args, {
       cwd,
+      ...(env ? { env } : {}),
       stdio: "pipe",
       windowsHide: true,
     });

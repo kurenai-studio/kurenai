@@ -6,7 +6,7 @@ export const DEFAULT_HOST_READY_TIMEOUT_MS = 600_000;
  * Priority: explicit ms → `--timeout` seconds → `KURENAI_HOST_READY_TIMEOUT_MS` → default 10m.
  */
 export function resolveHostReadyTimeoutMs(
-  options: { timeout?: string | true; readinessTimeoutMs?: number } = {},
+  options: { timeout?: string | true | undefined; readinessTimeoutMs?: number | undefined } = {},
   env: NodeJS.ProcessEnv = process.env,
 ): number {
   if (typeof options.readinessTimeoutMs === "number" && Number.isFinite(options.readinessTimeoutMs)) {

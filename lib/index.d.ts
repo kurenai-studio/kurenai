@@ -158,8 +158,8 @@ declare const DEFAULT_HOST_READY_TIMEOUT_MS = 600000;
  * Priority: explicit ms → `--timeout` seconds → `KURENAI_HOST_READY_TIMEOUT_MS` → default 10m.
  */
 declare function resolveHostReadyTimeoutMs(options?: {
-  timeout?: string | true;
-  readinessTimeoutMs?: number;
+  timeout?: string | true | undefined;
+  readinessTimeoutMs?: number | undefined;
 }, env?: NodeJS.ProcessEnv): number;
 //#endregion
 //#region src/project/control.d.ts
@@ -175,7 +175,7 @@ interface ProjectControlConfig extends PreviewConfig {
   controlHost?: string;
   templateRoot?: string;
   template3dRoot?: string;
-  runCommand?: (command: string, args: string[], cwd: string) => Promise<CommandResult>;
+  runCommand?: (command: string, args: string[], cwd: string, env?: NodeJS.ProcessEnv) => Promise<CommandResult>;
 }
 interface CocosProject {
   name: string;
@@ -214,8 +214,11 @@ declare class ProjectControl {
   publish(projectPath: string, options?: {
     platform?: PublishPlatform;
     outDir?: string;
+    release?: boolean;
     verbose?: boolean;
   }): Promise<Record<string, unknown>>;
+  /** Type-checks assets/ with the vendored TypeScript; preview itself only strips types. */
+  typecheck(projectPath: string): Promise<Record<string, unknown>>;
   setSelection(projectPath: string, selection: SelectionContext | undefined): void;
   getSelection(projectPath: string): SelectionContext | undefined;
   /** `preview` overrides the in-process preview, e.g. a host started by the CLI. */
@@ -223,6 +226,23 @@ declare class ProjectControl {
   private previewFor;
   private handle;
 }
+//#endregion
+//#region src/project/kit.d.ts
+interface KitAddResult {
+  ok: true;
+  kit: string;
+  resources: string;
+  models: string[];
+  audio: string[];
+  readme?: string;
+  skipped: number;
+}
+/**
+ * Copies a kit's web assets into assets/resources/kits/<kit>/{models,audio}/ so that
+ * `loadModel('kits/<kit>/models/<Name>')` works. Accepts a folder, a .zip, or a Kura
+ * studio pack id (e.g. `ks-survivor-kit`).
+ */
+declare function addKit(projectPath: string, source: string, name?: string): Promise<KitAddResult>;
 //#endregion
 //#region src/shared/protocol.d.ts
 declare const KURENAI_PROTOCOL_VERSION = 1;
@@ -278,5 +298,5 @@ type HostToInspectorMessage = {
 declare function isInspectorMessage(value: unknown): value is InspectorToHostMessage;
 declare function formatSelectionContext(node: SelectedNodeSummary): string;
 //#endregion
-export { type CocosProject, type CommandResult, DEFAULT_COCOS_CLI_ROOT, DEFAULT_HOST_READY_TIMEOUT_MS, type EnsurePacksOptions, type EnsurePacksResult, HostToInspectorMessage, InspectorToHostMessage, KURENAI_COCOS_CORE_VERSION, KURENAI_PROTOCOL_VERSION, LEGACY_PINK_COCOS_CLI_ROOT, type PackId, type PackPresence, type PacksStatus, PreviewBridge, type PreviewBridgeConfig, type PreviewConfig, PreviewController, type PreviewControllerOptions, type PreviewPhase, type PreviewState, ProjectControl, type ProjectControlConfig, type ProjectTemplateId, type PublishPlatform, SceneNodeSummary, SelectedNodeSummary, type SelectionContext, bundledCocosCoreRoot, ensureCorePack, ensurePacks, formatSelectionContext, injectInspector, inspectPack, isInspectorMessage, listKnownPackIds, managedCocosCoreRoot, packageRoot, packsForPlatform, packsStatus, resolveCocosCliRoot, resolveHostReadyTimeoutMs };
+export { type CocosProject, type CommandResult, DEFAULT_COCOS_CLI_ROOT, DEFAULT_HOST_READY_TIMEOUT_MS, type EnsurePacksOptions, type EnsurePacksResult, HostToInspectorMessage, InspectorToHostMessage, KURENAI_COCOS_CORE_VERSION, KURENAI_PROTOCOL_VERSION, type KitAddResult, LEGACY_PINK_COCOS_CLI_ROOT, type PackId, type PackPresence, type PacksStatus, PreviewBridge, type PreviewBridgeConfig, type PreviewConfig, PreviewController, type PreviewControllerOptions, type PreviewPhase, type PreviewState, ProjectControl, type ProjectControlConfig, type ProjectTemplateId, type PublishPlatform, SceneNodeSummary, SelectedNodeSummary, type SelectionContext, addKit, bundledCocosCoreRoot, ensureCorePack, ensurePacks, formatSelectionContext, injectInspector, inspectPack, isInspectorMessage, listKnownPackIds, managedCocosCoreRoot, packageRoot, packsForPlatform, packsStatus, resolveCocosCliRoot, resolveHostReadyTimeoutMs };
 //# sourceMappingURL=index.d.ts.map

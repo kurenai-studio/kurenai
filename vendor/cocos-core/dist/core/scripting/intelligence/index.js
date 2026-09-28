@@ -92,6 +92,8 @@ class TypeScriptConfigBuilder {
             noEmit: true,
             // To avoid case problem on Windows.
             forceConsistentCasingInFileNames: true,
+            // kurenai: the generated engine declarations do not type-check on their own.
+            skipLibCheck: true,
         };
         const tsConfig = {
             // Considering Visual Studio Code identifies tsconfig from schema.
@@ -154,7 +156,8 @@ class TypeScriptConfigBuilder {
     }
     tsConfigTypePath(path) {
         // Path should be relative to the directory of this config file itself
-        const rel = path_1.default.relative(path_1.default.dirname(this._realTsConfigPath), path);
+        // kurenai: the types live in temp/tsconfig.cocos.json, not the project tsconfig.json.
+        const rel = path_1.default.relative(path_1.default.dirname(this._configFilePath), path);
         // No `.d.ts` is allowed
         const extensionLess = rel.endsWith('.d.ts') ? rel.substr(0, rel.length - 5) : rel;
         // Let's convert it to slash for generic

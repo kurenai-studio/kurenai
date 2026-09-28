@@ -43,8 +43,16 @@ System.register("q-bundled:///fs/pal/input/web/keyboard-input.js", ["../../../co
             if (isEditableTarget(event.target)) return;
             this._ccprivate$_handleKeyboardUp(event);
           };
-          window.addEventListener("keydown", down);
-          window.addEventListener("keyup", up);
+          // Keys still held when focus leaves never get keyup (and macOS drops keyup while Cmd is held).
+          const held = new Set();
+          const releaseAll = () => {
+            for (const code of held) this._ccprivate$_eventTarget.emit("keyup", this._ccprivate$_getInputEvent({ code }, "keyup"));
+            held.clear();
+          };
+          window.addEventListener("keydown", (event) => { held.add(event.code); down(event); });
+          window.addEventListener("keyup", (event) => { held.delete(event.code); up(event); if (event.key === "Meta") releaseAll(); });
+          window.addEventListener("blur", releaseAll);
+          document.addEventListener("visibilitychange", () => { if (document.hidden) releaseAll(); });
           const ensureCanvasFocusable = () => {
             const canvas = document.getElementById("GameCanvas");
             if (canvas && canvas.tabIndex < 0) canvas.tabIndex = 0;
@@ -58,7 +66,7 @@ System.register("q-bundled:///fs/pal/input/web/keyboard-input.js", ["../../../co
         }
         _ccprivate$_handleKeyboardDown(event) {
           event.stopPropagation();
-          event.preventDefault();
+          if (!event.metaKey && !event.ctrlKey) event.preventDefault();
           if (!event.repeat) {
             const keyDownInputEvent = this._ccprivate$_getInputEvent(event, "keydown");
             this._ccprivate$_eventTarget.emit("keydown", keyDownInputEvent);
@@ -70,7 +78,7 @@ System.register("q-bundled:///fs/pal/input/web/keyboard-input.js", ["../../../co
         _ccprivate$_handleKeyboardUp(event) {
           const inputEvent = this._ccprivate$_getInputEvent(event, "keyup");
           event.stopPropagation();
-          event.preventDefault();
+          if (!event.metaKey && !event.ctrlKey) event.preventDefault();
           this._ccprivate$_eventTarget.emit("keyup", inputEvent);
         }
       });

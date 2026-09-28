@@ -397,7 +397,9 @@ class EngineManager {
         this._configInstance = configInstance;
         const syncConfig = () => {
             const projectConfig = configInstance.getAll() || {};
-            const mergedConfig = (0, lodash_1.merge)((0, lodash_1.cloneDeep)(configInstance.getDefaultConfig() || {}), projectConfig);
+            // kurenai: arrays replace instead of merging by index, or a shorter project
+            // includeModules gets the default list's tail appended back.
+            const mergedConfig = (0, lodash_1.mergeWith)((0, lodash_1.cloneDeep)(configInstance.getDefaultConfig() || {}), projectConfig, (_dst, src) => (Array.isArray(src) ? [...src] : undefined));
             const moduleConfig = this.getSelectedModuleProjectConfig(mergedConfig);
             if (moduleConfig) {
                 if (!Object.prototype.hasOwnProperty.call(projectConfig, 'includeModules')) {
