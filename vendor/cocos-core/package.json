@@ -124,7 +124,6 @@
         "@cocos/lib-programming": "3.8.15",
         "@cocos/module-system": "^0.0.21",
         "@cocos/quick-compiler": "^4.2.26",
-        "@ffprobe-installer/ffprobe": "^1.4.1",
         "@microsoft/api-extractor": "^7.55.0",
         "@modelcontextprotocol/sdk": "^1.18.0",
         "@sentry/node": "^10.21.0",

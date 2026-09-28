@@ -280,13 +280,9 @@ function mergeMeta(a, b) {
     });
 }
 async function getMediaDuration(filePath) {
-    const ffprobe = require('@ffprobe-installer/ffprobe');
-    const { execSync } = require('child_process');
-    const ffprobePath = ffprobe.path;
-    const command = `"${ffprobePath}" -v error -show_entries format=duration -of csv=p=0 "${filePath}"`;
     try {
-        const result = execSync(command).toString().trim();
-        return parseFloat(result);
+        // kurenai: pure JS instead of the ffprobe binary, which only shipped for darwin-arm64.
+        return require('./media-duration').mediaDuration(filePath);
     }
     catch (error) {
         throw new Error(`获取媒体时长失败: ${error.message}`);

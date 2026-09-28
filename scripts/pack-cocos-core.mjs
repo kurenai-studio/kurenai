@@ -5,8 +5,7 @@
  *
  * Policy:
  * - Do NOT ship the full node_modules tree; run `npm install --omit=dev` after extract.
- *   Exception: ship a few prebuilt native addons (gl / sharp / @ffprobe-installer) because
- *   node-gyp fails under paths with spaces (Application Support).
+ *   No native addons: sharp → packages/portable-sharp, gl removed, ffprobe → JS media-duration.
  * - Keep webgame builder modules in the main pack (web-desktop / web-mobile / web-common).
  * - Leave mini-game / native builder platforms out of the main pack.
  *
@@ -120,46 +119,19 @@ function npmInstall(dir) {
   const t0 = Date.now();
   const result = spawnSync(
     'npm',
-    // ignore-scripts: path-with-spaces breaks node-gyp for `gl`. Prebuilts are
-    // copied from the source install afterwards (see copyPrebuiltNatives).
+    // ignore-scripts: no dependency needs an install script (no native addons).
     ['install', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'],
     {
       cwd: dir,
       encoding: 'utf8',
       env: { ...process.env, npm_config_progress: 'false' },
+      shell: process.platform === 'win32',
     },
   );
   if (result.status !== 0) {
     throw new Error(`npm install failed: ${result.stderr || result.stdout}`);
   }
   console.log(`${Date.now() - t0}ms`);
-}
-
-/** Copy prebuilt native addons from a known-good install (paths with spaces break node-gyp). */
-function copyPrebuiltNatives(sourceRoot, destRoot) {
-  const natives = [
-    // ffprobe only — gl removed; sharp replaced by packages/portable-sharp (jimp).
-    { from: 'node_modules/@ffprobe-installer', stash: '.kurenai-prebuilts/@ffprobe-installer' },
-  ];
-  for (const { from, stash } of natives) {
-    const src = join(sourceRoot, from);
-    if (!existsSync(src)) {
-      console.warn(`[skip native] ${from}`);
-      continue;
-    }
-    process.stdout.write(`copy prebuilt ${from} ... `);
-    const t0 = Date.now();
-    for (const rel of [from, stash]) {
-      const dest = join(destRoot, rel);
-      mkdirSync(dirname(dest), { recursive: true });
-      rmSync(dest, { recursive: true, force: true });
-      const result = spawnSync('rsync', ['-a', `${src}/`, `${dest}/`], { encoding: 'utf8' });
-      if (result.status !== 0) {
-        throw new Error(`copy prebuilt ${rel} failed: ${result.stderr || result.stdout}`);
-      }
-    }
-    console.log(`${Date.now() - t0}ms`);
-  }
 }
 
 function basenameSafe(path) {
@@ -195,7 +167,7 @@ function main() {
         source,
         out,
         version,
-        policy: 'no full node_modules; portable-sharp (jimp) + prebuilt ffprobe only; web builders in main pack',
+        policy: 'no full node_modules; no native addons; web builders in main pack',
       },
       null,
       2,
@@ -230,10 +202,6 @@ function main() {
     'trimmed: mini-game platform packs install on demand\n',
   );
 
-  // Native addons cannot reliably rebuild under paths with spaces; ship the
-  // few prebuilt packages inside the core tarball (still not the full nm tree).
-  copyPrebuiltNatives(source, out);
-
   // Assert web builders present, native builders absent
   const webDesktop = join(out, 'dist/core/builder/platforms/web-desktop');
   const androidBuilder = join(out, 'dist/core/builder/platforms/android');
@@ -254,7 +222,7 @@ function main() {
     source,
     builtAt: new Date().toISOString(),
     shipsNodeModules: false,
-    shipsPrebuiltNatives: ['@ffprobe-installer'],
+    shipsPrebuiltNatives: [],
     imageBackend: 'packages/portable-sharp (jimp)',
     effectGpuTypecheck: false,
     postInstall: manifest.packs.core.postInstall || 'npm install --omit=dev',
@@ -288,7 +256,6 @@ function main() {
     if (existsSync(join(out, 'packages/engine/package.json'))) {
       npmInstall(join(out, 'packages/engine'));
     }
-    copyPrebuiltNatives(source, out);
     installedMB = mb(duBytes(out));
   }
 
@@ -303,7 +270,7 @@ function main() {
     tgzMB: tgzPath ? mb(duBytes(tgzPath)) : undefined,
     tgz: tgzPath,
     marker: join(out, '.kurenai-pack.json'),
-    note: 'tarball: no full node_modules; portable-sharp/jimp; prebuilt ffprobe only; npm install --omit=dev after extract; web builders in main pack',
+    note: 'tarball: no full node_modules; no native addons; npm install --omit=dev after extract; web builders in main pack',
   };
   console.log(JSON.stringify(summary, null, 2));
 }

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { cpSync, createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync } from "node:fs";
+import { createWriteStream, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -294,6 +294,8 @@ function runNpmInstall(dir: string): Promise<void> {
         cwd: dir,
         stdio: ["ignore", "ignore", "pipe"],
         env: { ...process.env, npm_config_progress: "false" },
+        // npm is npm.cmd on Windows, which Node only runs through a shell.
+        shell: process.platform === "win32",
       },
     );
     let stderr = "";
@@ -306,63 +308,6 @@ function runNpmInstall(dir: string): Promise<void> {
       else reject(new Error(`npm install failed in ${dir} (code=${String(code)}): ${stderr.trim()}`));
     });
   });
-}
-
-function packageLooksRestored(name: string, to: string): boolean {
-  return existsSync(join(to, "package.json"));
-}
-
-/** Replace dest with src without recursive rm (agent sandboxes often block bulk deletes). */
-function replaceTree(from: string, to: string): void {
-  mkdirSync(dirname(to), { recursive: true });
-  if (!existsSync(to)) {
-    cpSync(from, to, { recursive: true });
-    return;
-  }
-  const aside = `${to}.kurenai-old-${process.pid}`;
-  try {
-    if (existsSync(aside)) {
-      try {
-        rmSync(aside, { recursive: true, force: true });
-      } catch {
-        /* ignore */
-      }
-    }
-    renameSync(to, aside);
-  } catch {
-    cpSync(from, to, { recursive: true, force: true });
-    return;
-  }
-  try {
-    cpSync(from, to, { recursive: true });
-  } catch (error) {
-    try {
-      if (!existsSync(to)) renameSync(aside, to);
-    } catch {
-      /* ignore */
-    }
-    throw error;
-  }
-  try {
-    rmSync(aside, { recursive: true, force: true });
-  } catch {
-    /* leave aside; install still succeeded */
-  }
-}
-
-function restoreBundledPrebuilts(root: string): void {
-  if (process.env.KURENAI_SKIP_PREBUILT === "1") return;
-  const prebuiltDir = join(root, ".kurenai-prebuilts");
-  if (!existsSync(prebuiltDir)) return;
-  for (const name of readdirSync(prebuiltDir)) {
-    // Legacy: gl / sharp prebuilts no longer used (portable-sharp + no GPU typecheck).
-    if (name === "gl" || name === "sharp" || name.startsWith("gl.") || name.startsWith("sharp.")) continue;
-    const from = join(prebuiltDir, name);
-    if (!statSync(from).isDirectory()) continue;
-    const to = join(root, "node_modules", name);
-    if (packageLooksRestored(name, to)) continue;
-    replaceTree(from, to);
-  }
 }
 
 function coreDepsInstalled(root: string): boolean {
@@ -381,7 +326,6 @@ async function ensureCoreDependencies(root: string): Promise<void> {
   if (existsSync(join(root, "packages/engine/package.json"))) {
     await runNpmInstall(join(root, "packages/engine"));
   }
-  restoreBundledPrebuilts(root);
 }
 
 export type EnsurePacksOptions = {

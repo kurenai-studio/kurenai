@@ -5,11 +5,7 @@
   "source": "/Users/shinjiyu/Library/Application Support/cocos-default/cocos-4.0.0-alpha.33",
   "builtAt": "2026-09-25T06:53:58.952Z",
   "shipsNodeModules": false,
-  "shipsPrebuiltNatives": [
-    "gl",
-    "sharp",
-    "@ffprobe-installer"
-  ],
+  "shipsPrebuiltNatives": [],
   "postInstall": "npm install --omit=dev",
   "keepInMainPack": [
     "dist/core/builder/platforms/web-common/**",

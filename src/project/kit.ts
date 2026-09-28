@@ -1,8 +1,8 @@
-import { spawn } from "node:child_process";
 import { existsSync, statSync } from "node:fs";
 import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, extname, join, relative, resolve, sep } from "node:path";
+import { extractZip } from "./unzip.js";
 
 const KURA_BASE = process.env.KURA_BASE_URL || "https://kuroneko.chat/assets";
 const KIT_ID = /^[a-z0-9][a-z0-9._-]{1,63}$/;
@@ -42,17 +42,9 @@ async function walk(dir: string, root = dir): Promise<string[]> {
   return out;
 }
 
-function run(command: string, args: string[]): Promise<void> {
-  return new Promise((done, fail) => {
-    const child = spawn(command, args, { stdio: "ignore" });
-    child.once("error", fail);
-    child.once("exit", (code) => (code === 0 ? done() : fail(new Error(`${command} exited with ${code}`))));
-  });
-}
-
 async function unzip(zip: string): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "kurenai-kit-"));
-  await run("unzip", ["-q", zip, "-d", dir]);
+  await extractZip(zip, dir);
   return dir;
 }
 

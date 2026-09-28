@@ -47,7 +47,7 @@ new project.
   `/__kurenai/refresh`, `/__kurenai/asset` and `/__kurenai/logs`. Advertises
   itself in `<project>/temp/kurenai-host.json`.
 - `vendor/cocos-core/` — trimmed runtime (asset-db, preview, web builders).
-  `npm install` / `postinstall` installs its JS deps and restores prebuilt natives.
+  `npm install` / `postinstall` installs its JS deps (pure JS, no native addons).
 - `src/preview/controller.ts` — starts the host (or attaches to one the CLI
   started) and puts `PreviewBridge` in front of it.
 - `src/preview/bridge.ts` — reverse proxy that injects the inspector and keeps
@@ -62,14 +62,13 @@ new project.
 ## Requirements
 
 - **Node.js 22+** (22 / 24 both fine for the current portable stack: image ops are pure JS `portable-sharp` / jimp; no Node-ABI `gl` / `sharp` addons)
-- Remaining prebuilt binary is **ffprobe** only (`.kurenai-prebuilts`, mainly darwin-arm64). Not tied to Node `MODULE_VERSION`.
+- No native binaries: audio/video duration is read in pure JS (wav / mp3 / aac / ogg / mp4), `kit add` unzips in pure JS. Works the same on macOS, Windows and Linux.
 - 默认路径不需要 PinK / 完整 cocos-cli
 
 Optional override for tests only: `KURENAI_COCOS_CLI_ROOT` pointing at a custom tree.
 
 ### Install notes
 
-- If `vendor/cocos-core/node_modules/*.kurenai-old-*` appears after `npm install`, a sandbox blocked bulk delete during prebuilt restore. Safe to delete those aside dirs manually.
 - `kurenai host start` waits up to **600s** by default for first-time engine import. Use `--timeout <seconds>` or `KURENAI_HOST_READY_TIMEOUT_MS`. On timeout the host is **left running** — poll with `kurenai host status`.
 - If a killed host left locks, restart clears `temp/programming/**/*.lock`. Manual recovery: stop host, delete `temp/` (and if needed `library/`), then `host start` again.
 - `kurenai publish` type-checks `assets/` with the vendored TypeScript and fails on type errors; `kurenai check` runs the same check in about a second.
