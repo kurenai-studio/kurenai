@@ -38,6 +38,12 @@ are always written by the engine. The rules agents follow live in
 [`templates/shared/AGENTS.md`](templates/shared/AGENTS.md), copied into every
 new project.
 
+## TODO
+
+- [ ] **支持 Cocos 3 / Cocos 2 工程**：先直接提供一个面向 Cocos Creator 3.x 的版本；再做独立的 Cocos 2 → Cocos 3 升级工具。
+- [ ] **提升 3D 渲染能力**
+- [ ] **优化构建**：包括自动资源优化等
+
 ## Pieces
 
 - `bin/kurenai.mjs` — the CLI (see below).
