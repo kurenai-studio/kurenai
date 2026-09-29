@@ -73,6 +73,29 @@ Flat meshes (slash arcs, decals, quads seen from below) vanish under back-face
 culling. Use technique 3, or override the pass state per material:
 `"_states": [{ "rasterizerState": { "cullMode": 0 } }]` (0 = none).
 
+A handwritten `.mtl` ignores `mainTexture` unless `_defines` turns the sampler
+on: `builtin-standard` needs `"USE_ALBEDO_MAP": true`; `builtin-unlit` needs
+`"USE_TEXTURE": true`. Example unlit textured material:
+
+```json
+{
+  "__type__": "cc.Material",
+  "_effectAsset": { "__uuid__": "a3cd009f-0ab0-420d-9278-b9fdab939bbc" },
+  "_techIdx": 0,
+  "_defines": [{ "USE_TEXTURE": true }],
+  "_props": [{
+    "mainTexture": { "__uuid__": "<texture-uuid>" },
+    "mainColor": { "__type__": "cc.Color", "r": 255, "g": 255, "b": 255, "a": 255 }
+  }],
+  "_states": [{ "rasterizerState": { "cullMode": 0 } }]
+}
+```
+
+Runtime meshes do not need a prefab. Build one with
+`utils.MeshUtils.createMesh({ positions, normals, uvs, indices })` and assign
+it to a `MeshRenderer`. In this engine mesh UV **v=0 is the top of the image**.
+Do not search engine sources or `node_modules` for this API.
+
 Vertex colours: `builtin-standard` / `builtin-unlit` convert vertex colour with
 `SRGBToLinear`, but glTF `COLOR_0` is already linear. Textureless vertex-colour
 models (most low-poly kits) render far too dark, dark greens almost black.
@@ -156,6 +179,12 @@ When `kurenai asset info` returns `ok: false`, the host also writes a line like
 `kurenai logs --errors` to list import failures alongside compile errors.
 
 ## Publish
+
+While developing, look at the preview. `kurenai host start` once, then save;
+the host reloads the scene. Confirm with `kurenai logs --errors` and
+`kurenai check`. Do not run `kurenai publish` until the user asks for a build
+to hand over. Publish is a full web package and takes several minutes; the
+preview already runs the same scene.
 
 `kurenai publish --release` for anything you hand over (minified engine, no
 source maps; the default debug build is several times larger). The build only
