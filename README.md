@@ -43,7 +43,7 @@ new project.
 | Tool | Engine | Repo |
 |------|--------|------|
 | **Kurenai** | Creator **4.0** (this package) | preview + publish |
-| **Enji** | Creator **3.8** | sibling package `@kurenai-studio/enji` — preview/edit, **no publish**, 3.8 `.meta` caps |
+| **Enji** | Creator **3.8** | [kurenai-studio/enji](https://github.com/kurenai-studio/enji) — preview/edit, **no publish**, 3.8 `.meta` caps |
 | **Akane** | Creator **2.x** | reserved name — not started |
 
 Do **not** run `kurenai` on a 3.8 project (risk of 4.0-oriented meta / publish). Use Enji instead.
