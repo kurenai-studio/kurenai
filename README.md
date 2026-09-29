@@ -44,14 +44,14 @@ new project.
 |------|--------|------|
 | **Kurenai** | Creator **4.0** (this package) | preview + publish |
 | **Enji** | Creator **3.8** | [kurenai-studio/enji](https://github.com/kurenai-studio/enji) — preview/edit, **no publish**, 3.8 `.meta` caps |
-| **Akane** | Creator **2.x** | [kurenai-studio/akane](https://github.com/kurenai-studio/akane) — 2.x → 3.8 upgrade, not started (plan only) |
+| **Akane** | — | reserved name, unassigned |
 
 Do **not** run `kurenai` on a 3.8 project (risk of 4.0-oriented meta / publish). Use Enji instead.
 
 ## TODO
 
 - [x] **Creator 3.8 工作流**：独立仓库 Enji（不进本仓）
-- [ ] **Akane / Creator 2.x**：独立仓库 [Akane](https://github.com/kurenai-studio/akane)，2.x → 3.8 升级（仅有计划）
+- [ ] **Creator 2.x**：暂缓，不做 2.x 升级工具（Akane 名称保留）
 - [ ] **提升 3D 渲染能力**
 - [ ] **优化构建**：包括自动资源优化等
 
