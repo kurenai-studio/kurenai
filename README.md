@@ -38,9 +38,20 @@ are always written by the engine. The rules agents follow live in
 [`templates/shared/AGENTS.md`](templates/shared/AGENTS.md), copied into every
 new project.
 
+## Related tools (do not mix)
+
+| Tool | Engine | Repo |
+|------|--------|------|
+| **Kurenai** | Creator **4.0** (this package) | preview + publish |
+| **Enji** | Creator **3.8** | sibling package `@kurenai-studio/enji` — preview/edit, **no publish**, 3.8 `.meta` caps |
+| **Akane** | Creator **2.x** | reserved name — not started |
+
+Do **not** run `kurenai` on a 3.8 project (risk of 4.0-oriented meta / publish). Use Enji instead.
+
 ## TODO
 
-- [ ] **支持 Cocos 3 / Cocos 2 工程**：先直接提供一个面向 Cocos Creator 3.x 的版本；再做独立的 Cocos 2 → Cocos 3 升级工具。
+- [x] **Creator 3.8 工作流**：独立仓库 Enji（不进本仓）
+- [ ] **Akane / Creator 2.x**：独立升级与工具（名称已预留）
 - [ ] **提升 3D 渲染能力**
 - [ ] **优化构建**：包括自动资源优化等
 
