@@ -172,7 +172,13 @@ state; finish related edits before judging `logs`.
 
 `kurenai logs --errors` lists errors (stack traces folded into `detail`) logged
 since the last successful preview boot; older ones are fixed by later edits and
-only counted as `superseded`. Add `--all` to see them anyway.
+only counted as `superseded`. Add `--all` to see them anyway. Preview chunk
+stacks are mapped back to `assets/*.ts` (`source` on the entry). Shader compile
+failures become one entry whose `shader.errors[].effectLine` points at the
+`.effect` file.
+
+Full guide with verified capabilities and recipes: `docs/rendering.md` in the
+kurenai checkout.
 
 When `kurenai asset info` returns `ok: false`, the host also writes a line like
 `[kurenai-host] asset-error path=… reason=…` to its log buffer. Run

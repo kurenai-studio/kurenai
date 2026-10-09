@@ -77,7 +77,7 @@ function rsyncPath(sourceRoot, destRoot, rel, excludes) {
   }
   const dest = join(destRoot, rel);
   mkdirSync(dirname(dest), { recursive: true });
-  const args = ['-a'];
+  const args = ['-a', '--exclude', '*.map'];
   for (const ex of excludes) {
     if (ex.startsWith(`${rel}/`)) args.push('--exclude', ex.slice(rel.length + 1));
     else if (ex === rel) args.push('--exclude', '*');

@@ -1,21 +1,28 @@
 import {
+    assetManager,
     Camera,
     Canvas,
     Color,
+    EffectAsset,
     EventMouse,
     EventTouch,
     instantiate,
     Label,
     Layers,
     Material,
+    Mesh,
     MeshRenderer,
     Node,
     Prefab,
+    primitives,
+    RenderTexture,
     ResolutionPolicy,
     resources,
+    Texture2D,
     toDegree,
     UIOpacity,
     UITransform,
+    utils,
     view,
     Widget,
 } from 'cc';
@@ -203,4 +210,128 @@ export function useDesignResolution(width?: number, height?: number): void {
         height ?? design.height,
         ResolutionPolicy.SHOW_ALL,
     );
+}
+
+/** Engine effects that exist but are not registered until something loads them. */
+const BUILTIN_EFFECT_UUIDS: Record<string, string> = {
+    'builtin-standard': 'c8f66d17-351a-48da-a12c-0212d28575c4',
+    'builtin-toon': '9b20a514-6cc3-49de-b216-b6b863046249',
+    'builtin-unlit': 'a3cd009f-0ab0-420d-9278-b9fdab939bbc',
+    'advanced/water': '113a72d8-20cd-42cd-ba96-37cc1046971a',
+    'advanced/glass': 'f288f946-150b-443d-b4b3-0227c5117c93',
+    'advanced/sky': '6308c013-7d49-4160-9516-562dd205b480',
+};
+
+/**
+ * Returns an engine effect such as `builtin-standard`, loading it on first use.
+ * A Creator build only ships builtin effects that some asset references, so for
+ * shipped content also keep a `.mtl` under `resources/` that uses the effect.
+ */
+export function loadBuiltinEffect(name: string): Promise<EffectAsset> {
+    const ready = EffectAsset.get(name);
+    if (ready) return Promise.resolve(ready);
+    const uuid = BUILTIN_EFFECT_UUIDS[name];
+    if (!uuid) {
+        return Promise.reject(
+            new Error(`Unknown builtin effect "${name}"; known: ${Object.keys(BUILTIN_EFFECT_UUIDS).join(', ')}`),
+        );
+    }
+    return new Promise((resolve, reject) => {
+        assetManager.loadAny({ uuid }, (err: Error | null, effect: EffectAsset) => (err ? reject(err) : resolve(effect)));
+    });
+}
+
+/** Loads a project effect, e.g. `loadEffect('effects/water')` for `assets/resources/effects/water.effect`. */
+export function loadEffect(path: string): Promise<EffectAsset> {
+    return new Promise((resolve, reject) => {
+        resources.load(path, EffectAsset, (err, effect) => (err ? reject(err) : resolve(effect)));
+    });
+}
+
+/**
+ * Uploads new geometry into a mesh made by `utils.MeshUtils.createDynamicMesh`.
+ * `mesh.updateSubMesh` alone keeps drawing the old index/vertex count; the
+ * renderer must be told too.
+ */
+export function updateDynamicMesh(
+    renderer: MeshRenderer,
+    geometry: primitives.IDynamicGeometry,
+    primitiveIndex = 0,
+): void {
+    renderer.mesh!.updateSubMesh(primitiveIndex, geometry);
+    renderer.onGeometryChanged();
+}
+
+/**
+ * A texture you fill from typed arrays every frame (simulation fields, lookup
+ * tables). `float: true` stores RGBA32F, sampled with linear filtering on WebGL2.
+ */
+export function createDataTexture(width: number, height: number, options: { float?: boolean } = {}): Texture2D {
+    const texture = new Texture2D();
+    texture.reset({
+        width,
+        height,
+        format: options.float ? Texture2D.PixelFormat.RGBA32F : Texture2D.PixelFormat.RGBA8888,
+    });
+    texture.setFilters(Texture2D.Filter.LINEAR, Texture2D.Filter.LINEAR);
+    texture.setWrapMode(Texture2D.WrapMode.CLAMP_TO_EDGE, Texture2D.WrapMode.CLAMP_TO_EDGE);
+    return texture;
+}
+
+export interface TexturePass {
+    camera: Camera;
+    /** Draws the pass geometry; swap `renderer.mesh` or the material at any time. */
+    renderer: MeshRenderer;
+}
+
+export interface TexturePassOptions {
+    /** Camera priority; passes run in ascending order before the scene camera. Default -100. */
+    priority?: number;
+    /**
+     * Geometry to draw instead of the full-screen quad (e.g. a grid displaced in
+     * the vertex shader). Keep mesh bounds inside local x, y in [-1, 1].
+     */
+    mesh?: Mesh;
+}
+
+let texturePasses = 0;
+
+/**
+ * Renders `material` into `target` every frame (caustics maps, blurs, baked
+ * lookups). `target` is always 8 bits per channel; keep float simulation state
+ * in a `createDataTexture` instead.
+ */
+export function createTexturePass(
+    scene: Node,
+    material: Material,
+    target: RenderTexture,
+    options: TexturePassOptions = {},
+): TexturePass {
+    const slot = texturePasses++;
+    if (slot >= 20) throw new Error('createTexturePass: at most 20 passes (one user layer each)');
+    const layer = 1 << slot;
+    const x = 100000 + slot * 100;
+
+    const node = new Node(`TexturePass${slot}`);
+    node.layer = layer;
+    node.setPosition(x, 0, 0);
+    scene.addChild(node);
+    const meshRenderer = node.addComponent(MeshRenderer);
+    meshRenderer.mesh = options.mesh ?? utils.MeshUtils.createMesh(primitives.quad());
+    meshRenderer.setSharedMaterial(material, 0);
+
+    const cameraNode = new Node(`TexturePassCamera${slot}`);
+    cameraNode.setPosition(x, 0, 10);
+    scene.addChild(cameraNode);
+    const camera = cameraNode.addComponent(Camera);
+    camera.projection = Camera.ProjectionType.ORTHO;
+    camera.orthoHeight = 1;
+    camera.near = 1;
+    camera.far = 20;
+    camera.visibility = layer;
+    camera.clearFlags = Camera.ClearFlag.SOLID_COLOR;
+    camera.clearColor = new Color(0, 0, 0, 0);
+    camera.priority = options.priority ?? -100;
+    camera.targetTexture = target;
+    return { camera, renderer: meshRenderer };
 }

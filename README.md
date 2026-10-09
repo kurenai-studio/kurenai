@@ -15,6 +15,8 @@ Paste this into a coding agent so it can install and use Kurenai on its own:
 
 中文安装与用法入口：[docs/安装方法.md](docs/安装方法.md) · [docs/简单使用方法.md](docs/简单使用方法.md)
 
+3D / 自定义 shader / 仿真纹理：[docs/rendering.md](docs/rendering.md)
+
 ## Product shape
 
 ```text
@@ -51,8 +53,9 @@ Do **not** run `kurenai` on a 3.8 project (risk of 4.0-oriented meta / publish).
 ## TODO
 
 - [x] **Creator 3.8 工作流**：独立仓库 Enji（不进本仓）
+- [x] **从 Enji 回灌**：shader / TS 报错对回源码行、3D 模板相机与光照、`docs/rendering.md`、引擎 `bin/` 去掉 source map
 - [ ] **Creator 2.x**：暂缓，不做 2.x 升级工具（Akane 名称保留）
-- [ ] **提升 3D 渲染能力**
+- [ ] **继续瘦身 vendor**：去掉重复编译缓存，开发包目标约 500 MB
 - [ ] **优化构建**：包括自动资源优化等
 
 ## Pieces

@@ -24,6 +24,9 @@
  *        recent host output, including compile errors and forwarded browser logs;
  *        stack lines fold into their entry. errors=1 skips errors logged before the
  *        last successful preview boot (reported as `superseded`) unless all=1.
+ *        Stack frames in preview chunks are mapped to assets/*.ts (entry.source =
+ *        first mapped frame); a shader compile failure is one entry whose `shader`
+ *        field points at the .effect lines.
  *   GET  /__kurenai/asset?path=<abs or relative to project>
  *        refreshes the file, then returns asset-db's uuid / type / sub-assets
  *
@@ -33,6 +36,7 @@
 import { createRequire } from 'node:module';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, watch, writeFileSync } from 'node:fs';
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const DEBOUNCE_MS = 250;
 const META_QUIET_MS = 1500;
@@ -85,11 +89,121 @@ const CONTINUATION = /^\s+at\s|^\s*>?\s*\d+\s*\||^\s+\|/;
 const WARN_LINE = /^\s*WARN\b|\[Browser WARN\]|DeprecationWarning|\[DEP\d+\]|^\(Use `node --trace/;
 const ERROR_LINE = /^\s*ERROR\b|\[Browser ERROR\]|asset-error|refresh failed|\b\w*Error:|\bfail(ed|s)?\b/i;
 const BOOT_LINE = /\[Browser LOG\] Cocos game preview started/;
+const SHADER_FAIL = /\[Browser ERROR\] (\w+)Shader in '([^']+)' compilation failed/;
+const SHADER_DUMP_HEADER = /Shader source dump:/;
+const SHADER_DUMP_LINE = /^(\d+)(?: (.*))?$/;
+const GLSL_ERROR = /ERROR: \d+:(\d+): (.*)$/;
+const CHUNK_FRAME = /(https?:\/\/[^/\s]+\/chunks\/([0-9a-f]{2})\/([0-9a-f]+)\.js):(\d+):(\d+)/;
 
 function levelOf(line) {
   if (WARN_LINE.test(line)) return 'warn';
   return ERROR_LINE.test(line) ? 'error' : 'info';
 }
+
+const chunkMaps = new Map();
+
+/** Maps a preview chunk position back to the project source via packer-driver's source map. */
+function mapChunkPosition(dir, hash, line, column) {
+  const mapFile = join(project, 'temp/programming/packer-driver/targets/preview/chunks', dir, `${hash}.js.map`);
+  let tracer = chunkMaps.get(mapFile);
+  if (tracer === undefined) {
+    tracer = null;
+    try {
+      const { TraceMap } = cliRequire('@jridgewell/trace-mapping');
+      tracer = new TraceMap(readFileSync(mapFile, 'utf8'));
+    } catch {
+      // no map for this chunk
+    }
+    if (chunkMaps.size > 200) chunkMaps.clear();
+    chunkMaps.set(mapFile, tracer);
+  }
+  if (!tracer) return undefined;
+  const { originalPositionFor } = cliRequire('@jridgewell/trace-mapping');
+  const pos = originalPositionFor(tracer, { line, column: Math.max(0, column - 1) });
+  if (!pos.source || pos.line == null) return undefined;
+  const file = pos.source.startsWith('file://') ? fileURLToPath(pos.source) : pos.source;
+  return `${isAbsolute(file) ? relative(project, file) : file}:${pos.line}:${(pos.column ?? 0) + 1}`;
+}
+
+/** Rewrites a chunk URL in a stack frame to `assets/...ts:line:col`; returns the mapped location too. */
+function mapFrame(line) {
+  const match = CHUNK_FRAME.exec(line);
+  if (!match) return { line };
+  const location = mapChunkPosition(match[2], match[3], Number(match[4]), Number(match[5]));
+  return location ? { line: line.replace(match[0], location), location } : { line };
+}
+
+/** Finds `source` inside the CCProgram block of an .effect file; returns its 1-based line. */
+function effectLineOf(effectFile, program, source) {
+  const wanted = source?.trim();
+  if (!wanted || !effectFile) return undefined;
+  let lines;
+  try {
+    lines = readFileSync(effectFile, 'utf8').split('\n');
+  } catch {
+    return undefined;
+  }
+  let inside = !program;
+  for (let i = 0; i < lines.length; i++) {
+    const text = lines[i].trim();
+    if (program && /^CCProgram\s/.test(text)) inside = text.split(/\s+/)[1] === program;
+    else if (inside && text === wanted) return i + 1;
+  }
+  return undefined;
+}
+
+function effectFileOf(name) {
+  const candidate = `${resolve(assetsDir, 'effects', name)}.effect`;
+  if (existsSync(candidate)) return candidate;
+  const base = `${name.split('/').pop()}.effect`;
+  const search = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name.startsWith('.')) continue;
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        const found = search(path);
+        if (found) return found;
+      } else if (entry.name === base) return path;
+    }
+    return undefined;
+  };
+  try {
+    return search(assetsDir);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Folds a browser shader failure (header, numbered source dump, GLSL errors) into
+ * its header entry, pointing each error at the .effect line it came from.
+ */
+function finishShaderBlock(block) {
+  const [effectName, ...programs] = block.program.split('|');
+  const stageKey = block.stage === 'Vertex' ? 'vs' : block.stage === 'Fragment' ? 'fs' : 'cs';
+  const program = programs.map((p) => p.split(':')[0]).find((p) => p === stageKey || p.startsWith(stageKey));
+  const effectFile = effectFileOf(effectName);
+  const effectPath = effectFile ? relative(project, effectFile) : `${effectName}.effect`;
+  // GLSL ES 3.00 sources start with a #version line that the dump leaves out.
+  const dump = block.dump;
+  const es3 = !dump[1]?.startsWith('#version') && dump.some((text) => /\blayout\s*\(|^\s*(in|out)\s/.test(text ?? ''));
+  const offset = es3 ? 1 : 0;
+  const errors = block.errors.map(({ glslLine, message }) => {
+    const source = dump[glslLine - offset];
+    const effectLine = effectLineOf(effectFile, program, source);
+    return { ...(effectLine ? { effectLine } : {}), glslLine, message, ...(source ? { source: source.trim() } : {}) };
+  });
+  const first = errors[0];
+  const where = first?.effectLine ? `${effectPath}:${first.effectLine}` : effectPath;
+  const entry = block.entry;
+  entry.line = `[Browser ERROR] shader compile failed: ${where} (${program ?? stageKey}) ${first?.message ?? ''}`.trim();
+  entry.shader = { effect: effectPath, program: program ?? stageKey, errors };
+  entry.detail = errors.map(
+    (e) => `  ${e.effectLine ? `${effectPath}:${e.effectLine}` : `glsl line ${e.glslLine}`} | ${e.source ?? ''}  <- ${e.message}`,
+  );
+}
+
+let shaderBlock;
 
 /** Keeps the last LOG_CAPACITY entries (host, compiler and forwarded browser logs). */
 function captureOutput(stream) {
@@ -99,19 +213,48 @@ function captureOutput(stream) {
     const text = partial + (typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'));
     const lines = text.split('\n');
     partial = lines.pop() ?? '';
-    for (const line of lines) {
-      if (!line.trim()) continue;
+    for (const raw of lines) {
+      const line = raw.replace(/\0/g, '');
+      if (!line.trim()) {
+        // The shader dump ends with the source's NUL terminator; plain blank lines are logger padding.
+        if (shaderBlock && raw.includes('\0')) {
+          finishShaderBlock(shaderBlock);
+          shaderBlock = undefined;
+        }
+        continue;
+      }
+      if (shaderBlock) {
+        const body = line.replace(/^.*\[Browser ERROR\]\s*/, '').trimStart();
+        if (SHADER_DUMP_HEADER.test(line)) continue;
+        const glsl = GLSL_ERROR.exec(body);
+        if (glsl) {
+          shaderBlock.errors.push({ glslLine: Number(glsl[1]), message: glsl[2] });
+          continue;
+        }
+        const numbered = !shaderBlock.errors.length && SHADER_DUMP_LINE.exec(body);
+        if (numbered) {
+          shaderBlock.dump[Number(numbered[1])] = numbered[2] ?? '';
+          continue;
+        }
+        finishShaderBlock(shaderBlock);
+        shaderBlock = undefined;
+      }
       const last = logBuffer[logBuffer.length - 1];
       if (last && CONTINUATION.test(line)) {
+        const frame = mapFrame(line.trimEnd());
+        if (frame.location && !last.source) last.source = frame.location;
         last.detail ??= [];
-        if (last.detail.length < DETAIL_LINES) last.detail.push(line.trimEnd());
+        if (last.detail.length < DETAIL_LINES) last.detail.push(frame.line);
         else last.omitted = (last.omitted ?? 0) + 1;
         continue;
       }
       logSeq += 1;
       if (BOOT_LINE.test(line)) bootSeq = logSeq;
-      logBuffer.push({ seq: logSeq, at: new Date().toISOString(), level: levelOf(line), line: line.trim() });
+      const entry = { seq: logSeq, at: new Date().toISOString(), level: levelOf(line), line: mapFrame(line.trim()).line };
+      logBuffer.push(entry);
       if (logBuffer.length > LOG_CAPACITY) logBuffer.shift();
+      const shader = SHADER_FAIL.exec(line);
+      if (shader) shaderBlock = { entry, stage: shader[1], program: shader[2], dump: [], errors: [] };
     }
     return write(chunk, ...rest);
   };
