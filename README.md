@@ -59,10 +59,11 @@ Do **not** run `kurenai` on a 3.8 project (risk of 4.0-oriented meta / publish).
 ## TODO
 
 - [x] **Creator 3.8 工作流**：独立仓库 Enji（不进本仓）
-- [x] **按 Enji 的裁法重切 vendor**：`scripts/slim-vendor.mjs`（整仓约 **707 MB**，原先约 1.4 GB；Enji 约 588 MB。本仓多留了 Web 构建器和引擎源码）
+- [x] **按 Enji 的裁法重切 vendor**：`scripts/slim-vendor.mjs`（工作树约 **515 MB**，原先约 1.4 GB；Enji 约 505 MB。多留 Web 构建器与引擎源码）
 - [x] **从 Enji 回灌**：报错对回、3D 模板、`docs/rendering.md`、`--3d`、getting-started
+- [x] **预览缓存**：保留 editor（Node 预加载）+ web（浏览器）；相同文件硬链，只占一份
 - [ ] **Creator 2.x**：暂缓，不做 2.x 升级工具（Akane 名称保留）
-- [ ] **再压到约 500 MB**：引擎本地依赖改为核心构建包按需下；继续核对 editor/web 双份缓存
+- [ ] **核心构建包拆出**：引擎源码 / 首次 publish 的 engine `npm install` 按需下，开发包再靠近 500 MB
 - [ ] **优化构建**：包括自动资源优化等
 
 ## Pieces

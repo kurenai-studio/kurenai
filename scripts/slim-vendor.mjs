@@ -16,16 +16,19 @@ import { spawnSync } from 'node:child_process';
 import {
   copyFileSync,
   existsSync,
+  linkSync,
   mkdirSync,
   readdirSync,
   readFileSync,
   renameSync,
   rmSync,
   statSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -69,6 +72,8 @@ const DROP = [
 const ENGINE_KEEP = [
   /^packages\/engine\/(package\.json|package-lock\.json|cc\.config\.json|LICENSE)$/,
   /^packages\/engine\/licenses\//,
+  // Node preload needs editor/; the browser preview serves web/ (scripting-routes).
+  // After copy, identical files under web/ and editor/ are hard-linked.
   /^packages\/engine\/bin\/\.cache\/dev-cli\/(web|editor)\/(bundled|external)\//,
   /^packages\/engine\/bin\/\.cache\/dev-cli\/(web|editor)\/(import-map|partial-import-map)\.json$/,
   /^packages\/engine\/bin\/\.cache\/dev-cli\/(web|editor)\/loader\.js$/,
@@ -202,6 +207,7 @@ function assertPublishSurface() {
     'dist/core/builder/platforms/web-desktop',
     'dist/core/builder/platforms/web-mobile',
     'packages/engine/bin/.cache/dev-cli/web/bundled/index.js',
+    'packages/engine/bin/.cache/dev-cli/editor/loader.js',
     'packages/engine/cocos',
   ];
   for (const rel of required) {
@@ -210,6 +216,39 @@ function assertPublishSurface() {
   if (existsSync(join(out, 'dist/core/builder/platforms/android'))) {
     throw new Error('slim incorrect: android builder should stay out');
   }
+}
+
+/** Hard-link identical files under web/ and editor/ so the duplicate cache costs one copy. */
+function hardlinkIdenticalCaches() {
+  const web = join(out, 'packages/engine/bin/.cache/dev-cli/web');
+  const editor = join(out, 'packages/engine/bin/.cache/dev-cli/editor');
+  if (!existsSync(web) || !existsSync(editor)) return 0;
+  let linked = 0;
+  const walkDir = (dir, visit) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walkDir(full, visit);
+      else if (entry.isFile()) visit(full);
+    }
+  };
+  walkDir(editor, (editorFile) => {
+    const rel = relative(editor, editorFile);
+    const webFile = join(web, rel);
+    if (!existsSync(webFile)) return;
+    try {
+      if (statSync(editorFile).ino === statSync(webFile).ino) return;
+    } catch {
+      // continue
+    }
+    const a = readFileSync(editorFile);
+    const b = readFileSync(webFile);
+    if (a.length !== b.length) return;
+    if (createHash('sha1').update(a).digest('hex') !== createHash('sha1').update(b).digest('hex')) return;
+    unlinkSync(editorFile);
+    linkSync(webFile, editorFile);
+    linked += 1;
+  });
+  return linked;
 }
 
 function main() {
@@ -237,6 +276,7 @@ function main() {
   if (!args.includes('--no-lock')) pruneLockfile();
   npmInstall();
   assertPublishSurface();
+  const hardlinked = hardlinkIdenticalCaches();
 
   const source = JSON.parse(readFileSync(join(from, 'package.json'), 'utf8'));
   const engine = JSON.parse(readFileSync(join(from, 'packages', 'engine', 'package.json'), 'utf8'));
@@ -253,6 +293,7 @@ function main() {
     dependencies,
     droppedDependencies: DROP_DEPENDENCIES,
     keepsWebPublish: true,
+    hardlinkedCacheFiles: hardlinked,
   };
   writeFileSync(join(out, 'KURENAI_VENDOR.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 

@@ -39,5 +39,7 @@
   ],
   "keepsWebPublish": true,
   "engineNodeModules": "not shipped; npm install on first publish",
-  "note": "trimmed like Enji; keeps engine sources + web builders for publish"
+  "note": "Enji-style trim; web+editor caches hard-linked; launcher probe; keeps web publish + engine sources",
+  "workingTreeMB": 515,
+  "hardlinkedCacheFiles": 15
 }

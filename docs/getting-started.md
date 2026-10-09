@@ -66,6 +66,9 @@ These need PinK / Creator:
 
 ## Size note
 
+Working tree (no `.git`) is about **515 MB**, in the same band as Enji (~505 MB).
 The checkout is trimmed like Enji's preview runtime, and still keeps Web
 builders plus engine TypeScript sources for `kurenai publish`. Engine-local
-`node_modules` are installed on first publish when missing.
+`node_modules` are installed on first publish when missing. Preview needs both
+`bin/.cache/dev-cli/editor` (Node preload) and `web` (browser); identical files
+are hard-linked.

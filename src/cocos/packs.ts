@@ -79,10 +79,9 @@ function stripGlob(path: string): string {
 
 function probePathsForPack(manifest: Manifest, id: PackId): string[] {
   if (id === "core") {
-    // Minimal runtime probe shared with today's publish check. Richer files are
-    // reported by `packs status` via layout heuristics, not required here so
-    // stub fixtures and lean cores both pass.
-    return ["dist/cli.js"];
+    // Slim vendor drops dist/cli.js (kurenai drives the host directly). Probe the
+    // launcher the host loads instead.
+    return ["dist/core/launcher.js"];
   }
   const platform = manifest.packs.platform.packs.find((pack) => pack.id === id);
   if (platform) return [join(platform.dir, "package.json")];
@@ -196,7 +195,7 @@ export function packsStatus(configuredRoot?: string): PacksStatus {
   const manifest = loadManifest();
   const ids = listKnownPackIds();
   const packs = ids.map((id) => inspectPack(id, root));
-  const hasCli = existsSync(join(root, "dist/cli.js"));
+  const hasLauncher = existsSync(join(root, "dist/core/launcher.js"));
   const hasNative = existsSync(join(root, "packages/engine/native"));
   const platformPacksPresent = manifest.packs.platform.packs
     .map((pack) => pack.id)
@@ -206,7 +205,7 @@ export function packsStatus(configuredRoot?: string): PacksStatus {
     root,
     layout: !existsSync(root)
       ? "missing"
-      : hasCli
+      : hasLauncher
         ? "core-or-full"
         : "unknown",
     packs,

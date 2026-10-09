@@ -41,9 +41,9 @@ function depsReady(dir) {
 }
 
 function main() {
-  if (!existsSync(join(coreDir, 'dist/cli.js'))) {
+  if (!existsSync(join(coreDir, 'dist/core/launcher.js'))) {
     console.warn(
-      '[kurenai] vendor/cocos-core missing — skip deps. Maintainer: npm run vendor:cocos',
+      '[kurenai] vendor/cocos-core missing — skip deps. Maintainer: npm run vendor:slim',
     );
     return;
   }

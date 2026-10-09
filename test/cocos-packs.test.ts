@@ -38,10 +38,10 @@ describe("cocos packs", () => {
     ]);
   });
 
-  it("reports core present when dist/cli.js exists", async () => {
+  it("reports core present when dist/core/launcher.js exists", async () => {
     const root = await tempRoot();
-    await mkdir(join(root, "dist"), { recursive: true });
-    await writeFile(join(root, "dist", "cli.js"), "");
+    await mkdir(join(root, "dist", "core"), { recursive: true });
+    await writeFile(join(root, "dist", "core", "launcher.js"), "");
     expect(inspectPack("core", root).present).toBe(true);
     expect(inspectPack("platform:wechat", root).present).toBe(false);
     expect(packsStatus(root).layout).toBe("core-or-full");
@@ -49,8 +49,8 @@ describe("cocos packs", () => {
 
   it("ensurePacks succeeds for core-only stub and fails for missing platform", async () => {
     const root = await tempRoot();
-    await mkdir(join(root, "dist"), { recursive: true });
-    await writeFile(join(root, "dist", "cli.js"), "");
+    await mkdir(join(root, "dist", "core"), { recursive: true });
+    await writeFile(join(root, "dist", "core", "launcher.js"), "");
 
     await expect(ensurePacks(["core"], { cocosCliRoot: root })).resolves.toMatchObject({
       alreadyPresent: ["core"],
@@ -65,8 +65,8 @@ describe("cocos packs", () => {
 
   it("ensurePacks can fetch a missing platform pack from a base URL", async () => {
     const root = await tempRoot();
-    await mkdir(join(root, "dist"), { recursive: true });
-    await writeFile(join(root, "dist", "cli.js"), "");
+    await mkdir(join(root, "dist", "core"), { recursive: true });
+    await writeFile(join(root, "dist", "core", "launcher.js"), "");
 
     const packRoot = await tempRoot();
     const wechatDir = join(packRoot, "packages", "platforms", "wechat");
