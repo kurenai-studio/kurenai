@@ -1,0 +1,43 @@
+{
+  "cocosCli": "0.0.1-alpha.41",
+  "engine": "4.0.0-alpha.33",
+  "sourceCommit": "0334c9a848b55b3594708c508f894619037815ed",
+  "addedDependencies": {
+    "@cocos/systemjs": "1.0.4"
+  },
+  "vendoredAt": "2026-10-09T10:02:55.664Z",
+  "files": 10509,
+  "megabytes": 302.2,
+  "droppedFiles": 6847,
+  "dependencies": 54,
+  "droppedDependencies": [
+    "@cocos/build-polyfills",
+    "@cocos/creator-programming-rollup-plugin-mod-lo",
+    "@cocos/fbx2gltf",
+    "@cocos/quick-compiler",
+    "@microsoft/api-extractor",
+    "@modelcontextprotocol/sdk",
+    "@sentry/node",
+    "cli-progress",
+    "commander",
+    "figlet",
+    "globby",
+    "gradient-string",
+    "inquirer",
+    "listr2",
+    "max-rects-packing",
+    "ora",
+    "pino-pretty",
+    "reflect-metadata",
+    "replace-in-file",
+    "rotating-file-stream",
+    "xml2js",
+    "xxtea-node",
+    "zod",
+    "zod-to-json-schema",
+    "zod-to-ts"
+  ],
+  "keepsWebPublish": true,
+  "engineNodeModules": "not shipped; npm install on first publish",
+  "note": "trimmed like Enji; keeps engine sources + web builders for publish"
+}

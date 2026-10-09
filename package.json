@@ -36,7 +36,8 @@
     "test": "vitest run",
     "check": "tsc --noEmit && npm run build && npm run test",
     "postinstall": "node scripts/install-vendored-cocos.mjs",
-    "vendor:cocos": "node scripts/vendor-cocos-core.mjs"
+    "vendor:cocos": "node scripts/vendor-cocos-core.mjs",
+    "vendor:slim": "node scripts/slim-vendor.mjs"
   },
   "keywords": [
     "cocos",

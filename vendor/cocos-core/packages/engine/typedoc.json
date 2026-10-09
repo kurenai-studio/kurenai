@@ -1,8 +1,0 @@
-{
-    "entryPoints": [
-        "typedoc-index.ts"
-    ],
-    "json": "./Cocos-Creator-API.json",
-    "excludePrivate": true,
-    "excludeInternal": true
-}

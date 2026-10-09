@@ -7,15 +7,21 @@ PinK 的升级版：项目管理、资源编译、预览、构建在同一产品
 
 ## One-liner (for agents)
 
-Paste this into a coding agent so it can install and use Kurenai on its own:
+Paste only this; everything else is in the linked doc:
 
 ```text
-自学并只用最新 kurenai（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`；不要单独安装完整 cocos-cli / PinK）开发 Cocos 游戏：`kurenai init` → `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `asset info` / `logs` / `context` 闭环，`.meta` 由引擎生成、不要手写；`.prefab` / `.mtl` 可以直接手写，但 prefab 里不挂脚本组件，行为写在 TS 里用 `addComponent` 挂上；交付时再 `kurenai publish --platform web-desktop`。
+Download and follow https://raw.githubusercontent.com/kurenai-studio/kurenai/main/docs/getting-started.md (Kurenai / Creator 4.0).
 ```
 
-中文安装与用法入口：[docs/安装方法.md](docs/安装方法.md) · [docs/简单使用方法.md](docs/简单使用方法.md)
+If the repo is already cloned: `Read kurenai/docs/getting-started.md and follow it exactly.`
 
-3D / 自定义 shader / 仿真纹理：[docs/rendering.md](docs/rendering.md)
+Longer Chinese prompt (same rules):
+
+```text
+自学并只用最新 kurenai（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`；不要单独安装完整 cocos-cli / PinK）开发 Cocos 游戏：`kurenai init`（3D 用 `--3d`）→ `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `asset info` / `logs` / `context` 闭环，`.meta` 由引擎生成、不要手写；`.prefab` / `.mtl` 可以直接手写，但 prefab 里不挂脚本组件，行为写在 TS 里用 `addComponent` 挂上；交付时再 `kurenai publish --platform web-desktop`。
+```
+
+入口：[docs/getting-started.md](docs/getting-started.md) · [docs/rendering.md](docs/rendering.md) · [docs/安装方法.md](docs/安装方法.md) · [docs/简单使用方法.md](docs/简单使用方法.md)
 
 ## Product shape
 
@@ -53,9 +59,10 @@ Do **not** run `kurenai` on a 3.8 project (risk of 4.0-oriented meta / publish).
 ## TODO
 
 - [x] **Creator 3.8 工作流**：独立仓库 Enji（不进本仓）
-- [x] **从 Enji 回灌**：shader / TS 报错对回源码行、3D 模板相机与光照、`docs/rendering.md`、引擎 `bin/` 去掉 source map
+- [x] **按 Enji 的裁法重切 vendor**：`scripts/slim-vendor.mjs`（整仓约 **707 MB**，原先约 1.4 GB；Enji 约 588 MB。本仓多留了 Web 构建器和引擎源码）
+- [x] **从 Enji 回灌**：报错对回、3D 模板、`docs/rendering.md`、`--3d`、getting-started
 - [ ] **Creator 2.x**：暂缓，不做 2.x 升级工具（Akane 名称保留）
-- [ ] **继续瘦身 vendor**：去掉重复编译缓存，开发包目标约 500 MB
+- [ ] **再压到约 500 MB**：引擎本地依赖改为核心构建包按需下；继续核对 editor/web 双份缓存
 - [ ] **优化构建**：包括自动资源优化等
 
 ## Pieces
@@ -66,7 +73,8 @@ Do **not** run `kurenai` on a 3.8 project (risk of 4.0-oriented meta / publish).
   (or polls with `WATCH_POLL=1`) and exposes `/__kurenai/status`,
   `/__kurenai/refresh`, `/__kurenai/asset` and `/__kurenai/logs`. Advertises
   itself in `<project>/temp/kurenai-host.json`.
-- `vendor/cocos-core/` — trimmed runtime (asset-db, preview, web builders).
+- `vendor/cocos-core/` — trimmed like Enji (asset-db, preview, web builders,
+  engine sources for publish). Refresh with `npm run vendor:slim`.
   `npm install` / `postinstall` installs its JS deps (pure JS, no native addons).
 - `src/preview/controller.ts` — starts the host (or attaches to one the CLI
   started) and puts `PreviewBridge` in front of it.

@@ -18,4 +18,3 @@ __exportStar(require("./node"), exports);
 __exportStar(require("./component"), exports);
 __exportStar(require("./scene"), exports);
 __exportStar(require("./prefab"), exports);
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi8uLi8uLi9zcmMvY29yZS9zY2VuZS9jb21tb24vY2xpL2luZGV4LnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSx5Q0FBdUI7QUFDdkIsOENBQTRCO0FBQzVCLDBDQUF3QjtBQUN4QiwyQ0FBeUIiLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgKiBmcm9tICcuL25vZGUnO1xuZXhwb3J0ICogZnJvbSAnLi9jb21wb25lbnQnO1xuZXhwb3J0ICogZnJvbSAnLi9zY2VuZSc7XG5leHBvcnQgKiBmcm9tICcuL3ByZWZhYic7XG4iXX0=

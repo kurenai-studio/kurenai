@@ -3,13 +3,11 @@
  * Kurenai command line. Talks to the per-project cocos host
  * (bin/kurenai-cocos-host.mjs), starting it in the background when needed.
  *
- *   kurenai init <dir> --template base-ai|base-ai-3d
+ *   kurenai init <dir> [--3d | --template base-ai|base-ai-3d]
  *   kurenai host start|status|stop [--project <dir>] [--timeout <seconds>]
  *   kurenai asset info <file> [--project <dir>]
  *   kurenai logs [--since <seq>] [--errors [--all]] [--project <dir>]
  *   kurenai context [--project <dir>]
-  kurenai check [--project <dir>]
-  kurenai kit add <folder|zip|kura-pack-id> [--name <kit>] [--project <dir>]
  *   kurenai check [--project <dir>]
  *   kurenai kit add <folder|zip|kura-pack-id> [--name <kit>] [--project <dir>]
  *   kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--release] [--verbose] [--project <dir>]
@@ -29,17 +27,25 @@ const STOP_TIMEOUT_MS = 8_000;
 const POLL_MS = 500;
 
 const USAGE = `usage:
-  kurenai init <dir> --template base-ai|base-ai-3d
+  kurenai init <dir> [--3d | --template base-ai|base-ai-3d]
   kurenai host start|status|stop [--project <dir>] [--timeout <seconds>]
   kurenai asset info <file> [--project <dir>]
   kurenai logs [--since <seq>] [--errors [--all]] [--project <dir>]
   kurenai context [--project <dir>]
+  kurenai check [--project <dir>]
+  kurenai kit add <folder|zip|kura-pack-id> [--name <kit>] [--project <dir>]
   kurenai publish [--platform web-desktop|web-mobile] [--out <dir>] [--release] [--verbose] [--project <dir>]
   kurenai packs status|ensure [packId...] [--fetch]
 
+init        --3d is short for --template base-ai-3d (lit 3D scene + shadow + ambient).
+logs        preview chunk stacks map back to assets/*.ts; shader failures point at .effect lines.
+publish     web-desktop / web-mobile. First publish may npm-install packages/engine.
+
 host start waits for readiness (default 600s). Override with --timeout <seconds>
 or env KURENAI_HOST_READY_TIMEOUT_MS. On wait expiry the host is left running
-(first import can be slow); use \`kurenai host status\` to poll.`;
+(first import can be slow); use \`kurenai host status\` to poll.
+
+3D / custom shaders: docs/rendering.md`;
 
 async function projectControl() {
   const { ProjectControl } = await import('../lib/index.js');
@@ -173,9 +179,17 @@ async function main() {
   const [group, command, target] = positional;
 
   if (group === 'init' && command) {
-    if (!options.template) exitWith('--template base-ai|base-ai-3d is required');
+    const template =
+      options['3d'] === true
+        ? 'base-ai-3d'
+        : typeof options.template === 'string'
+          ? options.template
+          : 'base-ai';
+    if (template !== 'base-ai' && template !== 'base-ai-3d') {
+      exitWith('template must be base-ai or base-ai-3d (or pass --3d)');
+    }
     const control = await projectControl();
-    const project = await control.initialize(resolve(command), options.template);
+    const project = await control.initialize(resolve(command), template);
     print({ ok: true, project });
     return;
   }

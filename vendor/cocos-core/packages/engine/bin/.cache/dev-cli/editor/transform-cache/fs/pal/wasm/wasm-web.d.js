@@ -1,8 +1,0 @@
-System.register("q-bundled:///fs/pal/wasm/wasm-web.d.js", [], function (_export, _context) {
-  "use strict";
-
-  return {
-    setters: [],
-    execute: function () {}
-  };
-});
