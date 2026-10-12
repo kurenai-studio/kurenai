@@ -11,12 +11,12 @@
  * - Output layout is `{out}/{engineVersion}/platform/<dir>.tgz`, so `--out` can be
  *   served as KURENAI_COCOS_PACK_BASE_URL.
  *
- * platform:wechat ships in the @kurenai-studio/wechat-minigame npm package (manifest
- * `npm` field), so it is not packed by default; pass it explicitly for a tgz fallback.
+ * platform:wechat and platform:sudv2 ship as npm packages (@kurenai-studio/wechat-minigame
+ * and @kurenai-studio/openpaas). They are not packed by default; pass them explicitly
+ * for a tgz fallback.
  *
  * Usage:
- *   node scripts/pack-platform.mjs                      # platform:sudv2
- *   node scripts/pack-platform.mjs platform:wechat      # one pack (id or dir name)
+ *   node scripts/pack-platform.mjs platform:bytedance   # one pack (id or dir name)
  *   node scripts/pack-platform.mjs --all
  *   node scripts/pack-platform.mjs --source DIR --out DIR
  */
@@ -42,7 +42,7 @@ const DEFAULT_SOURCE = join(
   homedir(),
   'Library/Application Support/cocos-default/cocos-4.0.0-alpha.33',
 );
-const DEFAULT_PACKS = ['platform:sudv2'];
+const DEFAULT_PACKS = [];
 const RUNTIME_ENTRIES = ['package.json', 'dist', 'static', 'i18n', 'tools'];
 // Files PinK's plugins require but ship elsewhere: [from, to] inside the plugin dir.
 const PATCH_COPIES = {
@@ -196,6 +196,11 @@ function main() {
     : options.ids.length
       ? options.ids
       : DEFAULT_PACKS;
+  if (!refs.length) {
+    throw new Error(
+      'pass a platform id or --all. platform:wechat and platform:sudv2 ship as npm packages',
+    );
+  }
 
   if (!existsSync(join(source, 'packages/platforms'))) {
     throw new Error(`source has no packages/platforms: ${source}`);

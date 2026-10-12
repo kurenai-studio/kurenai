@@ -77,6 +77,17 @@ export type WechatPublishOptions = {
   virtualPayment?: boolean;
 };
 
+/** Checked before an openpaas build. The sudv2 plugin still performs create, sign, and upload. */
+export type OpenPaasPublishOptions = {
+  accessToken?: string;
+  uploadEnv?: string;
+  uploadBaseUrl?: string;
+};
+
+type OpenPaasAddon = {
+  assertCredentials(options?: OpenPaasPublishOptions): unknown;
+};
+
 type WechatAddon = {
   checkPackageSize(
     buildDir: string,
@@ -254,6 +265,7 @@ export class ProjectControl {
       release?: boolean;
       verbose?: boolean;
       wechat?: WechatPublishOptions;
+      openpaas?: OpenPaasPublishOptions;
     } = {},
   ): Promise<Record<string, unknown>> {
     const absolutePath = resolve(projectPath);
@@ -274,6 +286,17 @@ export class ProjectControl {
       };
     }
     await ensurePacks(packsForPlatform(platform), { cocosCliRoot });
+    if (platform === "openpaas") {
+      try {
+        await this.prepareOpenPaas(options.openpaas ?? {});
+      } catch (error) {
+        return {
+          ok: false,
+          platform,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
     const args = [
       packageFile("bin/kurenai-cocos-build.mjs"),
       "--project",
@@ -337,6 +360,13 @@ export class ProjectControl {
     } finally {
       if (configDir) await rm(configDir, { recursive: true, force: true });
     }
+  }
+
+  private async prepareOpenPaas(options: OpenPaasPublishOptions): Promise<void> {
+    const addon = platformAddon("openpaas");
+    if (!addon) throw new Error("OpenPaaS has no npm addon in the pack manifest");
+    const openpaas = (await (this.config.loadAddon ?? loadAddon)(addon)) as OpenPaasAddon;
+    openpaas.assertCredentials(options);
   }
 
   private async afterWechatBuild(

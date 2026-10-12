@@ -1,0 +1,58 @@
+require('runtime-adapter/ral.js');
+require('runtime-adapter/web-adapter.js');
+
+<% if(polyfillsBundleFile) { %>
+// Polyfills bundle.
+require("<%= polyfillsBundleFile %>");
+<% } %>
+
+// SystemJS support.
+window.self = window;
+require("<%= systemJsBundleFile %>");
+
+if(typeof WebAssembly === 'object' && typeof WebAssembly.instantiateFromFile === 'function'){
+    WebAssembly.instantiate = WebAssembly.instantiateFromFile;
+}
+
+const importMapJson = ral.getFileSystemManager().readFileSync("<%= importMapFile%>", 'utf8');
+const importMap = JSON.parse(importMapJson);
+System.warmup({
+    importMap,
+    importMapUrl: '<%= importMapFile%>',
+    defaultHandler: (urlNoSchema) => {
+        require('.' + urlNoSchema);
+    },
+    handlers: {
+        'plugin:' (urlNoSchema) {
+            if (window.requirePlugin) {
+                requirePlugin(urlNoSchema);
+            } else {
+                require(urlNoSchema);
+            }
+        },
+    },
+});
+
+System.import('<%= applicationJs %>').then(({ Application }) => {
+    return new Application();
+}).then((application) => {
+    return onApplicationCreated(application);
+}).catch((err) => {
+    console.error(err);
+});
+
+function onApplicationCreated(application) {
+    return System.import('cc').then((cc) => {
+        require('runtime-adapter/engine-adapter.js');
+        var orientation = '{"orientation": <%=orientationNum%>}';
+        loadRuntime().callCustomCommand({
+            success(msg) {
+                if(<%=orientationNum%> === 0) {
+                    window.orientation = 90;
+                }
+            },
+            fail(msg) {}
+        }, 'setOrientation', orientation);
+        return application.init(cc);
+    }).then(() => application.start());
+}

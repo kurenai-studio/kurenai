@@ -149,7 +149,12 @@
         { "id": "platform:huawei", "dir": "packages/platforms/huawei" },
         { "id": "platform:honor", "dir": "packages/platforms/honor" },
         { "id": "platform:sud", "dir": "packages/platforms/sud" },
-        { "id": "platform:sudv2", "dir": "packages/platforms/sudv2", "builderIdHint": "openpaas" },
+        {
+          "id": "platform:sudv2",
+          "dir": "packages/platforms/sudv2",
+          "builderIdHint": "openpaas",
+          "npm": { "name": "@kurenai-studio/openpaas", "specEnv": "KURENAI_OPENPAAS_PACKAGE" }
+        },
         { "id": "platform:meta", "dir": "packages/platforms/meta", "builderIdHint": "fb-instant-games" }
       ]
     },

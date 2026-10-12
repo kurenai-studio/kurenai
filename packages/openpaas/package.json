@@ -1,0 +1,42 @@
+{
+  "name": "@kurenai-studio/openpaas",
+  "version": "0.1.0",
+  "description": "Publish Cocos builds to OpenPaaS: install the sudv2 builder plugin and resolve the PinK access token before build.",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "kurenai-openpaas": "bin/kurenai-openpaas.mjs"
+  },
+  "files": [
+    "lib/**/*",
+    "bin/**/*",
+    "plugin/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "check": "tsc --noEmit && npm run build && npm run test",
+    "sync:plugin": "node scripts/sync-plugin.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}

@@ -143,7 +143,7 @@ npm run pack:build                       # → dist-packs/{engineVersion}/build.
 渠道包从 PinK 安装里打，只带运行时文件（`package.json`、`dist`、`static`、`i18n`，OpenPaaS 另带签名工具 `tools`），不带 `node_modules`；插件用到的 `fs-extra`、`ejs`、`jszip` 由 core 提供：
 
 ```bash
-npm run pack:platform                    # 默认 platform:sudv2（微信插件改由 npm 包发）
+npm run pack:platform -- platform:bytedance   # 微信与 OpenPaaS 改由 npm 包发，默认不再打 tgz
 npm run pack:platform -- --all           # 全部小游戏渠道
 ```
 
@@ -162,7 +162,7 @@ npm run pack:platform -- --all           # 全部小游戏渠道
 
 ### 微信独立包 `@kurenai-studio/wechat-minigame`
 
-微信发布相关的能力单独成包（源码在 `sub-private/kurenai-wechat`），kurenai 只在用户发微信时才装：
+微信发布相关的能力单独成包（源码在 `packages/wechat-minigame`），kurenai 只在用户发微信时才装：
 
 - 插件：`plugin/wechat` 是上面的 platform:wechat（含 signature 补丁），`installPlugin` 校验引擎版本后放进 cocos-cli
 - 包体检查：`checkPackageSize` 按微信限制（主包 4 MiB、独立分包 4 MiB、总包 20 MiB，开虚拟支付 30 MiB）检查构建目录
@@ -170,6 +170,10 @@ npm run pack:platform -- --all           # 全部小游戏渠道
 - 上传/预览：封装 `miniprogram-ci`，需要 appid、上传密钥（文件路径或 `WECHAT_MINIGAME_PRIVATE_KEY_PATH`）和公众平台 IP 白名单
 
 `kurenai publish --platform wechatgame` 构建成功后自动跑包体检查，超限时提示用分包；`--preview` / `--upload --version x.y.z` 在检查通过后调用微信 CI。
+
+### OpenPaaS 独立包 `@kurenai-studio/openpaas`
+
+源码在 `packages/openpaas`。`kurenai publish --platform openpaas` 时安装（`KURENAI_OPENPAAS_PACKAGE` 可指本地目录），`installPlugin` 把 `plugin/sudv2` 放进 cocos-cli。建游戏、取包私钥、签名、上传仍由插件在构建过程里做。包本身在构建前解析令牌：选项、`OPENPAAS_ACCESS_TOKEN`、`SUD_ACCESS_TOKEN`。没有令牌就不再启动构建。上传环境是 `OPENPAAS_UPLOAD_ENV`（`dev` / `fat` / `prod`，默认 `prod`），`OPENPAAS_UPLOAD_BASE_URL` 可覆盖地址。提审和上线不在这个包里。
 
 缩包分工：微信包负责 `check`（含 `hints`）和 `propose-subpackages` / `subpackage`；引擎按需压缩在 kurenai：扫描 `assets` 脚本/场景/预制体用法，算出最小 `includeModules`（`proposeEngineCuts` / `applyMinimalEngineModules`，CLI：`kurenai engine propose-cuts [--from-build <wechatBuild>]`、`apply-cuts --minimal`）。会同步写 `settings/cocos.config.json` 与 `settings/v2/packages/engine.json`。2048 实测：31 → 6 个模块后主包 5.84 MB → 2.51 MB，过微信 4 MB。自动 rebuild 闭环仍未串上，需 apply 后再 `publish`。
 

@@ -11,6 +11,7 @@ import {
   inspectPack,
   packsForPlatform,
   packsStatus,
+  platformAddon,
 } from "../src/cocos/packs.js";
 
 const roots: string[] = [];
@@ -34,6 +35,11 @@ describe("cocos packs", () => {
   it("maps mini-game and native platforms to optional packs", () => {
     expect(packsForPlatform("wechatgame")).toEqual(["core", "build", "platform:wechat"]);
     expect(packsForPlatform("openpaas")).toEqual(["core", "build", "platform:sudv2"]);
+    expect(platformAddon("openpaas")).toEqual({
+      name: "@kurenai-studio/openpaas",
+      specEnv: "KURENAI_OPENPAAS_PACKAGE",
+    });
+    expect(platformAddon("wechatgame")?.name).toBe("@kurenai-studio/wechat-minigame");
     expect(packsForPlatform("bytedance-mini-game")).toEqual([
       "core",
       "build",

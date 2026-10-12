@@ -258,6 +258,72 @@ describe("ProjectControl", () => {
     });
   });
 
+  it("refuses an openpaas publish before the build when no access token is available", async () => {
+    const root = await temporaryRoot();
+    const cliRoot = join(root, "cocos-cli");
+    await stubCocosCli(cliRoot);
+    await mkdir(join(cliRoot, "packages", "platforms", "sudv2"), { recursive: true });
+    await writeFile(join(cliRoot, "packages", "platforms", "sudv2", "package.json"), "{}");
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({ name: "game", creator: { version: "4.0.0" } }),
+    );
+    let built = false;
+    const control = new ProjectControl({
+      cocosCliRoot: cliRoot,
+      runCommand: async () => {
+        built = true;
+        return { stdout: "", stderr: "", code: 0 };
+      },
+      loadAddon: async (addon) => {
+        expect(addon.name).toBe("@kurenai-studio/openpaas");
+        return {
+          assertCredentials() {
+            throw new Error("Missing OpenPaaS access token. Set OPENPAAS_ACCESS_TOKEN or SUD_ACCESS_TOKEN.");
+          },
+        };
+      },
+    });
+
+    const result = await control.publish(root, { platform: "openpaas" });
+    expect(result).toMatchObject({ ok: false, platform: "openpaas" });
+    expect(result.error).toMatch(/Missing OpenPaaS access token/);
+    expect(built).toBe(false);
+  });
+
+  it("builds openpaas after the addon accepts the token", async () => {
+    const root = await temporaryRoot();
+    const cliRoot = join(root, "cocos-cli");
+    await stubCocosCli(cliRoot);
+    await mkdir(join(cliRoot, "packages", "platforms", "sudv2"), { recursive: true });
+    await writeFile(join(cliRoot, "packages", "platforms", "sudv2", "package.json"), "{}");
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({ name: "game", creator: { version: "4.0.0" } }),
+    );
+    const seen: unknown[] = [];
+    const control = new ProjectControl({
+      cocosCliRoot: cliRoot,
+      runCommand: async () => ({
+        stdout: "✓ Build completed successfully! Build Dest: project://build/openpaas\n",
+        stderr: "",
+        code: 0,
+      }),
+      loadAddon: async () => ({
+        assertCredentials(options: unknown) {
+          seen.push(options);
+        },
+      }),
+    });
+
+    expect(await control.publish(root, { platform: "openpaas", openpaas: { accessToken: "pink" } })).toMatchObject({
+      ok: true,
+      platform: "openpaas",
+      outDir: join(root, "build", "openpaas"),
+    });
+    expect(seen).toEqual([{ accessToken: "pink" }]);
+  });
+
   it("truncates publish logTail by default and keeps full output with verbose", async () => {
     const root = await temporaryRoot();
     const cliRoot = join(root, "cocos-cli");

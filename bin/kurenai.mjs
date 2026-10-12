@@ -53,12 +53,13 @@ asset info  read uuid / importer / sub-assets from an existing .meta (no import)
 logs        preview chunk stacks map back to assets/*.ts; shader failures point at .effect lines.
             With --errors, read clean / previewPage (not only entries length).
 publish     every platform needs the core build pack (packs ensure build --fetch);
-            wechatgame / openpaas also need their channel pack (platform:wechat|platform:sudv2);
-            openpaas also needs OPENPAAS_ACCESS_TOKEN.
             wechatgame installs @kurenai-studio/wechat-minigame into ~/.kurenai/addons on first use
             (override the spec with KURENAI_WECHAT_MINIGAME_PACKAGE), checks WeChat's 4 MB main
             package limit, and with --preview / --upload calls miniprogram-ci. Credentials default to
             WECHAT_MINIGAME_APPID and WECHAT_MINIGAME_PRIVATE_KEY_PATH.
+            openpaas installs @kurenai-studio/openpaas the same way (KURENAI_OPENPAAS_PACKAGE) and
+            refuses to build without OPENPAAS_ACCESS_TOKEN or SUD_ACCESS_TOKEN. Optional
+            OPENPAAS_UPLOAD_ENV is dev, fat, or prod.
 wechat      the addon's own CLI (size check, propose/configure subpackages, preview/upload).
 engine      minimal on-demand includeModules (scan assets scripts/scenes). propose-cuts shows
             keep/remove; apply-cuts --minimal writes the minimal set; apply-cuts <module...>

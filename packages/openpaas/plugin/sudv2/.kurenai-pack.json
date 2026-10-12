@@ -1,0 +1,6 @@
+{
+  "id": "platform:sudv2",
+  "platform": "openpaas",
+  "pluginVersion": "1.0.0",
+  "engineVersion": "4.0.0-alpha.33"
+}

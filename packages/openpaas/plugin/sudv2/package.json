@@ -1,0 +1,73 @@
+{
+    "name": "openpaas",
+    "version": "1.0.0",
+    "author": "Cocos",
+    "description": "sud mini game platform plugin",
+    "license": "ISC",
+    "type": "commonjs",
+    "contributes": {
+        "builder": {
+            "register": true,
+            "platform": "openpaas",
+            "config": "./dist/config",
+            "hooks": "./dist/hooks"
+        },
+        "pinkBuilder": {
+            "platform": "openpaas",
+            "customView": "./dist/view/build-config.js",
+            "customExtensionHost": "./dist/view/build-config-host.js",
+            "customFields": [
+                "appid",
+                "uploadEnv",
+                "accessToken",
+                "networkTimeout",
+                "codeVersion",
+                "encryptKey"
+            ],
+            "hiddenBuiltinFields": [
+                "includeInAll"
+            ],
+            "optionsUI": {
+                "privatePemPath": {
+                    "editPresentation": "filepath",
+                    "editPresentationOptions": {
+                        "protocols": [
+                            "file"
+                        ]
+                    }
+                }
+            },
+            "doc": "./static/platform-intro/README.md",
+            "card": "./static/card.png",
+            "icon": "./static/icon.png"
+        }
+    },
+    "scripts": {
+        "build-adapter": "node scripts/build-adapter.js",
+        "build-view": "node scripts/build-view.js",
+        "watch-view": "node scripts/build-view.js --watch",
+        "build": "npm run build-view & npm run build-adapter & tsc"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.28.6",
+        "@babel/plugin-proposal-export-default-from": "^7.17.12",
+        "@babel/preset-env": "^7.28.5",
+        "@pink/types": "^0.0.4",
+        "@types/node": "^24.10.1",
+        "@types/react": "^19.0.0",
+        "babelify": "^10.0.0",
+        "browserify": "^17.0.0",
+        "chalk": "^4.1.2",
+        "esbuild": "^0.25.0",
+        "gulp": "^4.0.2",
+        "gulp-rename": "^2.0.0",
+        "gulp-sourcemaps": "^2.6.5",
+        "gulp-uglify": "^3.0.2",
+        "react": "^19.0.0",
+        "vinyl-buffer": "^1.0.1",
+        "vinyl-source-stream": "^2.0.0"
+    },
+    "dependencies": {
+        "fastestsmallesttextencoderdecoder": "^1.0.22"
+    }
+}

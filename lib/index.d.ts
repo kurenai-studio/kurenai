@@ -209,6 +209,12 @@ type WechatPublishOptions = {
   robot?: number;
   virtualPayment?: boolean;
 };
+/** Checked before an openpaas build. The sudv2 plugin still performs create, sign, and upload. */
+type OpenPaasPublishOptions = {
+  accessToken?: string;
+  uploadEnv?: string;
+  uploadBaseUrl?: string;
+};
 interface CocosProject {
   name: string;
   projectPath: string;
@@ -249,7 +255,9 @@ declare class ProjectControl {
     release?: boolean;
     verbose?: boolean;
     wechat?: WechatPublishOptions;
+    openpaas?: OpenPaasPublishOptions;
   }): Promise<Record<string, unknown>>;
+  private prepareOpenPaas;
   private afterWechatBuild;
   /** Type-checks assets/ with the vendored TypeScript; preview itself only strips types. */
   typecheck(projectPath: string): Promise<Record<string, unknown>>;
