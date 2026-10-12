@@ -1,0 +1,9 @@
+{
+  "id": "platform:wechat",
+  "platform": "wechatgame",
+  "pluginVersion": "1.0.0",
+  "engineVersion": "4.0.0-alpha.33",
+  "patches": [
+    "static/templates/cocos/signature.json -> static/cocos/signature.json"
+  ]
+}

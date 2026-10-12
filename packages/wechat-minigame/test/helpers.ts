@@ -1,0 +1,29 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { afterEach } from "vitest";
+
+const roots: string[] = [];
+
+afterEach(() => {
+  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
+
+export function tempDir(): string {
+  const root = mkdtempSync(join(tmpdir(), "kurenai-wechat-"));
+  roots.push(root);
+  return root;
+}
+
+export function writeFile(root: string, rel: string, content: string | Buffer): string {
+  const file = join(root, rel);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, content);
+  return file;
+}
+
+export function writeBytes(root: string, rel: string, bytes: number): void {
+  writeFile(root, rel, Buffer.alloc(bytes));
+}
+
+export const MiB = 1024 * 1024;

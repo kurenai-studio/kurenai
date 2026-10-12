@@ -1,0 +1,9 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Paths = exports.OPEN_DATA_CONTEXT_ROOT = void 0;
+const path_1 = require("path");
+exports.OPEN_DATA_CONTEXT_ROOT = 'openDataContext';
+exports.Paths = {
+    internalTemplateDir: (0, path_1.join)(__dirname, `../static/templates`),
+};
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic2hhcmUuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi9zcmMvc2hhcmUudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7O0FBQUEsK0JBQTRCO0FBQ2YsUUFBQSxzQkFBc0IsR0FBRyxpQkFBaUIsQ0FBQztBQUMzQyxRQUFBLEtBQUssR0FBRztJQUNqQixtQkFBbUIsRUFBRSxJQUFBLFdBQUksRUFBQyxTQUFTLEVBQUUscUJBQXFCLENBQUM7Q0FDOUQsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IGpvaW4gfSBmcm9tICdwYXRoJztcbmV4cG9ydCBjb25zdCBPUEVOX0RBVEFfQ09OVEVYVF9ST09UID0gJ29wZW5EYXRhQ29udGV4dCc7XG5leHBvcnQgY29uc3QgUGF0aHMgPSB7XG4gICAgaW50ZXJuYWxUZW1wbGF0ZURpcjogam9pbihfX2Rpcm5hbWUsIGAuLi9zdGF0aWMvdGVtcGxhdGVzYCksXG59O1xuXG4iXX0=
