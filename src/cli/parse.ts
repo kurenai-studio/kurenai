@@ -1,7 +1,18 @@
 import { existsSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
-export const CLI_BOOLEAN_FLAGS = new Set(["errors", "all", "release", "verbose", "fetch", "3d"]);
+export const CLI_BOOLEAN_FLAGS = new Set([
+  "errors",
+  "all",
+  "release",
+  "verbose",
+  "fetch",
+  "3d",
+  "preview",
+  "upload",
+  "virtual-payment",
+  "minimal",
+]);
 
 export type CliOptions = Record<string, string | true>;
 

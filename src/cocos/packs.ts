@@ -1,9 +1,12 @@
 import { spawn } from "node:child_process";
 import { createWriteStream, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
+import { get as httpGet, type IncomingMessage } from "node:http";
+import { get as httpsGet } from "node:https";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pipeline } from "node:stream/promises";
+import { loadAddon, type NpmAddon } from "./addons.js";
 import {
   KURENAI_COCOS_CORE_VERSION,
   bundledCocosCoreRoot,
@@ -40,8 +43,9 @@ type Manifest = {
   measuredAgainst?: { engineVersion?: string; cocosCliPackageVersion?: string };
   packs: {
     core: { id: string; include: string[]; exclude: string[] };
+    build: { id: string; probes: string[] };
     platform: {
-      packs: Array<{ id: string; dir: string; builderIdHint?: string }>;
+      packs: Array<{ id: string; dir: string; builderIdHint?: string; npm?: NpmAddon }>;
     };
     native: {
       shared: Array<{ id: string; paths: string[] }>;
@@ -83,6 +87,7 @@ function probePathsForPack(manifest: Manifest, id: PackId): string[] {
     // launcher the host loads instead.
     return ["dist/core/launcher.js"];
   }
+  if (id === manifest.packs.build.id) return manifest.packs.build.probes;
   const platform = manifest.packs.platform.packs.find((pack) => pack.id === id);
   if (platform) return [join(platform.dir, "package.json")];
 
@@ -102,6 +107,7 @@ export function listKnownPackIds(root?: string): PackId[] {
   const manifest = loadManifest();
   return [
     "core",
+    manifest.packs.build.id,
     ...manifest.packs.platform.packs.map((pack) => pack.id),
     ...manifest.packs.native.shared.map((pack) => pack.id),
     ...manifest.packs.native.targets.map((pack) => pack.id),
@@ -111,10 +117,15 @@ export function listKnownPackIds(root?: string): PackId[] {
 
 /**
  * Map a cocos/kurenai build platform to the packs that must be present.
- * Web stays on core only; mini-game / native pull optional packs.
+ * Every build needs core + the core build pack; mini-game / native add their own packs.
  */
 export function packsForPlatform(platform: string): PackId[] {
-  const normalized = platform.trim().toLowerCase();
+  const build = loadManifest().packs.build.id;
+  const packs = platformPacks(platform.trim().toLowerCase());
+  return packs.includes(build) ? packs : ["core", build, ...packs.filter((id) => id !== "core")];
+}
+
+function platformPacks(normalized: string): PackId[] {
   const manifest = loadManifest();
 
   if (normalized === "web-desktop" || normalized === "web-mobile" || normalized === "web") {
@@ -214,6 +225,17 @@ export function packsStatus(configuredRoot?: string): PacksStatus {
   };
 }
 
+/** Platform packs that come from an npm package (plugin + publishing tools) instead of a tgz. */
+export function packAddon(id: PackId): NpmAddon | undefined {
+  return loadManifest().packs.platform.packs.find((pack) => pack.id === id)?.npm;
+}
+
+/** The npm addon behind a build platform's pack, e.g. wechatgame → @kurenai-studio/wechat-minigame. */
+export function platformAddon(platform: string): NpmAddon | undefined {
+  const id = packsForPlatform(platform).find((pack) => pack.startsWith("platform:"));
+  return id ? packAddon(id) : undefined;
+}
+
 function packDownloadUrl(packId: PackId, baseUrl: string, version: string): string {
   const base = baseUrl.replace(/\/$/, "");
   // e.g. https://cdn.example/cocos-packs/4.0.0-alpha.33/core.tgz
@@ -230,13 +252,33 @@ function resolvePackBaseUrl(options: EnsurePacksOptions): string | undefined {
   );
 }
 
+// node:http rather than fetch: undici asserts and kills the process when a
+// server closes the socket while a backpressured body stream is paused.
+function openDownload(url: string, redirectsLeft = 5): Promise<IncomingMessage> {
+  return new Promise((resolvePromise, reject) => {
+    const get = url.startsWith("https:") ? httpsGet : httpGet;
+    get(url, (response) => {
+      const status = response.statusCode ?? 0;
+      const location = response.headers.location;
+      if (status >= 300 && status < 400 && location && redirectsLeft > 0) {
+        response.resume();
+        resolvePromise(openDownload(new URL(location, url).toString(), redirectsLeft - 1));
+        return;
+      }
+      if (status !== 200) {
+        response.resume();
+        reject(new Error(`Failed to download pack (${status}): ${url}`));
+        return;
+      }
+      resolvePromise(response);
+    }).on("error", reject);
+  });
+}
+
 async function downloadToFile(url: string, dest: string): Promise<void> {
-  const response = await fetch(url);
-  if (!response.ok || !response.body) {
-    throw new Error(`Failed to download pack (${response.status}): ${url}`);
-  }
+  const response = await openDownload(url);
   mkdirSync(dirname(dest), { recursive: true });
-  await pipeline(response.body as unknown as NodeJS.ReadableStream, createWriteStream(dest));
+  await pipeline(response, createWriteStream(dest));
 }
 
 function runTarExtract(archive: string, dest: string): Promise<void> {
@@ -317,14 +359,14 @@ function coreDepsInstalled(root: string): boolean {
   );
 }
 
-/** vendor/cocos-core ships without full node_modules; install on first use. */
+/**
+ * vendor/cocos-core ships without full node_modules; install on first use. Engine-local
+ * node_modules are never installed (publish gets what it needs from the `build` pack).
+ */
 async function ensureCoreDependencies(root: string): Promise<void> {
   if (coreDepsInstalled(root)) return;
   if (!existsSync(join(root, "package.json"))) return;
   await runNpmInstall(root);
-  if (existsSync(join(root, "packages/engine/package.json"))) {
-    await runNpmInstall(join(root, "packages/engine"));
-  }
 }
 
 export type EnsurePacksOptions = {
@@ -372,7 +414,12 @@ export async function ensurePacks(
 
   for (const id of [...missing]) {
     if (id === "core") continue;
-    if (wantRemote && baseUrl) {
+    const addon = packAddon(id);
+    if (wantRemote && addon) {
+      const mod = await loadAddon<{ installPlugin(root: string): unknown }>(addon);
+      mod.installPlugin(root);
+      installed.push(id);
+    } else if (wantRemote && baseUrl) {
       await installPack(root, id, { baseUrl, version });
       installed.push(id);
     }
@@ -382,7 +429,9 @@ export async function ensurePacks(
   if (stillMissing.length) {
     const hint = stillMissing.includes("core")
       ? `Core must exist at ${bundledCocosCoreRoot()} (run: npm run vendor:cocos).`
-      : `Set KURENAI_COCOS_PACK_BASE_URL for optional platform/native packs.`;
+      : stillMissing.some((id) => packAddon(id))
+        ? `Run with fetch enabled so kurenai can npm-install the platform package.`
+        : `Set KURENAI_COCOS_PACK_BASE_URL for optional platform/native packs.`;
     throw new Error(
       `Missing kurenai packs: ${stillMissing.join(", ")} (under ${root}).\n${hint}`,
     );

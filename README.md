@@ -18,7 +18,7 @@ If the repo is already cloned: `Read kurenai/docs/getting-started.md and follow 
 Longer Chinese prompt (same rules):
 
 ```text
-自学并只用最新 kurenai（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`；不要单独安装完整 cocos-cli / PinK）开发 Cocos 游戏：`kurenai init`（3D 用 `--3d`）→ `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `asset info` / `logs` / `context` 闭环，`.meta` 由引擎生成、不要手写；`.prefab` / `.mtl` 可以直接手写，但 prefab 里不挂脚本组件，行为写在 TS 里用 `addComponent` 挂上；交付时再 `kurenai publish --platform web-desktop`。
+自学并只用最新 kurenai（https://github.com/kurenai-studio/kurenai：clone 后 Node.js 22+ 下 `npm install && npm link`；不要单独安装完整 cocos-cli / PinK）开发 Cocos 游戏：`kurenai init`（3D 用 `--3d`）→ `host start` → 按项目 `AGENTS.md` 只改 `assets/game/` 与 `assets/resources/`，用 `import` / `asset info` / `logs` / `context` 闭环，`.meta` 由引擎生成、不要手写；`.prefab` / `.mtl` 可以直接手写，但 prefab 里不挂脚本组件，行为写在 TS 里用 `addComponent` 挂上；交付时再 `kurenai publish --platform web-desktop`。
 ```
 
 入口：[docs/getting-started.md](docs/getting-started.md) · [docs/rendering.md](docs/rendering.md) · [docs/安装方法.md](docs/安装方法.md) · [docs/简单使用方法.md](docs/简单使用方法.md)
@@ -37,7 +37,7 @@ kurenai
 Agent writes files under assets/ (prefabs, materials, TypeScript views)
   → host watcher → asset-db refresh (.meta, import, compile)
   → live reload refreshes the preview
-  → agent reads uuids and errors through `kurenai asset info` / `kurenai logs`
+  → agent imports assets and reads uuids / errors through `kurenai import` / `asset info` / `logs`
 ```
 
 Prefabs describe structure and look and carry no scripts; code loads them by
@@ -124,7 +124,8 @@ cd my-game
 kurenai host start                 # background preview host; prints the preview URL
 # kurenai host start --timeout 1200   # wait up to 20 minutes for first import
 kurenai host status                # poll readiness if start wait expired
-kurenai asset info assets/resources/materials/red.mtl   # engine-assigned uuid, sub-assets
+kurenai import assets/resources/materials/red.mtl       # import + uuid / sub-assets
+kurenai asset info assets/resources/materials/red.mtl   # read existing .meta only
 kurenai kit add ks-survivor-kit    # kit folder, zip or Kura pack id -> assets/resources/kits/<kit>/
 kurenai check                      # type-check assets/ (preview does not)
 kurenai logs --errors              # errors since the last good preview boot (--all: older too)

@@ -9,6 +9,7 @@ vendor/cocos-core/node_modules/
 vendor/cocos-core/packages/**/node_modules/
 vendor/cocos-core/node_modules/*.kurenai-old-*
 vendor/kurenai-cocos-core-*.tgz
+dist-packs/
 vendor/.extract-tmp/
 vendor/.extract-tmp-*/
 

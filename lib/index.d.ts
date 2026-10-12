@@ -26,6 +26,22 @@ declare const DEFAULT_COCOS_CLI_ROOT: string;
  */
 declare function resolveCocosCliRoot(configured?: string): string;
 //#endregion
+//#region src/cocos/addons.d.ts
+/** An npm package kurenai installs on demand (e.g. a platform's publishing tools). */
+type NpmAddon = {
+  name: string;
+  /** Env var that overrides the npm spec (version, tarball, or folder) for this addon. */
+  specEnv?: string;
+};
+/** Outside the kurenai package so addons survive kurenai upgrades; override with KURENAI_ADDONS_DIR. */
+declare function addonsDir(): string;
+/** Install the addon unless the same spec is already installed; returns its entry file. */
+declare function ensureAddon(addon: NpmAddon): Promise<{
+  entry: string;
+  installed: boolean;
+}>;
+declare function loadAddon<T>(addon: NpmAddon): Promise<T>;
+//#endregion
 //#region src/cocos/packs.d.ts
 type PackId = string;
 type PackPresence = {
@@ -51,11 +67,13 @@ type EnsurePacksResult = {
 declare function listKnownPackIds(root?: string): PackId[];
 /**
  * Map a cocos/kurenai build platform to the packs that must be present.
- * Web stays on core only; mini-game / native pull optional packs.
+ * Every build needs core + the core build pack; mini-game / native add their own packs.
  */
 declare function packsForPlatform(platform: string): PackId[];
 declare function inspectPack(id: PackId, configuredRoot?: string): PackPresence;
 declare function packsStatus(configuredRoot?: string): PacksStatus;
+/** The npm addon behind a build platform's pack, e.g. wechatgame → @kurenai-studio/wechat-minigame. */
+declare function platformAddon(platform: string): NpmAddon | undefined;
 type EnsurePacksOptions = {
   cocosCliRoot?: string;
   /** Attempt remote install for optional platform/native packs. Default true when base URL set. */
@@ -164,7 +182,7 @@ declare function resolveHostReadyTimeoutMs(options?: {
 //#endregion
 //#region src/project/control.d.ts
 type ProjectTemplateId = "base-ai" | "base-ai-3d";
-type PublishPlatform = "web-desktop" | "web-mobile";
+type PublishPlatform = "web-desktop" | "web-mobile" | "wechatgame" | "openpaas";
 interface CommandResult {
   stdout: string;
   stderr: string;
@@ -176,7 +194,21 @@ interface ProjectControlConfig extends PreviewConfig {
   templateRoot?: string;
   template3dRoot?: string;
   runCommand?: (command: string, args: string[], cwd: string, env?: NodeJS.ProcessEnv) => Promise<CommandResult>;
+  /** Loads a platform's npm addon (installing it on first use); injectable for tests. */
+  loadAddon?: (addon: NpmAddon) => Promise<unknown>;
 }
+/** After a wechatgame build: preview (QR code) or upload through @kurenai-studio/wechat-minigame. */
+type WechatPublishOptions = {
+  preview?: boolean;
+  upload?: boolean;
+  version?: string;
+  appid?: string;
+  privateKeyPath?: string;
+  qrcodeOutput?: string;
+  desc?: string;
+  robot?: number;
+  virtualPayment?: boolean;
+};
 interface CocosProject {
   name: string;
   projectPath: string;
@@ -216,7 +248,9 @@ declare class ProjectControl {
     outDir?: string;
     release?: boolean;
     verbose?: boolean;
+    wechat?: WechatPublishOptions;
   }): Promise<Record<string, unknown>>;
+  private afterWechatBuild;
   /** Type-checks assets/ with the vendored TypeScript; preview itself only strips types. */
   typecheck(projectPath: string): Promise<Record<string, unknown>>;
   setSelection(projectPath: string, selection: SelectionContext | undefined): void;
@@ -226,6 +260,73 @@ declare class ProjectControl {
   private previewFor;
   private handle;
 }
+//#endregion
+//#region src/project/engine-modules.d.ts
+interface MissingEngineModule {
+  module: string;
+  file: string;
+  match: string;
+}
+type EngineCutHint = {
+  evidence?: string;
+  bytes?: number;
+};
+type EngineCutProposal = {
+  module: string;
+  reason: "unused" | "artifact" | "minimal";
+  evidence?: string;
+  bytes?: number;
+};
+type ProposeEngineCutsResult = {
+  file: string;
+  included: string[];
+  /** Minimal includeModules that still cover detected usage (+ deps + always). */
+  minimal: string[];
+  cuts: EngineCutProposal[];
+  keep: string[];
+  blocked: Array<{
+    module: string;
+    file: string;
+    match: string;
+    evidence?: string;
+  }>;
+  /** Modules pulled in because scripts/scenes referenced them. */
+  detected: Array<{
+    module: string;
+    evidence: string;
+  }>;
+};
+type ApplyEngineCutsResult = {
+  file: string;
+  removed: string[];
+  included: string[];
+};
+declare function findMissingEngineModules(projectPath: string): Promise<{
+  file: string;
+  missing: MissingEngineModule[];
+}>;
+declare function modulesFromArtifacts(artifacts: Array<{
+  path: string;
+  bytes?: number;
+}>): Map<string, EngineCutHint>;
+/**
+ * Propose a minimal includeModules list from project usage (scripts + scenes/prefabs).
+ * Optional build artifacts only annotate cut reasons / ordering — they do not keep modules.
+ */
+declare function proposeEngineCuts(projectPath: string, options?: {
+  artifacts?: Array<{
+    path: string;
+    bytes?: number;
+  }>;
+}): Promise<ProposeEngineCutsResult>;
+/** Write an exact includeModules list into every engine settings file that has one. */
+declare function applyEngineModules(projectPath: string, modules: string[]): Promise<ApplyEngineCutsResult>;
+/** Compute minimal set and write it. */
+declare function applyMinimalEngineModules(projectPath: string): Promise<ApplyEngineCutsResult & {
+  minimal: string[];
+}>;
+/** Remove the given modules from includeModules. Idempotent. */
+declare function applyEngineCuts(projectPath: string, modules: string[]): Promise<ApplyEngineCutsResult>;
 //#endregion
 //#region src/project/kit.d.ts
 interface KitAddResult {
@@ -298,5 +399,29 @@ type HostToInspectorMessage = {
 declare function isInspectorMessage(value: unknown): value is InspectorToHostMessage;
 declare function formatSelectionContext(node: SelectedNodeSummary): string;
 //#endregion
-export { type CocosProject, type CommandResult, DEFAULT_COCOS_CLI_ROOT, DEFAULT_HOST_READY_TIMEOUT_MS, type EnsurePacksOptions, type EnsurePacksResult, HostToInspectorMessage, InspectorToHostMessage, KURENAI_COCOS_CORE_VERSION, KURENAI_PROTOCOL_VERSION, type KitAddResult, LEGACY_PINK_COCOS_CLI_ROOT, type PackId, type PackPresence, type PacksStatus, PreviewBridge, type PreviewBridgeConfig, type PreviewConfig, PreviewController, type PreviewControllerOptions, type PreviewPhase, type PreviewState, ProjectControl, type ProjectControlConfig, type ProjectTemplateId, type PublishPlatform, SceneNodeSummary, SelectedNodeSummary, type SelectionContext, addKit, bundledCocosCoreRoot, ensureCorePack, ensurePacks, formatSelectionContext, injectInspector, inspectPack, isInspectorMessage, listKnownPackIds, managedCocosCoreRoot, packageRoot, packsForPlatform, packsStatus, resolveCocosCliRoot, resolveHostReadyTimeoutMs };
+//#region src/meta/asset-info.d.ts
+interface MetaSubAsset {
+  uuid: string;
+  name?: string;
+  importer?: string;
+}
+interface MetaAssetInfo {
+  path: string;
+  url: string;
+  uuid: string;
+  importer: string;
+  imported: boolean;
+  subAssets: MetaSubAsset[];
+}
+/** Absolute path of `file` if it lies inside `<project>/assets`, else undefined. */
+declare function assetPathInProject(project: string, file: string): string | undefined;
+/**
+ * Reads uuid / importer / sub-assets from an existing `.meta` without starting the
+ * host. Throws when the file has not been imported yet.
+ */
+declare function readAssetInfo(project: string, file: string): Promise<MetaAssetInfo>;
+/** Files under `path` (or `path` itself), skipping `.meta` and dotfiles. */
+declare function listImportTargets(path: string): string[];
+//#endregion
+export { type ApplyEngineCutsResult, type CocosProject, type CommandResult, DEFAULT_COCOS_CLI_ROOT, DEFAULT_HOST_READY_TIMEOUT_MS, type EngineCutProposal, type EnsurePacksOptions, type EnsurePacksResult, HostToInspectorMessage, InspectorToHostMessage, KURENAI_COCOS_CORE_VERSION, KURENAI_PROTOCOL_VERSION, type KitAddResult, LEGACY_PINK_COCOS_CLI_ROOT, type MetaAssetInfo, type MetaSubAsset, type MissingEngineModule, type NpmAddon, type PackId, type PackPresence, type PacksStatus, PreviewBridge, type PreviewBridgeConfig, type PreviewConfig, PreviewController, type PreviewControllerOptions, type PreviewPhase, type PreviewState, ProjectControl, type ProjectControlConfig, type ProjectTemplateId, type ProposeEngineCutsResult, type PublishPlatform, SceneNodeSummary, SelectedNodeSummary, type SelectionContext, addKit, addonsDir, applyEngineCuts, applyEngineModules, applyMinimalEngineModules, assetPathInProject, bundledCocosCoreRoot, ensureAddon, ensureCorePack, ensurePacks, findMissingEngineModules, formatSelectionContext, injectInspector, inspectPack, isInspectorMessage, listImportTargets, listKnownPackIds, loadAddon, managedCocosCoreRoot, modulesFromArtifacts, packageRoot, packsForPlatform, packsStatus, platformAddon, proposeEngineCuts, readAssetInfo, resolveCocosCliRoot, resolveHostReadyTimeoutMs };
 //# sourceMappingURL=index.d.ts.map

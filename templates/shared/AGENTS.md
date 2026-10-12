@@ -12,8 +12,9 @@ write prefab and material files directly, and write TypeScript for behaviour.
 - Prefabs go under `assets/resources/prefabs/`, materials under
   `assets/resources/materials/`, other files (images, audio) under `assets/resources/`.
 - Do not edit `assets/kurenai/Boot.ts` or `*.scene`.
-- Never write or edit `.meta` files. The engine creates them when it imports a
-  file and assigns the uuid. Get uuids with `kurenai asset info <file>`.
+- Never create a `.meta` file or change its `uuid`, `ver`, `importer` or
+  `subMetas` keys. `kurenai import` creates them. Importer settings under
+  `userData` are yours to edit (see "Importer settings" below).
 - `assets/kurenai/helpers.ts` holds small helpers (`loadPrefab`, canvas, labels).
   Read and extend it when useful.
 
@@ -31,19 +32,38 @@ Describe node trees, transforms and render components in `.prefab` files.
   template for examples.
 - The importer may reformat a prefab file, so read it again before editing.
 
-## Getting uuids from the engine
+## Importing files and getting uuids
 
-Write the source file (`.mtl`, image, ...), then run:
+After you create or change files under `assets/`, import them. This writes the
+`.meta` and returns the uuids you reference from prefabs, materials and code:
 
 ```sh
-kurenai asset info assets/resources/materials/red.mtl
+kurenai import assets/resources/materials/red.mtl        # one file
+kurenai import assets/resources/images                   # a whole folder
 ```
 
-It makes the engine import the file (creating its `.meta`) and prints
-`{ ok, asset: { uuid, type, url, subAssets: [{ uuid, name, type }] } }`.
-`ok: false` means the import failed; fix the file and run it again.
-Reference the main asset by `uuid`; use a sub-asset `uuid` for things like an
-image's texture or sprite frame.
+Returns `{ ok, imported, failed, assets: [{ ok, path, uuid, type, importer, subAssets }] }`.
+Sub-assets carry their own uuid (e.g. an image's `spriteFrame` is `<uuid>@f9941`).
+A non-zero `failed` means the file content was rejected; fix the file and import again.
+Scripts under `assets/game/` do not need `import` — the host recompiles on save.
+
+### Importer settings
+
+Settings Creator shows in the asset inspector live in the `.meta` `userData`.
+Edit the value in place, then `kurenai import` the asset (not the `.meta`) so the
+host re-imports it. For example, 9-slice borders of an image are
+`subMetas.f9941.userData.borderLeft / borderTop / borderRight / borderBottom`,
+in texture pixels; a `cc.Sprite` with type SLICED uses them.
+
+To look up a file that is already imported, without importing:
+
+```sh
+kurenai asset info assets/resources/images/hero.png
+```
+
+It only reads the existing `.meta` (`uuid`, `importer`, `subAssets`) and fails
+with “not imported yet” if there is none — run `kurenai import` then. While the
+host runs it waits up to 3 s for the host's own import of a just-created file.
 
 ## Materials
 
@@ -165,10 +185,17 @@ point the model's materials at the copy (see `replaceMaterials`).
 
 ## Feedback loop
 
+```sh
+kurenai host start
+# edit assets/…
+kurenai import <new or changed asset files>   # scripts do not need this
+kurenai logs --errors
+kurenai check
+```
+
 Saving a file refreshes the asset database, recompiles scripts and reloads the
-preview automatically. Change source files, not the running page. Every save
-reloads, so a half-finished multi-file edit logs errors for the in-between
-state; finish related edits before judging `logs`.
+preview automatically. Every save reloads, so a half-finished multi-file edit
+logs errors for the in-between state; finish related edits before judging `logs`.
 
 `kurenai logs --errors` lists errors (stack traces folded into `detail`) logged
 since the last successful preview boot; older ones are fixed by later edits and
@@ -177,20 +204,85 @@ stacks are mapped back to `assets/*.ts` (`source` on the entry). Shader compile
 failures become one entry whose `shader.errors[].effectLine` points at the
 `.effect` file.
 
-Full guide with verified capabilities and recipes: `docs/rendering.md` in the
-kurenai checkout.
+Read `clean` from `kurenai logs --errors`, not the length of `entries`.
+`clean: true` means a preview page booted and no current errors remain.
+`clean: false` with `previewPage: "none"` means no browser page has run since
+`host start`: open or reload the `previewUrl` and ask again. The port is not
+fixed; always take the URL from `kurenai host start` / `kurenai host status`.
+Every open preview tab logs into the same buffer; `openPages` counts them and
+browser entries carry `page`. Close extra tabs when the output looks duplicated.
+An `asset-error` stays until the same path imports successfully: fix the file,
+then run `kurenai import <path>` again (a page reload does not clear it).
 
-When `kurenai asset info` returns `ok: false`, the host also writes a line like
-`[kurenai-host] asset-error path=… reason=…` to its log buffer. Run
-`kurenai logs --errors` to list import failures alongside compile errors.
+When a 3D view looks wrong, check `kurenai logs --errors` **before** redesigning
+art. Several failure modes look like “bad visuals” but are hard runtime errors.
+
+## 3D scenes: cameras vs Canvas
+
+The template `main.scene` already has a Canvas + UI camera. That UI camera
+defaults to clearing **color**. If you add a world / player camera and leave
+the Canvas camera alone, the 3D frame is wiped every frame → **black screen**
+(or only HUD).
+
+When adding a 3D camera:
+
+1. Game camera: `clearFlags = SOLID_COLOR` (or SKYBOX), lower `priority`,
+   `visibility = Layers.Enum.DEFAULT`.
+2. Every other camera (Canvas / UI): `clearFlags = DEPTH_ONLY`, higher `priority`,
+   `visibility = Layers.Enum.UI_2D`. The template Canvas camera's visibility
+   also includes `DEFAULT`, so without this it draws every 3D mesh a second
+   time, orthographically, on top of the scene (large meshes show up as flat
+   discs or slabs over the view).
+3. Prefer `ensureCanvas()` from `assets/kurenai/helpers.ts` for new UI cameras —
+   it already sets `DEPTH_ONLY` and `UI_2D`. Still fix any **existing** scene Canvas camera.
+
+```ts
+for (const cam of scene.getComponentsInChildren(Camera)) {
+    if (cam.node.name === 'PlayerCamera') continue;
+    cam.clearFlags = Camera.ClearFlag.DEPTH_ONLY;
+    cam.visibility = Layers.Enum.UI_2D;
+    cam.priority = 1 << 30; // the template camera's priority is 0, same as a new game camera
+}
+```
+
+## Materials, lighting and custom shaders
+
+Full guide with verified capabilities and recipes: `docs/rendering.md` in the
+kurenai package (`kurenai context` prints the docs folder). Short version:
+
+- Start 3D work with `kurenai init <dir> --3d`: 3d modules, camera, shadowed
+  directional light, ambient light and `resources/materials/standard.mtl`
+  (`builtin-standard`, PBR) are set up.
+- Only `builtin-unlit` is registered at start. `builtin-standard`,
+  `builtin-toon` and `advanced/*` effects load on demand: reference them from a
+  `.mtl` under `resources/` (needed for publish too) or call
+  `loadBuiltinEffect('builtin-standard')` from `assets/kurenai/helpers.ts`.
+  `EffectAsset.get(name)` is only non-null after something loaded the effect.
+- Custom `.effect` files under `assets/resources/effects/` work; load them with
+  `loadEffect('effects/<name>')`. A shader compiles when its material is first
+  used: GLSL errors then appear in `kurenai logs --errors` as one entry pointing at
+  the `.effect` line (they do not fail `kurenai import`).
+- Render textures are 8 bits per channel. Keep float simulation state on the
+  CPU and upload it with `createDataTexture(w, h, { float: true })`; use
+  `createTexturePass` for 8-bit passes (caustics, blurs).
+- Meshes rebuilt every frame: `utils.MeshUtils.createDynamicMesh` once, then
+  `updateDynamicMesh(renderer, geometry)`. A bare `mesh.updateSubMesh` keeps
+  drawing the old triangle count.
+
+| Log / crash | Meaning |
+|-------------|---------|
+| `illegal property name: mainTexture` (or roughness / metallic) | The property is not on the pass: wrong effect, or its define (`USE_TEXTURE`, `USE_ALBEDO_MAP`) was not set |
+| `Cannot read properties of undefined (reading 'localSetLayout')` on `setSharedMaterial` | The material never initialized (effect missing or failed to compile); fix the effect before swapping materials |
+
+Imported model materials (from glTF / prefab under `resources/`) carry their own
+effects; use `loadModel` / `replaceMaterials`.
 
 ## Publish
 
-While developing, look at the preview. `kurenai host start` once, then save;
-the host reloads the scene. Confirm with `kurenai logs --errors` and
-`kurenai check`. Do not run `kurenai publish` until the user asks for a build
-to hand over. Publish is a full web package and takes several minutes; the
-preview already runs the same scene.
+While developing, look at the preview. `kurenai host start` once, then edit;
+confirm with `kurenai logs --errors` and `kurenai check`. Do not run
+`kurenai publish` until the user asks for a build to hand over. Publish is a
+full web package and takes several minutes; the preview already runs the same scene.
 
 `kurenai publish --release` for anything you hand over (minified engine, no
 source maps; the default debug build is several times larger). The build only
@@ -208,11 +300,10 @@ End-to-end pattern for one mesh with a custom lit material (3D template paths).
 2. **Import and read uuid** — from the project root:
 
    ```sh
-   kurenai asset info assets/resources/materials/red.mtl
+   kurenai import assets/resources/materials/red.mtl
    ```
 
-   Copy `asset.uuid` from the JSON when `ok` is true; fix the file if import
-   failed.
+   Copy `uuid` from the JSON when `ok` is true; fix the file if import failed.
 3. **Write the prefab** — add `assets/resources/prefabs/RedBox.prefab`: root
    `cc.Node` + `cc.MeshRenderer` with `_mesh` from
    [Builtin asset uuids](#builtin-asset-uuids) (e.g. box) and `_materials`:
@@ -229,5 +320,5 @@ End-to-end pattern for one mesh with a custom lit material (3D template paths).
    Implement `RedBoxView` with `bind(root)` using `getChildByPath` if the
    prefab has named children.
 
-After each file change, the host refreshes imports and reloads the preview;
-re-run `kurenai asset info` only when you need an updated uuid.
+After each asset file change, run `kurenai import` again for that path; scripts
+reload on save. Use `kurenai asset info` only to look up an already-imported uuid.

@@ -23,12 +23,17 @@
  *   GET  /__kurenai/logs?since=<seq>&errors=1[&all=1]
  *        recent host output, including compile errors and forwarded browser logs;
  *        stack lines fold into their entry. errors=1 skips errors logged before the
- *        last successful preview boot (reported as `superseded`) unless all=1.
- *        Stack frames in preview chunks are mapped to assets/*.ts (entry.source =
- *        first mapped frame); a shader compile failure is one entry whose `shader`
- *        field points at the .effect lines.
- *   GET  /__kurenai/asset?path=<abs or relative to project>
- *        refreshes the file, then returns asset-db's uuid / type / sub-assets
+ *        last successful preview boot (reported as `superseded`) unless all=1; an
+ *        asset-error is superseded only by a later successful /__kurenai/asset check of
+ *        the same path.
+ *        previewPage is none | connected | booted: whether any browser page has
+ *        reported since host start. With errors=1, clean is true only when a page
+ *        booted and no current errors remain. Stack frames in preview chunks are
+ *        mapped to assets/*.ts (entry.source = first mapped frame); a shader compile
+ *        failure is one entry whose `shader` field points at the .effect lines;
+ *        browser entries carry `page` (one number per connected preview page).
+ *   GET  /__kurenai/asset?path=<abs or relative to project>[&refresh=0]
+ *        refreshes the file (unless refresh=0), then returns asset-db's uuid / type / sub-assets
  *
  * While ready, the host advertises itself in <project>/temp/kurenai-host.json
  * so the `kurenai` CLI can find it.
@@ -81,14 +86,25 @@ const LOG_CAPACITY = 500;
 const DETAIL_LINES = 12;
 const logBuffer = [];
 let logSeq = 0;
+/** Project-relative asset path -> logSeq of its last successful /__kurenai/asset check. */
+const assetOkSeq = new Map();
+const ASSET_ERROR_PATH = /asset-error path=(.*?) reason=/;
 // Seq of the last successful preview boot; errors logged before it were fixed by a later edit.
 let bootSeq = 0;
+// Seq of the last line forwarded from any browser page; 0 means no page has run since start.
+let browserSeq = 0;
+
+// Preview page that is printing right now (set around each forwarded browser line).
+let currentPage = 0;
+let pageSeq = 0;
+const openPages = new Set();
 
 // Stack frames and Babel code frames belong to the entry above them.
 const CONTINUATION = /^\s+at\s|^\s*>?\s*\d+\s*\||^\s+\|/;
 const WARN_LINE = /^\s*WARN\b|\[Browser WARN\]|DeprecationWarning|\[DEP\d+\]|^\(Use `node --trace/;
 const ERROR_LINE = /^\s*ERROR\b|\[Browser ERROR\]|asset-error|refresh failed|\b\w*Error:|\bfail(ed|s)?\b/i;
 const BOOT_LINE = /\[Browser LOG\] Cocos game preview started/;
+const BROWSER_LINE = /\[Browser [A-Z]+\]/;
 const SHADER_FAIL = /\[Browser ERROR\] (\w+)Shader in '([^']+)' compilation failed/;
 const SHADER_DUMP_HEADER = /Shader source dump:/;
 const SHADER_DUMP_LINE = /^(\d+)(?: (.*))?$/;
@@ -250,7 +266,9 @@ function captureOutput(stream) {
       }
       logSeq += 1;
       if (BOOT_LINE.test(line)) bootSeq = logSeq;
+      if (BROWSER_LINE.test(line)) browserSeq = logSeq;
       const entry = { seq: logSeq, at: new Date().toISOString(), level: levelOf(line), line: mapFrame(line.trim()).line };
+      if (currentPage && BROWSER_LINE.test(line)) entry.page = currentPage;
       logBuffer.push(entry);
       if (logBuffer.length > LOG_CAPACITY) logBuffer.shift();
       const shader = SHADER_FAIL.exec(line);
@@ -508,6 +526,89 @@ function clearStaleProgrammingLocks() {
   if (removed) log(`cleared ${removed} stale lock file(s) under temp/programming`);
 }
 
+// Replaces cocos-cli's injected console forwarder: queues messages until the socket
+// opens (first-load logs), forwards Error stacks and resource load failures.
+const CONSOLE_BRIDGE = `
+<script>
+(function () {
+  var queue = [], open = false, ws;
+  function fmt(a) {
+    if (a instanceof Error) return a.stack || String(a);
+    if (a && typeof a === 'object') { try { return JSON.stringify(a, null, 2); } catch (e) { return String(a); } }
+    return String(a);
+  }
+  function send(level, args) {
+    var msg = JSON.stringify({ type: 'log', level: level, message: Array.prototype.map.call(args, fmt).join(' ') });
+    if (open) ws.send(msg); else if (queue.length < 500) queue.push(msg);
+  }
+  ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/console-log');
+  ws.onopen = function () { open = true; queue.splice(0).forEach(function (m) { ws.send(m); }); };
+  ws.onclose = function () { open = false; };
+  ['log', 'error', 'warn', 'info', 'debug'].forEach(function (level) {
+    var original = console[level];
+    console[level] = function () { original.apply(console, arguments); send(level, arguments); };
+  });
+  window.addEventListener('error', function (e) {
+    var t = e.target;
+    if (t && t !== window && (t.src || t.href)) send('error', ['Failed to load resource: ' + (t.src || t.href)]);
+    else if (e.error && e.error.stack) send('error', ['Uncaught ' + e.error.stack]);
+    else send('error', ['Uncaught ' + e.message + ' (' + e.filename + ':' + e.lineno + ':' + e.colno + ')']);
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) {
+    var r = e.reason;
+    send('error', ['Unhandled Promise Rejection: ' + (r && r.stack ? r.stack : String(r))]);
+  });
+})();
+</script>
+`;
+const STOCK_BRIDGE = /<script>\s*\(function\(\) \{\s*\/\/ 建立 WebSocket 连接[\s\S]*?<\/script>\s*/g;
+
+function installConsoleBridge() {
+  const service = load('server/console-log').consoleLogService;
+  const { WebSocketServer } = cliRequire('ws');
+  const inject = service.injectMiddleware;
+  service.injectMiddleware = (req, res, next) => {
+    const send = res.send;
+    res.send = function (body) {
+      if (typeof body === 'string' && STOCK_BRIDGE.test(body)) {
+        let first = true;
+        body = body.replace(STOCK_BRIDGE, () => (first ? ((first = false), CONSOLE_BRIDGE) : ''));
+      }
+      STOCK_BRIDGE.lastIndex = 0;
+      return send.call(this, body);
+    };
+    inject(req, res, next);
+  };
+  service.startup = function (server) {
+    this.wss = new WebSocketServer({ noServer: true });
+    server.on('upgrade', (request, socket, head) => {
+      if (new URL(request.url || '', 'http://base').pathname !== '/console-log') return;
+      this.wss.handleUpgrade(request, socket, head, (ws) => this.wss.emit('connection', ws, request));
+    });
+    this.wss.on('connection', (ws) => {
+      const page = ++pageSeq;
+      openPages.add(page);
+      ws.on('close', () => openPages.delete(page));
+      ws.on('message', (message) => {
+        let data;
+        try {
+          data = JSON.parse(message.toString());
+        } catch {
+          return;
+        }
+        if (data?.type !== 'log') return;
+        const level = ['error', 'warn', 'info', 'debug'].includes(data.level) ? data.level : 'log';
+        currentPage = page;
+        try {
+          console[level](`[Browser ${level.toUpperCase()}] ${data.message ?? ''}`);
+        } finally {
+          currentPage = 0;
+        }
+      });
+    });
+  };
+}
+
 function registerRoutes() {
   const { middlewareService } = load('server/middleware');
   middlewareService.register('KurenaiHost', {
@@ -528,6 +629,10 @@ function registerRoutes() {
       {
         url: '/__kurenai/logs',
         async handler(req, res) {
+          if (shaderBlock) {
+            finishShaderBlock(shaderBlock);
+            shaderBlock = undefined;
+          }
           const since = Number(req.query.since || 0);
           const errorsOnly = req.query.errors === '1';
           const includeSuperseded = req.query.all === '1';
@@ -536,18 +641,35 @@ function registerRoutes() {
             if (entry.seq <= since) return false;
             if (!errorsOnly) return true;
             if (entry.level !== 'error') return false;
-            // Asset import errors are not fixed by a script edit, so they never go stale.
-            if (entry.seq < bootSeq && !entry.line.includes('asset-error') && !includeSuperseded) {
+            if (includeSuperseded) return true;
+            // Asset import errors are not fixed by a script edit or a reload, only by
+            // a later successful import of the same path.
+            const assetPath = ASSET_ERROR_PATH.exec(entry.line)?.[1];
+            const stale = assetPath !== undefined
+              ? (assetOkSeq.get(assetPath) ?? 0) > entry.seq
+              : entry.seq < bootSeq;
+            if (stale) {
               superseded += 1;
               return false;
             }
             return true;
           });
+          const previewPage = bootSeq ? 'booted' : browserSeq ? 'connected' : 'none';
           res.json({
             ok: true,
             lastSeq: logSeq,
+            previewPage,
+            // true only when a page booted and no current error remains; false also means "cannot tell yet".
+            ...(errorsOnly ? { clean: previewPage === 'booted' && entries.length === 0 } : {}),
+            ...(previewPage === 'none'
+              ? { hint: `No preview page has run since host start; open or reload ${state.url} before trusting an empty result.` }
+              : {}),
             ...(bootSeq ? { lastBootSeq: bootSeq } : {}),
             ...(superseded ? { superseded } : {}),
+            openPages: openPages.size,
+            ...(openPages.size > 1
+              ? { pagesHint: `${openPages.size} preview pages are open and all log here; each browser entry carries its page number. Close extra tabs if the output is confusing.` }
+              : {}),
             entries,
           });
         },
@@ -565,7 +687,7 @@ function registerRoutes() {
             res.status(404).json({ ok: false, error: `no such file: ${relative(project, target)}` });
             return;
           }
-          await refresh([target], 'api');
+          if (req.query.refresh !== '0') await refresh([target], 'api');
           const { assetManager } = load('core/assets');
           const info = assetManager.queryAssetInfo(target);
           if (!info) {
@@ -591,6 +713,7 @@ function registerRoutes() {
             res.json({ ok: false, error: reason, asset });
             return;
           }
+          assetOkSeq.set(relative(project, target), logSeq);
           res.json({ ok: true, asset });
         },
       },
@@ -617,6 +740,7 @@ async function main() {
   log(`project ${project}`);
   log(`cocos-cli ${cliRoot}`);
   clearStaleProgrammingLocks();
+  installConsoleBridge();
   registerRoutes();
 
   const { default: Launcher } = load('core/launcher');

@@ -89,13 +89,57 @@
         "packages/engine/templates"
       ]
     },
+    "build": {
+      "id": "build",
+      "required": false,
+      "installWhen": "kurenai publish (any platform)",
+      "packScript": "scripts/pack-build.mjs",
+      "probes": [
+        "packages/engine/tsconfig.json",
+        "node_modules/@cocos/build-polyfills/package.json"
+      ],
+      "npmPackages": [
+        "@cocos/babel-preset-cc",
+        "@cocos/build-polyfills",
+        "@cocos/creator-programming-rollup-plugin-mod-lo",
+        "concat-with-sourcemaps",
+        "max-rects-packing"
+      ],
+      "engineNpmPackages": ["@cocos/box2d", "@cocos/cannon", "@cocos/dragonbones-js"],
+      "engineFiles": [
+        "packages/engine/tsconfig.json",
+        "packages/engine/babel.config.js",
+        "packages/engine/predefine.ts",
+        "packages/engine/DebugInfos.json",
+        "packages/engine/DebugInfos.d.ts",
+        "packages/engine/@types",
+        "packages/engine/extensions",
+        "packages/engine/external",
+        "packages/engine/templates/README.md",
+        "packages/engine/templates/cocos-project-template.json",
+        "packages/engine/templates/compatibility-info.json",
+        "packages/engine/templates/project.json",
+        "packages/engine/templates/common",
+        "packages/engine/templates/launcher",
+        "packages/engine/templates/web-desktop",
+        "packages/engine/templates/web-mobile",
+        "packages/engine/templates/wechatgame"
+      ],
+      "emscriptenDir": "packages/engine/native/external/emscripten",
+      "emscriptenSuffixes": [".asm.js", ".d.ts"]
+    },
     "platform": {
       "idPrefix": "platform:",
       "required": false,
       "installWhen": "kurenai publish / cocos build -p <id>",
       "discovery": "packages/platforms/<dir>/package.json (contributes.builder.register)",
       "packs": [
-        { "id": "platform:wechat", "dir": "packages/platforms/wechat", "builderIdHint": "wechatgame" },
+        {
+          "id": "platform:wechat",
+          "dir": "packages/platforms/wechat",
+          "builderIdHint": "wechatgame",
+          "npm": { "name": "@kurenai-studio/wechat-minigame", "specEnv": "KURENAI_WECHAT_MINIGAME_PACKAGE" }
+        },
         { "id": "platform:wechat-playable", "dir": "packages/platforms/wechat-playable" },
         { "id": "platform:bytedance", "dir": "packages/platforms/bytedance", "builderIdHint": "bytedance-mini-game" },
         { "id": "platform:alipay", "dir": "packages/platforms/alipay", "builderIdHint": "alipay-mini-game" },
@@ -105,7 +149,7 @@
         { "id": "platform:huawei", "dir": "packages/platforms/huawei" },
         { "id": "platform:honor", "dir": "packages/platforms/honor" },
         { "id": "platform:sud", "dir": "packages/platforms/sud" },
-        { "id": "platform:sudv2", "dir": "packages/platforms/sudv2" },
+        { "id": "platform:sudv2", "dir": "packages/platforms/sudv2", "builderIdHint": "openpaas" },
         { "id": "platform:meta", "dir": "packages/platforms/meta", "builderIdHint": "fb-instant-games" }
       ]
     },
@@ -142,8 +186,8 @@
     "ensurePack": "kurenai host start / publish call ensurePacks; pack with scripts/pack-cocos-core.mjs",
     "packScript": "scripts/pack-cocos-core.mjs",
     "webDefault": ["core"],
-    "publishWeb": ["core"],
-    "publishWechat": ["core", "platform:wechat"],
-    "publishAndroid": ["core", "native:engine-src", "native:tool-cmake", "native:android"]
+    "publishWeb": ["core", "build"],
+    "publishWechat": ["core", "build", "platform:wechat"],
+    "publishAndroid": ["core", "build", "native:engine-src", "native:tool-cmake", "native:android"]
   }
 }

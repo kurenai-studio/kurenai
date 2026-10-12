@@ -18,7 +18,8 @@ import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { basename, delimiter, dirname, join, resolve } from "node:path";
 import { spawn } from "node:child_process";
-import { ensurePacks, packsForPlatform } from "../cocos/packs.js";
+import { loadAddon, type NpmAddon } from "../cocos/addons.js";
+import { ensurePacks, packsForPlatform, platformAddon } from "../cocos/packs.js";
 import { packageFile, resolveCocosCliRoot } from "../cocos/paths.js";
 import { findMissingEngineModules } from "./engine-modules.js";
 
@@ -29,7 +30,7 @@ import {
 } from "../preview/controller.js";
 
 export type ProjectTemplateId = "base-ai" | "base-ai-3d";
-export type PublishPlatform = "web-desktop" | "web-mobile";
+export type PublishPlatform = "web-desktop" | "web-mobile" | "wechatgame" | "openpaas";
 
 const PUBLISH_LOG_TAIL_LINES = 30;
 
@@ -59,7 +60,35 @@ export interface ProjectControlConfig extends PreviewConfig {
     cwd: string,
     env?: NodeJS.ProcessEnv,
   ) => Promise<CommandResult>;
+  /** Loads a platform's npm addon (installing it on first use); injectable for tests. */
+  loadAddon?: (addon: NpmAddon) => Promise<unknown>;
 }
+
+/** After a wechatgame build: preview (QR code) or upload through @kurenai-studio/wechat-minigame. */
+export type WechatPublishOptions = {
+  preview?: boolean;
+  upload?: boolean;
+  version?: string;
+  appid?: string;
+  privateKeyPath?: string;
+  qrcodeOutput?: string;
+  desc?: string;
+  robot?: number;
+  virtualPayment?: boolean;
+};
+
+type WechatAddon = {
+  checkPackageSize(
+    buildDir: string,
+    options?: { virtualPayment?: boolean },
+  ): {
+    ok: boolean;
+    violations?: string[];
+    hints?: Array<{ kind: string; module?: string; folder?: string; evidence?: string; bytes?: number }>;
+  };
+  preview(buildDir: string, options: Record<string, unknown>): Promise<Record<string, unknown>>;
+  upload(buildDir: string, options: Record<string, unknown>): Promise<Record<string, unknown>>;
+};
 
 export interface CocosProject {
   name: string;
@@ -224,6 +253,7 @@ export class ProjectControl {
       outDir?: string;
       release?: boolean;
       verbose?: boolean;
+      wechat?: WechatPublishOptions;
     } = {},
   ): Promise<Record<string, unknown>> {
     const absolutePath = resolve(projectPath);
@@ -244,9 +274,13 @@ export class ProjectControl {
       };
     }
     await ensurePacks(packsForPlatform(platform), { cocosCliRoot });
-    const cli = join(cocosCliRoot, "dist", "cli.js");
-    if (!existsSync(cli)) throw new Error(`cocos-cli not found: ${cli}`);
-    const args = [cli, "build", "--project", absolutePath, "--platform", platform];
+    const args = [
+      packageFile("bin/kurenai-cocos-build.mjs"),
+      "--project",
+      absolutePath,
+      "--platform",
+      platform,
+    ];
 
     const buildConfig: Record<string, unknown> = {};
     if (options.outDir) {
@@ -271,14 +305,13 @@ export class ProjectControl {
       // cocos-cli type-checks assets/ with `tsc` from PATH and skips the check without it.
       // The vendored TypeScript 5 understands the generated temp/tsconfig.cocos.json.
       const tscBin = join(cocosCliRoot, "node_modules", ".bin");
-      const { stdout, stderr, code } = await this.runCommand(
-        process.execPath,
-        args,
-        absolutePath,
-        existsSync(join(tscBin, "tsc"))
-          ? { ...process.env, PATH: `${tscBin}${delimiter}${process.env.PATH ?? ""}` }
-          : undefined,
-      );
+      const { stdout, stderr, code } = await this.runCommand(process.execPath, args, absolutePath, {
+        ...process.env,
+        KURENAI_COCOS_CLI_ROOT: cocosCliRoot,
+        ...(existsSync(join(tscBin, "tsc"))
+          ? { PATH: `${tscBin}${delimiter}${process.env.PATH ?? ""}` }
+          : {}),
+      });
       const combined = `${stdout}\n${stderr}`.trim();
       const dest = /Build Dest: (.+)$/mu.exec(combined)?.[1]?.trim();
       if (code !== 0 || !dest) {
@@ -293,15 +326,84 @@ export class ProjectControl {
         ? join(absolutePath, dest.slice("project://".length))
         : resolve(absolutePath, dest);
       const logTail = publishLogTail(combined, options.verbose);
-      return {
+      const result = {
         ok: true,
         outDir,
         platform,
         mode: options.release ? "release" : "debug",
         ...(logTail !== undefined ? { logTail } : {}),
       };
+      return platform === "wechatgame" ? await this.afterWechatBuild(result, options.wechat ?? {}) : result;
     } finally {
       if (configDir) await rm(configDir, { recursive: true, force: true });
+    }
+  }
+
+  private async afterWechatBuild(
+    result: { ok: boolean; outDir: string } & Record<string, unknown>,
+    options: WechatPublishOptions,
+  ): Promise<Record<string, unknown>> {
+    const addon = platformAddon("wechatgame");
+    if (!addon) return result;
+    const wechat = (await (this.config.loadAddon ?? loadAddon)(addon)) as WechatAddon;
+    const size = wechat.checkPackageSize(result.outDir, options.virtualPayment ? { virtualPayment: true } : {});
+    const engineHints = (size.hints ?? []).filter((h) => h.kind === "engine-module");
+    const assetHints = (size.hints ?? []).filter((h) => h.kind === "asset-folder");
+    const hintParts: string[] = [];
+    if (!size.ok) {
+      if (engineHints.length) {
+        hintParts.push(
+          `Shrink the engine to on-demand modules (kurenai engine propose-cuts --from-build ${result.outDir}; ` +
+            `kurenai engine apply-cuts --minimal): artifacts suggest ` +
+            engineHints
+              .slice(0, 4)
+              .map((h) => h.module)
+              .filter(Boolean)
+              .join(", "),
+        );
+      }
+      if (assetHints.length) {
+        hintParts.push(
+          `Or move asset folders into subpackages (kurenai wechat propose-subpackages <project> then ` +
+            `kurenai wechat subpackage <project> <folder>): ` +
+            assetHints
+              .slice(0, 4)
+              .map((h) => h.folder)
+              .filter(Boolean)
+              .join(", "),
+        );
+      }
+      if (!hintParts.length) {
+        hintParts.push(
+          "Over WeChat's package limits. Drop unused engine modules (kurenai engine propose-cuts) " +
+            "or configure subpackages (kurenai wechat propose-subpackages / subpackage), then publish again.",
+        );
+      }
+    }
+    const sized = {
+      ...result,
+      wechatSize: size,
+      ...(hintParts.length ? { hint: hintParts.join(" ") } : {}),
+    };
+    if (!options.preview && !options.upload) return sized;
+
+    const ciOptions = {
+      ...(options.appid ? { appid: options.appid } : {}),
+      ...(options.privateKeyPath ? { privateKeyPath: options.privateKeyPath } : {}),
+      ...(options.desc ? { desc: options.desc } : {}),
+      ...(options.robot ? { robot: options.robot } : {}),
+      ...(options.virtualPayment ? { virtualPayment: true } : {}),
+    };
+    try {
+      const wechatResult = options.upload
+        ? await wechat.upload(result.outDir, { ...ciOptions, version: options.version ?? "" })
+        : await wechat.preview(result.outDir, {
+            ...ciOptions,
+            ...(options.qrcodeOutput ? { qrcodeOutput: options.qrcodeOutput } : {}),
+          });
+      return { ...sized, wechat: wechatResult };
+    } catch (error) {
+      return { ...sized, ok: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
 

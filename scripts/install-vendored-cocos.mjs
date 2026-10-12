@@ -6,9 +6,13 @@
  * No native binaries remain: image ops use packages/portable-sharp (jimp), effect GPU
  * typecheck (former `gl`) is disabled in shdc-lib, and media duration (former ffprobe)
  * is read in JS by asset-handler/media-duration.js.
+ *
+ * packages/engine/node_modules is not installed: preview runs on the prebuilt engine
+ * bundles, and publish gets the few engine-local packages it needs from the `build` pack.
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, linkSync, lstatSync, readdirSync, readFileSync, renameSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -40,6 +44,55 @@ function depsReady(dir) {
   );
 }
 
+/**
+ * Hard-link byte-identical files. npm nests the same TypeScript 4.9.5 under both
+ * @cocos/ccbuild and @cocos/tfig (the root needs 5.9.3), which alone is ~65 MB.
+ */
+function hardlinkDuplicates(dir, minBytes = 4096) {
+  const bySize = new Map();
+  const walk = (current) => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const full = join(current, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.isFile()) {
+        const { size } = lstatSync(full);
+        if (size < minBytes) continue;
+        const group = bySize.get(size);
+        if (group) group.push(full);
+        else bySize.set(size, [full]);
+      }
+    }
+  };
+  walk(dir);
+
+  let linked = 0;
+  let savedBytes = 0;
+  for (const [size, files] of bySize) {
+    if (files.length < 2) continue;
+    const firstByHash = new Map();
+    for (const file of files) {
+      const hash = createHash('sha1').update(readFileSync(file)).digest('hex');
+      const first = firstByHash.get(hash);
+      if (!first) {
+        firstByHash.set(hash, file);
+        continue;
+      }
+      if (lstatSync(first).ino === lstatSync(file).ino) continue;
+      const aside = `${file}.kurenai-dedupe`;
+      try {
+        renameSync(file, aside);
+        linkSync(first, file);
+        unlinkSync(aside);
+        linked += 1;
+        savedBytes += size;
+      } catch {
+        if (!existsSync(file) && existsSync(aside)) renameSync(aside, file);
+      }
+    }
+  }
+  return { linked, savedMB: Math.round(savedBytes / 1e5) / 10 };
+}
+
 function main() {
   if (!existsSync(join(coreDir, 'dist/core/launcher.js'))) {
     console.warn(
@@ -47,12 +100,12 @@ function main() {
     );
     return;
   }
+  let dedupe;
   if (!depsReady(coreDir)) {
     npmInstall(coreDir);
-    const engine = join(coreDir, 'packages/engine');
-    if (existsSync(join(engine, 'package.json'))) npmInstall(engine);
+    dedupe = hardlinkDuplicates(join(coreDir, 'node_modules'));
   }
-  console.log(JSON.stringify({ ok: true, core: coreDir, image: 'portable-sharp/jimp' }));
+  console.log(JSON.stringify({ ok: true, core: coreDir, image: 'portable-sharp/jimp', dedupe }));
 }
 
 try {

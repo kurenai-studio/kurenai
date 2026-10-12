@@ -1,6 +1,7 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { ProjectControl } from "../src/project/control.js";
 
@@ -120,20 +121,20 @@ describe("ProjectControl", () => {
     const root = await temporaryRoot();
     const cliRoot = join(root, "cocos-cli");
     const project = join(root, "game");
-    await mkdir(join(cliRoot, "dist"), { recursive: true });
-    await writeFile(join(cliRoot, "dist", "cli.js"), "");
+    await stubCocosCli(cliRoot);
     await mkdir(project);
     await writeFile(
       join(project, "package.json"),
       JSON.stringify({ name: "game", creator: { version: "4.0.0" } }),
     );
-    const calls: { args: string[]; config?: unknown }[] = [];
+    const calls: { args: string[]; config?: unknown; cliRoot: string | undefined }[] = [];
     const control = new ProjectControl({
       cocosCliRoot: cliRoot,
-      runCommand: async (_command, args) => {
+      runCommand: async (_command, args, _cwd, env) => {
         const configIndex = args.indexOf("--build-config");
         calls.push({
           args,
+          cliRoot: env?.KURENAI_COCOS_CLI_ROOT,
           ...(configIndex >= 0
             ? { config: JSON.parse(await readFile(args[configIndex + 1]!, "utf8")) }
             : {}),
@@ -152,22 +153,21 @@ describe("ProjectControl", () => {
     });
 
     expect(result).toMatchObject({ ok: true, platform: "web-mobile", outDir: join(root, "out", "web") });
-    expect(calls[0]?.args.slice(0, 6)).toEqual([
-      join(cliRoot, "dist", "cli.js"),
-      "build",
+    expect(calls[0]?.args.slice(0, 5)).toEqual([
+      fileURLToPath(new URL("../bin/kurenai-cocos-build.mjs", import.meta.url)),
       "--project",
       project,
       "--platform",
       "web-mobile",
     ]);
+    expect(calls[0]?.cliRoot).toBe(cliRoot);
     expect(calls[0]?.config).toEqual({ buildPath: join(root, "out"), outputName: "web" });
   });
 
   it("resolves project:// build destinations to the project directory", async () => {
     const root = await temporaryRoot();
     const cliRoot = join(root, "cocos-cli");
-    await mkdir(join(cliRoot, "dist"), { recursive: true });
-    await writeFile(join(cliRoot, "dist", "cli.js"), "");
+    await stubCocosCli(cliRoot);
     await writeFile(
       join(root, "package.json"),
       JSON.stringify({ name: "game", creator: { version: "4.0.0" } }),
@@ -188,11 +188,80 @@ describe("ProjectControl", () => {
     });
   });
 
+  it("checks WeChat package size after a wechatgame build and previews through the addon", async () => {
+    const root = await temporaryRoot();
+    const cliRoot = join(root, "cocos-cli");
+    await stubCocosCli(cliRoot);
+    await mkdir(join(cliRoot, "packages", "platforms", "wechat"), { recursive: true });
+    await writeFile(join(cliRoot, "packages", "platforms", "wechat", "package.json"), "{}");
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({ name: "game", creator: { version: "4.0.0" } }),
+    );
+    const addonCalls: { method: string; dir: string; options: unknown }[] = [];
+    let sizeOk = false;
+    const control = new ProjectControl({
+      cocosCliRoot: cliRoot,
+      runCommand: async () => ({
+        stdout: "✓ Build completed successfully! Build Dest: project://build/wechatgame\n",
+        stderr: "",
+        code: 0,
+      }),
+      loadAddon: async (addon) => {
+        expect(addon.name).toBe("@kurenai-studio/wechat-minigame");
+        return {
+          checkPackageSize: (dir: string, options: unknown) => {
+            addonCalls.push({ method: "check", dir, options });
+            return {
+              ok: sizeOk,
+              violations: sizeOk ? [] : ["main package 5.00 MB exceeds 4.00 MB"],
+              hints: sizeOk
+                ? []
+                : [
+                    {
+                      kind: "engine-module",
+                      module: "physics-ammo",
+                      evidence: "cocos-js/bullet.js",
+                      bytes: 900_000,
+                    },
+                  ],
+            };
+          },
+          preview: async (dir: string, options: unknown) => {
+            addonCalls.push({ method: "preview", dir, options });
+            return { ok: true, action: "preview", qrcode: "/tmp/qr.jpg" };
+          },
+          upload: async () => {
+            throw new Error("upload not expected");
+          },
+        };
+      },
+    });
+    const outDir = join(root, "build", "wechatgame");
+
+    const oversized = await control.publish(root, { platform: "wechatgame" });
+    expect(oversized).toMatchObject({ ok: true, outDir, wechatSize: { ok: false } });
+    expect(oversized.hint).toContain("propose-cuts");
+    expect(oversized.hint).toContain("physics-ammo");
+
+    sizeOk = true;
+    const previewed = await control.publish(root, {
+      platform: "wechatgame",
+      wechat: { preview: true, appid: "wx1", virtualPayment: true },
+    });
+    expect(previewed).toMatchObject({ ok: true, wechat: { action: "preview", qrcode: "/tmp/qr.jpg" } });
+    expect(previewed.hint).toBeUndefined();
+    expect(addonCalls.at(-1)).toEqual({
+      method: "preview",
+      dir: outDir,
+      options: { appid: "wx1", virtualPayment: true },
+    });
+  });
+
   it("truncates publish logTail by default and keeps full output with verbose", async () => {
     const root = await temporaryRoot();
     const cliRoot = join(root, "cocos-cli");
-    await mkdir(join(cliRoot, "dist"), { recursive: true });
-    await writeFile(join(cliRoot, "dist", "cli.js"), "");
+    await stubCocosCli(cliRoot);
     await writeFile(
       join(root, "package.json"),
       JSON.stringify({ name: "game", creator: { version: "4.0.0" } }),
@@ -238,4 +307,16 @@ async function temporaryRoot(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "kurenai-project-"));
   roots.push(root);
   return root;
+}
+
+async function stubCocosCli(cliRoot: string): Promise<void> {
+  const files = [
+    join("dist", "core", "launcher.js"),
+    join("packages", "engine", "tsconfig.json"),
+    join("node_modules", "@cocos", "build-polyfills", "package.json"),
+  ];
+  for (const file of files) {
+    await mkdir(join(cliRoot, file, ".."), { recursive: true });
+    await writeFile(join(cliRoot, file), "");
+  }
 }

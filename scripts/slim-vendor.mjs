@@ -8,9 +8,8 @@
  *
  * Default --from and --out are this repo's vendor/cocos-core (in-place via a
  * sibling temp directory). Rules follow enji/scripts/vendor-cocos-core.mjs, plus
- * engine TypeScript sources so `kurenai publish` can rebuild the engine for
- * web-desktop / web-mobile. Engine-local node_modules are not shipped; the
- * first publish runs `npm install` under packages/engine (see packs.ts).
+ * engine TypeScript sources so `kurenai publish` can rebuild the engine. Engine-local
+ * node_modules are never installed; publish gets what it needs from the `build` pack.
  */
 import { spawnSync } from 'node:child_process';
 import {
@@ -67,7 +66,7 @@ const DROP = [
 
 /**
  * Inside packages/engine keep the prebuilt preview bundles, editor assets, and
- * the TypeScript sources + local node_modules needed to rebuild for web publish.
+ * the TypeScript sources. The rest of what publish needs comes from the `build` pack.
  */
 const ENGINE_KEEP = [
   /^packages\/engine\/(package\.json|package-lock\.json|cc\.config\.json|LICENSE)$/,
@@ -90,7 +89,7 @@ const ENGINE_KEEP = [
 
 const FORCE_KEEP = [/^packages\/engine\/bin\/\.declarations\/cc\.d\.ts$/];
 
-/** npm dependencies of cocos-cli that preview + web publish never load. */
+/** npm dependencies of cocos-cli that preview never loads (publish gets its own from the `build` pack). */
 const DROP_DEPENDENCIES = [
   '@cocos/build-polyfills',
   '@cocos/creator-programming-rollup-plugin-mod-lo',
@@ -292,7 +291,7 @@ function main() {
     droppedFiles: dropped,
     dependencies,
     droppedDependencies: DROP_DEPENDENCIES,
-    keepsWebPublish: true,
+    keepsWebPublish: false,
     hardlinkedCacheFiles: hardlinked,
   };
   writeFileSync(join(out, 'KURENAI_VENDOR.json'), `${JSON.stringify(manifest, null, 2)}\n`);

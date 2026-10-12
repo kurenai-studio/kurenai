@@ -14,7 +14,10 @@ export {
   listKnownPackIds,
   packsForPlatform,
   packsStatus,
+  platformAddon,
 } from "./cocos/packs.js";
+export { addonsDir, ensureAddon, loadAddon } from "./cocos/addons.js";
+export type { NpmAddon } from "./cocos/addons.js";
 export type {
   EnsurePacksOptions,
   EnsurePacksResult,
@@ -36,6 +39,20 @@ export {
   resolveHostReadyTimeoutMs,
 } from "./preview/timeout.js";
 export { ProjectControl } from "./project/control.js";
+export {
+  applyEngineCuts,
+  applyEngineModules,
+  applyMinimalEngineModules,
+  findMissingEngineModules,
+  modulesFromArtifacts,
+  proposeEngineCuts,
+} from "./project/engine-modules.js";
+export type {
+  ApplyEngineCutsResult,
+  EngineCutProposal,
+  MissingEngineModule,
+  ProposeEngineCutsResult,
+} from "./project/engine-modules.js";
 export { addKit } from "./project/kit.js";
 export type { KitAddResult } from "./project/kit.js";
 export type {
@@ -47,3 +64,9 @@ export type {
   SelectionContext,
 } from "./project/control.js";
 export * from "./shared/protocol.js";
+export {
+  assetPathInProject,
+  listImportTargets,
+  readAssetInfo,
+} from "./meta/asset-info.js";
+export type { MetaAssetInfo, MetaSubAsset } from "./meta/asset-info.js";
