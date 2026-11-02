@@ -1,0 +1,80 @@
+#!/bin/bash
+# Run one game-agent CLI verb on the worker's long-lived `rpc serve` process
+# (POST /cli-rpc on the loopback worker port). Drop-in for
+# `node /app/dist/entry-cli.js <resource> <action>`: the envelope arrives on
+# stdin; exit 0 prints the result JSON on stdout; any other exit code prints
+# the job's stderr with the CLI error JSON as its last line.
+#
+# Falls back to a one-shot entry-cli.js only when the worker never admitted the
+# job (connection refused, or 503 without an exit code), so a verb never runs
+# twice.
+
+set -u
+
+resource=$1
+action=$2
+entry_cli=/app/dist/entry-cli.js
+
+# Milliseconds since epoch, taken before any other work so the worker's
+# shell_to_handler_ms includes temp-file setup and curl. EPOCHREALTIME is
+# bash 5+; the runtime image installs that bash. Second resolution is only
+# a fallback for a bash that lacks it.
+if [ -n "${EPOCHREALTIME-}" ]; then
+  _epoch=$EPOCHREALTIME
+  _epoch_frac=${_epoch#*.}
+  shell_started_at_ms=$(( ${_epoch%.*} * 1000 + 10#${_epoch_frac} / 1000 ))
+else
+  shell_started_at_ms=$(( $(date +%s) * 1000 ))
+fi
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+cat >"$tmp/stdin"
+
+# Per-job credentials travel as headers named after the env key
+# (STORAGE_SESSION_TOKEN -> x-wanaka-storage-session-token), matching
+# cliRpcEnvHeader in agents/game-agent/src/handlers/cli-rpc-handler.ts.
+: >"$tmp/headers"
+for key in STORAGE_ACCESS_KEY_ID STORAGE_SECRET_ACCESS_KEY STORAGE_SESSION_TOKEN WANAKA_EXPECTED_RUNTIME_INSTANCE_ID WANAKA_RUNTIME_SESSION_ID WANAKA_PROJECT_RESTORE_REQUEST; do
+  value=${!key:-}
+  if [ -n "$value" ]; then
+    printf 'x-wanaka-%s: %s\n' "$(printf '%s' "$key" | tr 'A-Z_' 'a-z-')" "$value" >>"$tmp/headers"
+  fi
+done
+printf 'x-wanaka-shell-started-at-ms: %s\n' "$shell_started_at_ms" >>"$tmp/headers"
+
+run_one_shot() {
+  echo "cli-rpc: worker did not admit the job; falling back to one-shot CLI" >&2
+  node "$entry_cli" "$resource" "$action" <"$tmp/stdin"
+  exit $?
+}
+
+meta=$(curl --silent --show-error --output "$tmp/body" \
+  --write-out '%{http_code} %header{x-wanaka-cli-exit-code}' \
+  --header @"$tmp/headers" \
+  --header 'content-type: application/json' \
+  --data-binary @"$tmp/stdin" \
+  "http://127.0.0.1:${WORKER_HTTP_PORT:-8322}/cli-rpc/${resource}/${action}" \
+  2>"$tmp/curl-stderr")
+curl_status=$?
+if [ "$curl_status" -eq 7 ]; then run_one_shot; fi
+if [ "$curl_status" -ne 0 ]; then
+  cat "$tmp/curl-stderr" >&2
+  echo "cli-rpc: worker request failed (curl exit $curl_status)" >&2
+  exit 1
+fi
+
+http_status=${meta%% *}
+exit_code=${meta#* }
+if [ "$http_status" = 503 ] && [ -z "$exit_code" ]; then run_one_shot; fi
+if [ "$http_status" != 200 ] || [ -z "$exit_code" ]; then
+  cat "$tmp/body" >&2
+  echo "cli-rpc: worker answered HTTP $http_status" >&2
+  exit 1
+fi
+if [ "$exit_code" = 0 ]; then
+  cat "$tmp/body"
+else
+  cat "$tmp/body" >&2
+fi
+exit "$exit_code"
